@@ -128,8 +128,29 @@ export class DatabaseStorage implements IStorage {
   }
   
   async updateUserProfile(id: number, profileData: Partial<User>): Promise<User> {
+    // Prétraiter les données pour s'assurer que les dates sont correctement formatées
+    const sanitizedData: Record<string, any> = {};
+    
+    // Copier toutes les propriétés sauf birthDate
+    Object.keys(profileData).forEach(key => {
+      if (key !== 'birthDate') {
+        sanitizedData[key] = (profileData as any)[key];
+      }
+    });
+    
+    // Traiter birthDate séparément
+    if ('birthDate' in profileData) {
+      const birthDate = profileData.birthDate;
+      if (birthDate === null || birthDate === undefined || 
+          (typeof birthDate === 'string' && birthDate.trim() === '')) {
+        sanitizedData['birthDate'] = null;
+      } else {
+        sanitizedData['birthDate'] = birthDate;
+      }
+    }
+    
     const [updatedUser] = await db.update(users)
-      .set(profileData)
+      .set(sanitizedData)
       .where(eq(users.id, id))
       .returning();
     
@@ -162,16 +183,36 @@ export class DatabaseStorage implements IStorage {
   }
   
   async addChild(child: InsertChild): Promise<Child> {
+    // Prétraiter les données pour s'assurer que les dates sont correctement formatées
+    const sanitizedData = { ...child };
+    
+    // Si birthDate est null, une chaîne vide ou undefined, le définir explicitement à null
+    if (child.birthDate === null || 
+        child.birthDate === undefined || 
+        (typeof child.birthDate === 'string' && child.birthDate.trim() === '')) {
+      sanitizedData.birthDate = null;
+    }
+    
     const [newChild] = await db.insert(children)
-      .values(child)
+      .values(sanitizedData)
       .returning();
     
     return newChild;
   }
   
   async updateChild(id: number, childData: Partial<Child>): Promise<Child> {
+    // Prétraiter les données pour s'assurer que les dates sont correctement formatées
+    const sanitizedData = { ...childData };
+    
+    // Si birthDate est null, une chaîne vide ou undefined, le définir explicitement à null
+    if (childData.birthDate === null || 
+        childData.birthDate === undefined || 
+        (typeof childData.birthDate === 'string' && childData.birthDate.trim() === '')) {
+      sanitizedData.birthDate = null;
+    }
+    
     const [updatedChild] = await db.update(children)
-      .set(childData)
+      .set(sanitizedData)
       .where(eq(children.id, id))
       .returning();
     
