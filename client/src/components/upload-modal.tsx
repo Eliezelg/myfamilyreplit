@@ -124,7 +124,7 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
               }
             };
             
-            xhr.open("POST", "/api/photos/upload", true);
+            xhr.open("POST", "/api/basic-test-upload", true);
             xhr.withCredentials = true;
             xhr.send(formData);
           });

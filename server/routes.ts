@@ -65,6 +65,9 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Ajout des routes de test pour upload
+  // Commenté pour l'instant car déjà ajouté dans test-upload.ts
+  // setupTestUploadRoutes(app);
   // Setup authentication
   setupAuth(app);
   
