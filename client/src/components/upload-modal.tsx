@@ -97,37 +97,34 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
           console.log("Uploading file:", fileObj.file.name, "Size:", fileObj.file.size);
           
           // Utilisons l'endpoint normal après avoir corrigé le problème
-          const result = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            
-            xhr.onreadystatechange = function() {
-              if (xhr.readyState === 4) {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                  try {
-                    const response = JSON.parse(xhr.responseText);
-                    console.log("Upload successful response:", response);
-                    resolve(response);
-                  } catch (e) {
-                    console.log("Parse error but successful status", e);
-                    resolve({ success: true });
-                  }
-                } else {
-                  try {
-                    const errorData = JSON.parse(xhr.responseText);
-                    console.error("Upload failed:", xhr.status, errorData);
-                    reject(new Error(errorData.message || `Upload failed with status ${xhr.status}`));
-                  } catch (e) {
-                    console.error("Upload failed:", xhr.status, xhr.responseText);
-                    reject(new Error(xhr.responseText || `Upload failed with status ${xhr.status}`));
-                  }
-                }
-              }
-            };
-            
-            xhr.open("POST", "/api/basic-test-upload", true);
-            xhr.withCredentials = true;
-            xhr.send(formData);
+          // Utilisons fetch au lieu de XHR pour une meilleure lisibilité
+          const response = await fetch("/api/photos/upload", {
+            method: "POST",
+            body: formData,
+            credentials: "include"
           });
+          
+          let result;
+          if (response.ok) {
+            try {
+              result = await response.json();
+              console.log("Upload successful response:", result);
+            } catch (e) {
+              console.log("Parse error but successful status", e);
+              result = { success: true };
+            }
+          } else {
+            let errorMessage;
+            try {
+              const errorData = await response.json();
+              console.error("Upload failed:", response.status, errorData);
+              errorMessage = errorData.message || `Upload failed with status ${response.status}`;
+            } catch (e) {
+              console.error("Upload failed:", response.status, response.statusText);
+              errorMessage = response.statusText || `Upload failed with status ${response.status}`;
+            }
+            throw new Error(errorMessage);
+          }
           
           results.push(result);
         } catch (error) {
