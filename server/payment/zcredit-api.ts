@@ -414,6 +414,22 @@ export class ZCreditSimulationAPI extends ZCreditAPI {
   }
 
   /**
+   * Simule la création d'un token
+   */
+  async createCardToken(creditCard: CreditCardDetails): Promise<string> {
+    if (!this.simulationMode) {
+      return super.createCardToken(creditCard);
+    }
+
+    // Simuler un délai
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Générer un token simulé
+    const randomToken = `SIM-TOKEN-${Math.random().toString(36).substring(2, 10)}-${Date.now()}`;
+    return randomToken;
+  }
+
+  /**
    * Simule un paiement avec token
    */
   async processTokenPayment(
