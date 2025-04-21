@@ -16,17 +16,38 @@ interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
 
+// S'assurer que le dossier d'uploads existe
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  console.log("Dossier d'uploads créé:", uploadDir);
+}
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: function (req: Express.Request, file: Express.Multer.File, cb: any) {
-      const uploadDir = path.join(process.cwd(), "uploads");
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+      // Logs de débogage
+      console.log("Upload destination dir:", uploadDir);
+      console.log("Directory exists:", fs.existsSync(uploadDir));
+      try {
+        // Vérifier les permissions
+        fs.accessSync(uploadDir, fs.constants.W_OK);
+        console.log("Directory is writable");
+      } catch (err) {
+        console.error("Directory is not writable:", err);
+        // Tentative de correction des permissions
+        try {
+          fs.chmodSync(uploadDir, 0o777);
+          console.log("Changed directory permissions to 777");
+        } catch (chmodErr) {
+          console.error("Failed to change permissions:", chmodErr);
+        }
       }
       cb(null, uploadDir);
     },
     filename: function (req: Express.Request, file: Express.Multer.File, cb: any) {
       const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
+      console.log("Generated filename:", uniqueFilename);
       cb(null, uniqueFilename);
     }
   }),
@@ -34,6 +55,7 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024 // 5MB
   },
   fileFilter: function (req: Express.Request, file: Express.Multer.File, cb: any) {
+    console.log("File filter checking:", file.mimetype);
     const allowedTypes = ['image/jpeg', 'image/png'];
     if (!allowedTypes.includes(file.mimetype)) {
       return cb(new Error('Only JPEG and PNG files are allowed'));
