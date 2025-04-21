@@ -558,3 +558,13 @@ export const zcreditAPI = new ZCreditSimulationAPI({
   password: process.env.ZCREDIT_PASSWORD || '',
   apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
 }, process.env.NODE_ENV === 'development'); // Mode simulation en développement
+
+/*
+NOTE IMPORTANTE: 
+1. La tokenisation avec l'API réelle ne produit pas de token (champ vide dans la réponse)
+2. Le paiement direct avec l'API réelle nécessite une autorisation téléphonique (IsTelApprovalNeeded: true)
+3. Pour tester en production, il faudra:
+   - Vérifier la configuration du terminal Z-Credit
+   - Utiliser une carte qui ne nécessite pas d'autorisation téléphonique
+   - Appeler le 03-5726333 pour obtenir l'autorisation si nécessaire
+*/
