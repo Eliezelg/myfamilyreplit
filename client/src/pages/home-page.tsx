@@ -45,13 +45,30 @@ export default function HomePage() {
             <p className="text-sm text-red-500">{error.message}</p>
           </div>
         ) : !families || families.length === 0 ? (
-          // User has no families yet, show create form
+          // User has no families yet, show create form and join option
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold">ברוך הבא ל-MyFamily</h1>
-              <p className="text-gray-600">התחל ליצור את הגזטה המשפחתית הראשונה שלך</p>
+              <p className="text-gray-600">צור משפחה חדשה או הצטרף למשפחה קיימת</p>
             </div>
-            <CreateFamilyForm onSuccess={() => {}} />
+            
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-bold mb-4">צור משפחה חדשה</h2>
+                <p className="text-gray-600 mb-4">צור משפחה חדשה ותזמין את בני המשפחה להצטרף</p>
+                <CreateFamilyForm onSuccess={() => {}} />
+              </div>
+              
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <h2 className="text-xl font-bold mb-4">הצטרף למשפחה קיימת</h2>
+                <p className="text-gray-600 mb-6">יש לך קוד הזמנה? הצטרף למשפחה קיימת</p>
+                <div className="text-center">
+                  <a href="/join-family" className="inline-flex items-center justify-center bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+                    הצטרף עם קוד הזמנה
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
           // User has families, show the dashboard

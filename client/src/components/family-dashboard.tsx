@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient } from "@shared/schema";
-import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle } from "lucide-react";
+import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import InviteFamilyModal from "./invite-family-modal";
 
 interface FamilyDashboardProps {
   familyId: number;
@@ -13,6 +14,8 @@ interface FamilyDashboardProps {
 }
 
 export default function FamilyDashboard({ familyId, familyName, onUploadClick }: FamilyDashboardProps) {
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  
   // Family data query
   const { data: family } = useQuery<Family>({
     queryKey: [`/api/families/${familyId}`],
@@ -319,10 +322,13 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">חברי המשפחה</h3>
-                <Button size="sm" variant="outline" className="gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="gap-1"
+                  onClick={() => setIsInviteModalOpen(true)}
+                >
+                  <UserPlus className="w-4 h-4" />
                   הזמן
                 </Button>
               </div>

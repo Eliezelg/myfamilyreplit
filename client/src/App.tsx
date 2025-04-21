@@ -16,6 +16,7 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/join-family" component={JoinFamilyPage} />
       <Route component={NotFound} />
     </Switch>
   );
