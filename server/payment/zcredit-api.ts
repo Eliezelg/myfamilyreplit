@@ -257,19 +257,45 @@ export class ZCreditAPI {
         payload,
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/plain, */*'
           }
         }
       );
 
       // Log de la réponse
-      console.log('Réponse Z-Credit (tokenisation):', JSON.stringify(response.data));
-
-      // Vérifier la réponse
-      if (response.data && response.data.Token) {
+      console.log('Réponse Z-Credit (tokenisation) type:', typeof response.data);
+      
+      // Gestion des réponses XML
+      if (typeof response.data === 'string' && response.data.includes('<Token>')) {
+        // Extraction simple du token depuis la réponse XML
+        const tokenMatch = response.data.match(/<Token>([^<]+)<\/Token>/);
+        if (tokenMatch && tokenMatch[1]) {
+          console.log('Token extrait de XML:', tokenMatch[1]);
+          return tokenMatch[1];
+        }
+      }
+      
+      // Gestion des réponses JSON
+      if (typeof response.data === 'object' && response.data.Token) {
+        console.log('Token extrait de JSON:', response.data.Token);
         return response.data.Token;
       }
 
+      // Si une réponse IntOt_JSON contient un token
+      if (response.data.IntOt_JSON) {
+        try {
+          const intOtData = JSON.parse(response.data.IntOt_JSON);
+          if (intOtData && intOtData.Token) {
+            console.log('Token extrait de IntOt_JSON:', intOtData.Token);
+            return intOtData.Token;
+          }
+        } catch (e) {
+          console.error('Erreur lors du parsing de IntOt_JSON:', e);
+        }
+      }
+
+      console.error('Aucun token trouvé dans la réponse Z-Credit:', response.data);
       throw new Error('Impossible de créer un token pour la carte');
     } catch (error) {
       console.error('Erreur lors de la création du token:', error);
@@ -531,4 +557,4 @@ export const zcreditAPI = new ZCreditSimulationAPI({
   terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
   password: process.env.ZCREDIT_PASSWORD || '',
   apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
-}, false); // Mode production pour test réel
+}, process.env.NODE_ENV === 'development'); // Mode simulation en développement
