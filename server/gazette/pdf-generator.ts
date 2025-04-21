@@ -38,6 +38,7 @@ export async function generateGazettePDF(
   family: Family
 ): Promise<string> {
   // Créer un nouveau document PDF (A4 avec orientation portrait)
+  // @ts-ignore - Le type RTL n'est pas dans les types mais est supporté par pdfkit
   const doc = new PDFDocument({ size: 'A4', margin: 50, rtl: true }); // RTL pour l'hébreu
   
   // Créer un nom de fichier unique pour cette gazette
@@ -240,7 +241,7 @@ export async function getUpcomingBirthdays(familyId: number, monthYear: string):
         upcomingBirthdays.push({
           name: member.user.displayName || member.user.username,
           date: birthDate,
-          profileImage: member.user.profileImage,
+          profileImage: member.user.profileImage || undefined,
           type: 'user'
         });
       }
@@ -259,7 +260,7 @@ export async function getUpcomingBirthdays(familyId: number, monthYear: string):
           upcomingBirthdays.push({
             name: child.name,
             date: childBirthDate,
-            profileImage: child.profileImage,
+            profileImage: child.profileImage || undefined,
             type: 'child'
           });
         }
