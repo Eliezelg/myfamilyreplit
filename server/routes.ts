@@ -450,22 +450,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const photo = await storage.addPhoto({
         familyId,
         userId: req.user.id,
-        imageUrl: `/uploads/${req.file.filename}`,
-        caption: (req.body.caption || "").toString().substring(0, 500), // Limite à 500 caractères pour sécurité
+        imageUrl: `/uploads/${req.file.filename}`, // Nom correct conforme au schéma
+        caption: req.body.caption || null, // Gestion propre des nulls
         monthYear,
         fileSize: req.file.size,
       });
       
       console.log("UPLOAD SUCCESS:", photo.id);
-      res.setHeader('Content-Type', 'application/json');
-      return res.status(201).send(JSON.stringify(photo));
+      
+      // Utiliser res.json au lieu de res.send(JSON.stringify())
+      return res.status(201).json({
+        success: true,
+        photo
+      });
     } catch (error: any) {
       console.error("Error uploading photo:", error);
-      res.setHeader('Content-Type', 'application/json');
-      return res.status(500).send(JSON.stringify({ 
+      return res.status(500).json({ 
         success: false,
         message: error.message || "An unknown error occurred" 
-      }));
+      });
     }
   });
 
