@@ -2,10 +2,15 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient } from "@shared/schema";
+import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient, User } from "@shared/schema";
 import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import InviteFamilyModal from "./invite-family-modal";
+
+// Type étendu pour inclure les données utilisateur
+interface FamilyMemberWithUser extends FamilyMember {
+  user?: User;
+}
 
 interface FamilyDashboardProps {
   familyId: number;
@@ -27,7 +32,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   });
   
   // Members query for this family
-  const { data: members } = useQuery<FamilyMember[]>({
+  const { data: members } = useQuery<FamilyMemberWithUser[]>({
     queryKey: [`/api/families/${familyId}/members`],
   });
   

@@ -76,14 +76,16 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
     mutationFn: async () => {
       // Create FormData for each file
       const uploads = files.map(async (fileWithPreview) => {
-        // Ici, nous créons un nouveau blob à partir du fichier original
-        // pour éviter que des propriétés étendues interfèrent avec l'upload
-        const originalFile = fileWithPreview.slice(0, fileWithPreview.size, fileWithPreview.type);
-        
+        // Créer un nouveau blob à partir du fichier original pour garantir la compatibilité
+        // On utilise le fichier natif sans propriétés ajoutées
         const formData = new FormData();
-        formData.append("file", originalFile, fileWithPreview.name);
+        
+        // Important: Utiliser le File original directement, pas un blob dérivé
+        formData.append("file", fileWithPreview);
         formData.append("caption", fileWithPreview.caption || "");
         formData.append("familyId", familyId.toString());
+        
+        console.log("Uploading file:", fileWithPreview.name, "Size:", fileWithPreview.size);
         
         // Utiliser fetch directement car apiRequest ne gère pas FormData correctement
         const res = await fetch('/api/photos/upload', {
@@ -94,6 +96,7 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
         
         if (!res.ok) {
           const error = await res.text();
+          console.error("Upload failed:", error);
           throw new Error(error);
         }
         
