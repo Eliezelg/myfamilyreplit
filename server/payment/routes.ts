@@ -113,12 +113,12 @@ export function registerPaymentRoutes(app: Express) {
       }
       
       // Effectuer le paiement direct via carte de crédit
-      const paymentResult = await zCreditAPI.chargeWithToken(token, amount);
+      const paymentResponse = await zCreditAPI.chargeWithToken(token, amount);
       
-      if (!paymentResult.success) {
+      if (!paymentResponse.IsApproved || paymentResponse.ReturnCode !== 0) {
         return res.status(400).json({ 
           success: false, 
-          message: paymentResult.message || "Failed to process payment" 
+          message: paymentResponse.ReturnMessage || "Failed to process payment" 
         });
       }
       
@@ -140,22 +140,21 @@ export function registerPaymentRoutes(app: Express) {
       
       // Enregistrer la transaction
       await storage.addFundTransaction({
-        fundId: familyFund.id,
+        familyFundId: familyFund.id,
         amount,
-        type: "deposit",
+        userId: req.user.id,
         description: "הפקדה לקופה המשפחתית",
-        createdAt: new Date(),
-        referenceNumber: paymentResult.referenceNumber.toString(),
-        userId: req.user.id
+        type: "deposit",
+        referenceNumber: paymentResponse.ReferenceNumber?.toString() || ""
       });
       
       return res.status(200).json({
         success: true,
         message: "Fonds ajoutés avec succès",
         amountFromCard: amount,
-        referenceNumber: paymentResult.referenceNumber.toString(),
+        referenceNumber: paymentResponse.ReferenceNumber?.toString() || "",
         paymentDetails: {
-          cardMask: paymentResult.cardMask || "xxxx"
+          cardMask: paymentResponse.CardNumberMask || paymentResponse.Card4Digits || "xxxx"
         }
       });
     } catch (error) {

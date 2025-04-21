@@ -100,12 +100,14 @@ export const fundTransactions = pgTable("fund_transactions", {
   userId: integer("user_id").notNull().references(() => users.id),
   amount: integer("amount").notNull(), // In cents
   description: text("description"),
-  transactionDate: timestamp("transaction_date").defaultNow().notNull(),
+  type: text("type").default("payment"),  // payment, deposit, refund
+  referenceNumber: text("reference_number"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertFundTransactionSchema = createInsertSchema(fundTransactions).omit({
   id: true,
-  transactionDate: true,
+  createdAt: true,
 });
 
 // Recipients model

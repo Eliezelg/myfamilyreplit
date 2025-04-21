@@ -27,27 +27,13 @@ export function FamilyFundManager({ familyId }: FamilyFundManagerProps) {
   const queryClient = useQueryClient();
 
   // Récupérer les informations du fonds de famille
-  const { data: familyFund, isLoading: isLoadingFund } = useQuery({
+  const { data: familyFund, isLoading: isLoadingFund } = useQuery<FamilyFund>({
     queryKey: ["/api/families", familyId, "fund"],
-    onError: (error: Error) => {
-      toast({
-        title: "שגיאה בטעינת נתוני הקופה המשפחתית",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
   // Récupérer l'historique des transactions
-  const { data: transactions, isLoading: isLoadingTransactions } = useQuery({
+  const { data: transactions, isLoading: isLoadingTransactions } = useQuery<FundTransaction[]>({
     queryKey: ["/api/families", familyId, "fund/transactions"],
-    onError: (error: Error) => {
-      toast({
-        title: "שגיאה בטעינת היסטוריית עסקאות",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
   // Mutation pour ajouter des fonds
@@ -150,8 +136,8 @@ export function FamilyFundManager({ familyId }: FamilyFundManagerProps) {
   };
 
   // Formater la date pour l'affichage
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     return new Intl.DateTimeFormat('he-IL', {
       day: '2-digit',
       month: '2-digit',

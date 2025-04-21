@@ -28,6 +28,14 @@ interface TransactionDetails {
   uniqueId?: string;
 }
 
+// Type pour les résultats de tokenisation
+interface TokenizeResult {
+  success: boolean;
+  token?: string;
+  cardMask?: string;
+  message?: string;
+}
+
 // Type pour la réponse de Z-Credit basé sur la documentation
 export interface ZCreditResponse {
   // Structure basée sur la documentation Z-Credit
@@ -77,8 +85,13 @@ export interface ZCreditResponse {
 export class ZCreditAPI {
   private config: ZCreditConfig;
 
-  constructor(config: ZCreditConfig) {
-    this.config = config;
+  constructor(config?: ZCreditConfig) {
+    // Si aucune configuration n'est fournie, utiliser les variables d'environnement
+    this.config = config || {
+      terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
+      password: process.env.ZCREDIT_PASSWORD || '',
+      apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
+    };
   }
 
   /**
@@ -229,7 +242,7 @@ export class ZCreditAPI {
   /**
    * Crée un token pour la carte de crédit
    */
-  async createCardToken(creditCard: CreditCardDetails): Promise<string> {
+  async tokenizeCard(creditCard: CreditCardDetails): Promise<TokenizeResult> {
     try {
       // Construction du payload pour la tokenisation
       const payload: Record<string, any> = {
@@ -276,14 +289,22 @@ export class ZCreditAPI {
         const tokenMatch = response.data.match(/<Token>([^<]+)<\/Token>/);
         if (tokenMatch && tokenMatch[1]) {
           console.log('Token extrait de XML:', tokenMatch[1]);
-          return tokenMatch[1];
+          return {
+            success: true,
+            token: tokenMatch[1],
+            cardMask: creditCard.cardNumber.replace(/\d(?=\d{4})/g, '*')
+          };
         }
       }
       
       // Gestion des réponses JSON
       if (typeof response.data === 'object' && response.data.Token) {
         console.log('Token extrait de JSON:', response.data.Token);
-        return response.data.Token;
+        return {
+          success: true,
+          token: response.data.Token,
+          cardMask: response.data.CardNumber || creditCard.cardNumber.replace(/\d(?=\d{4})/g, '*')
+        };
       }
 
       // Si une réponse IntOt_JSON contient un token
@@ -292,7 +313,11 @@ export class ZCreditAPI {
           const intOtData = JSON.parse(response.data.IntOt_JSON);
           if (intOtData && intOtData.Token) {
             console.log('Token extrait de IntOt_JSON:', intOtData.Token);
-            return intOtData.Token;
+            return {
+              success: true,
+              token: intOtData.Token,
+              cardMask: intOtData.CardNumber || creditCard.cardNumber.replace(/\d(?=\d{4})/g, '*')
+            };
           }
         } catch (e) {
           console.error('Erreur lors du parsing de IntOt_JSON:', e);
@@ -300,74 +325,58 @@ export class ZCreditAPI {
       }
 
       console.error('Aucun token trouvé dans la réponse Z-Credit:', response.data);
-      throw new Error('Impossible de créer un token pour la carte');
+      return {
+        success: false,
+        message: 'Impossible de créer un token pour la carte'
+      };
     } catch (error) {
       console.error('Erreur lors de la création du token:', error);
       if (axios.isAxiosError(error) && error.response) {
         console.error('Détails de l\'erreur Z-Credit:', JSON.stringify(error.response.data));
-        throw new Error(`Erreur Z-Credit: ${error.response.data?.ReturnMessage || 'Erreur inconnue'}`);
+        return {
+          success: false,
+          message: `Erreur Z-Credit: ${error.response.data?.ReturnMessage || 'Erreur inconnue'}`
+        };
       } else if (axios.isAxiosError(error)) {
         console.error('Erreur de connexion Z-Credit:', error.message);
-        throw new Error(`Erreur de connexion à Z-Credit: ${error.message}`);
+        return {
+          success: false,
+          message: `Erreur de connexion à Z-Credit: ${error.message}`
+        };
       }
-      throw error;
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Erreur inconnue'
+      };
     }
   }
 
   /**
    * Effectue un paiement avec un token
    */
-  async processTokenPayment(
+  async chargeWithToken(
     token: string,
-    transaction: TransactionDetails
+    amount: number,
+    description: string = "Paiement MyFamily"
   ): Promise<ZCreditResponse> {
     try {
-      // Conversion de l'amount de aggorot (centimes) à NIS avec 2 décimales comme attendu par l'API
-      const transactionSum = (transaction.amount / 100).toFixed(2);
+      // Conversion de l'amount de aggorot (centimes) à NIS avec 2 décimales
+      const transactionSum = (amount / 100).toFixed(2);
       
-      // Préparation des montants de paiements échelonnés si nécessaire
-      let firstPaymentSum = undefined;
-      let otherPaymentsSum = undefined;
-      
-      if (transaction.numOfPayments && transaction.numOfPayments > 1) {
-        if (transaction.firstPaymentSum && transaction.otherPaymentsSum) {
-          firstPaymentSum = (transaction.firstPaymentSum / 100).toFixed(2);
-          otherPaymentsSum = (transaction.otherPaymentsSum / 100).toFixed(2);
-        } else {
-          // Calcul automatique des montants pour paiements échelonnés égaux
-          const totalAmount = transaction.amount / 100;
-          const numPayments = transaction.numOfPayments;
-          
-          // Calcul du montant pour chaque paiement (sauf le premier)
-          const paymentAmount = Math.floor((totalAmount / numPayments) * 100) / 100;
-          otherPaymentsSum = paymentAmount.toFixed(2);
-          
-          // Le premier paiement prend le reste pour égaliser le montant total
-          const firstAmount = totalAmount - (paymentAmount * (numPayments - 1));
-          firstPaymentSum = firstAmount.toFixed(2);
-        }
-      }
-      
-      // Construction du payload pour le paiement par token selon la documentation Z-Credit
+      // Construction du payload pour le paiement par token
       const payload: Record<string, string> = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
         CardNumber: token, // Utiliser le token au lieu du numéro de carte
         TransactionSum: transactionSum,
-        NumberOfPayments: transaction.numOfPayments ? transaction.numOfPayments.toString() : "1",
-        CreditType: transaction.creditType ? transaction.creditType.toString() : "1",
+        NumberOfPayments: "1",
+        CreditType: "1",
         CurrencyType: "1", // ILS (shekels)
         TransactionType: "01", // Transaction standard
         J: "0", // Transaction standard
-        ItemDescription: transaction.description || "Paiement MyFamily",
-        TransactionUniqueID: transaction.uniqueId || this.generateUniqueId()
+        ItemDescription: description,
+        TransactionUniqueID: this.generateUniqueId()
       };
-      
-      // Ajouter les paramètres conditionnels uniquement lorsqu'ils sont nécessaires
-      if (transaction.numOfPayments && transaction.numOfPayments > 1) {
-        (payload as Record<string, string>)["FirstPaymentSum"] = firstPaymentSum || "0";
-        (payload as Record<string, string>)["OtherPaymentsSum"] = otherPaymentsSum || "0";
-      }
 
       console.log('Envoi de requête token à Z-Credit:', JSON.stringify({
         url: `${this.config.apiUrl}/Transaction/CommitFullTransaction`,
@@ -421,154 +430,3 @@ export class ZCreditAPI {
     }
   }
 }
-
-/**
- * Classe pour simuler l'API Z-Credit (utile pour les tests)
- */
-export class ZCreditSimulationAPI extends ZCreditAPI {
-  private simulationMode: boolean = true;
-
-  constructor(config: ZCreditConfig, simulationMode: boolean = true) {
-    super(config);
-    this.simulationMode = simulationMode;
-    if (this.simulationMode) {
-      console.log('Z-Credit API en mode simulation');
-    }
-  }
-
-  /**
-   * Simule un traitement de paiement
-   */
-  async processPayment(
-    creditCard: CreditCardDetails,
-    transaction: TransactionDetails
-  ): Promise<ZCreditResponse> {
-    if (!this.simulationMode) {
-      return super.processPayment(creditCard, transaction);
-    }
-
-    // Simuler un délai de traitement
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Simuler une réponse
-    return this.simulateResponse(creditCard, transaction);
-  }
-
-  /**
-   * Simule la création d'un token
-   */
-  async createCardToken(creditCard: CreditCardDetails): Promise<string> {
-    if (!this.simulationMode) {
-      return super.createCardToken(creditCard);
-    }
-
-    // Simuler un délai
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Générer un token simulé
-    const randomToken = `SIM-TOKEN-${Math.random().toString(36).substring(2, 10)}-${Date.now()}`;
-    return randomToken;
-  }
-
-  /**
-   * Simule un paiement avec token
-   */
-  async processTokenPayment(
-    token: string,
-    transaction: TransactionDetails
-  ): Promise<ZCreditResponse> {
-    if (!this.simulationMode) {
-      return super.processTokenPayment(token, transaction);
-    }
-
-    // Simuler un délai de traitement
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Simuler une réponse
-    const dummyCard: CreditCardDetails = {
-      cardNumber: '4111111111111111',
-      expDate: '1225'
-    };
-
-    return this.simulateResponse(dummyCard, transaction);
-  }
-
-  /**
-   * Simule une réponse de l'API
-   */
-  private simulateResponse(
-    creditCard: CreditCardDetails,
-    transaction: TransactionDetails
-  ): ZCreditResponse {
-    // Numéros de carte qui déclenchent des erreurs spécifiques pour les tests
-    const errorCards: Record<string, string> = {
-      '4111111111111112': 'כרטיס האשראי לא תקין', // Carte invalide
-      '4111111111111113': 'עסקה לא אושרה', // Transaction non approuvée
-      '4111111111111114': 'תוקף הכרטיס פג', // Carte expirée
-      '4111111111111115': 'סכום העסקה חורג מהמותר' // Montant trop élevé
-    };
-
-    // Simuler une erreur si la carte est dans notre liste d'erreurs
-    const lastFourDigits = creditCard.cardNumber.slice(-4);
-    if (lastFourDigits in errorCards) {
-      return {
-        ReturnValue: 800,
-        IsApproved: false,
-        ReturnMessage: errorCards[lastFourDigits]
-      };
-    }
-
-    // Pour les transactions de plus de 10000 agorot, simuler une erreur de montant
-    if (transaction.amount > 10000) {
-      return {
-        ReturnValue: 801,
-        IsApproved: false,
-        ReturnMessage: 'סכום העסקה חורג מהמותר'
-      };
-    }
-
-    // Sinon, simuler une réponse réussie
-    return {
-      ReturnValue: 0,
-      ReferenceNumber: `SIM-${Date.now()}`,
-      Token: `TOK-${Math.random().toString(36).substring(2, 10)}`,
-      ReturnMessage: 'עסקה אושרה',
-      IsApproved: true,
-      TransactionSum: transaction.amount,
-      TransactionID: `TID-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      AuthNumber: `AUTH-${Math.floor(Math.random() * 100000)}`,
-      CardBrand: 'Visa',
-      CardBrandCode: 1,
-      CardNumber: creditCard.cardNumber,
-      CardNumberMask: this.maskCardNumber(creditCard.cardNumber),
-      PaymentsNumber: transaction.numOfPayments || 1
-    };
-  }
-
-  /**
-   * Masque un numéro de carte
-   */
-  private maskCardNumber(cardNumber: string): string {
-    if (cardNumber.length < 8) return cardNumber;
-    const firstDigits = cardNumber.slice(0, 4);
-    const lastDigits = cardNumber.slice(-4);
-    return `${firstDigits}${'X'.repeat(cardNumber.length - 8)}${lastDigits}`;
-  }
-}
-
-// Singleton pour l'API Z-Credit
-export const zcreditAPI = new ZCreditAPI({
-  terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
-  password: process.env.ZCREDIT_PASSWORD || '',
-  apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
-}); // Mode réel sans simulation
-
-/*
-NOTE IMPORTANTE: 
-1. La tokenisation avec l'API réelle ne produit pas de token (champ vide dans la réponse)
-2. Le paiement direct avec l'API réelle nécessite une autorisation téléphonique (IsTelApprovalNeeded: true)
-3. Pour tester en production, il faudra:
-   - Vérifier la configuration du terminal Z-Credit
-   - Utiliser une carte qui ne nécessite pas d'autorisation téléphonique
-   - Appeler le 03-5726333 pour obtenir l'autorisation si nécessaire
-*/
