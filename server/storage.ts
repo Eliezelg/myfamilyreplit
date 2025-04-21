@@ -82,6 +82,72 @@ export interface IStorage {
   addEvent(event: InsertEvent): Promise<Event>;
 }
 
+// Fonction utilitaire pour nettoyer les objets avant insertion/mise à jour dans la base de données
+function sanitizeData(data: any): any {
+  // Si le champ est null ou undefined, on renvoie une copie simple
+  if (!data) return data;
+  
+  const result: any = {};
+  
+  for (const key in data) {
+    // On saute les clés inexistantes
+    if (!(key in data)) continue;
+    
+    const value = data[key];
+    
+    // Traitement spécial pour les champs de date
+    if (key.toLowerCase().includes('date') && key !== 'createdAt' && key !== 'updatedAt') {
+      // Si la valeur est vide, explicitement à null
+      if (value === null || value === undefined || 
+          (typeof value === 'string' && value.toString().trim() === '')) {
+        result[key] = null;
+      } 
+      // Si c'est déjà une date, on la garde
+      else if (value instanceof Date) {
+        result[key] = value;
+      }
+      // Si c'est une chaîne de caractères qui ressemble à une date ISO
+      else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+        try {
+          result[key] = new Date(value);
+        } catch (error) {
+          // Si la conversion échoue, on met null
+          result[key] = null;
+        }
+      }
+      // Autres formats de date (YYYY-MM-DD)
+      else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        try {
+          result[key] = new Date(value);
+        } catch (error) {
+          // Si la conversion échoue, on met null
+          result[key] = null;
+        }
+      }
+      // Sinon on garde la valeur telle quelle (mais attention aux erreurs potentielles)
+      else {
+        try {
+          // Essayer de convertir en date si c'est un timestamp ou autre format
+          const possibleDate = new Date(value);
+          if (!isNaN(possibleDate.getTime())) {
+            result[key] = possibleDate;
+          } else {
+            result[key] = null;
+          }
+        } catch (error) {
+          // Erreur de conversion, on met null
+          result[key] = null;
+        }
+      }
+    } else {
+      // Pour les autres champs, copier tel quel
+      result[key] = value;
+    }
+  }
+  
+  return result;
+}
+
 // Database implementation of the storage interface
 export class DatabaseStorage implements IStorage {
   sessionStore: any;
@@ -129,25 +195,7 @@ export class DatabaseStorage implements IStorage {
   
   async updateUserProfile(id: number, profileData: Partial<User>): Promise<User> {
     // Prétraiter les données pour s'assurer que les dates sont correctement formatées
-    const sanitizedData: Record<string, any> = {};
-    
-    // Copier toutes les propriétés sauf birthDate
-    Object.keys(profileData).forEach(key => {
-      if (key !== 'birthDate') {
-        sanitizedData[key] = (profileData as any)[key];
-      }
-    });
-    
-    // Traiter birthDate séparément
-    if ('birthDate' in profileData) {
-      const birthDate = profileData.birthDate;
-      if (birthDate === null || birthDate === undefined || 
-          (typeof birthDate === 'string' && birthDate.trim() === '')) {
-        sanitizedData['birthDate'] = null;
-      } else {
-        sanitizedData['birthDate'] = birthDate;
-      }
-    }
+    const sanitizedData = sanitizeData(profileData);
     
     const [updatedUser] = await db.update(users)
       .set(sanitizedData)
@@ -184,14 +232,7 @@ export class DatabaseStorage implements IStorage {
   
   async addChild(child: InsertChild): Promise<Child> {
     // Prétraiter les données pour s'assurer que les dates sont correctement formatées
-    const sanitizedData = { ...child };
-    
-    // Si birthDate est null, une chaîne vide ou undefined, le définir explicitement à null
-    if (child.birthDate === null || 
-        child.birthDate === undefined || 
-        (typeof child.birthDate === 'string' && child.birthDate.trim() === '')) {
-      sanitizedData.birthDate = null;
-    }
+    const sanitizedData = sanitizeData(child);
     
     const [newChild] = await db.insert(children)
       .values(sanitizedData)
@@ -202,14 +243,7 @@ export class DatabaseStorage implements IStorage {
   
   async updateChild(id: number, childData: Partial<Child>): Promise<Child> {
     // Prétraiter les données pour s'assurer que les dates sont correctement formatées
-    const sanitizedData = { ...childData };
-    
-    // Si birthDate est null, une chaîne vide ou undefined, le définir explicitement à null
-    if (childData.birthDate === null || 
-        childData.birthDate === undefined || 
-        (typeof childData.birthDate === 'string' && childData.birthDate.trim() === '')) {
-      sanitizedData.birthDate = null;
-    }
+    const sanitizedData = sanitizeData(childData);
     
     const [updatedChild] = await db.update(children)
       .set(sanitizedData)
