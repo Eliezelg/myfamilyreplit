@@ -15,7 +15,13 @@ interface MobileSidebarProps {
   onAddFamilyClick?: () => void;
 }
 
-export default function MobileSidebar({ isOpen, onClose, user }: MobileSidebarProps) {
+export default function MobileSidebar({ 
+  isOpen, 
+  onClose, 
+  user, 
+  onFamilySelect, 
+  onAddFamilyClick 
+}: MobileSidebarProps) {
   const { logoutMutation } = useAuth();
   const [location, navigate] = useLocation();
   
@@ -79,10 +85,9 @@ export default function MobileSidebar({ isOpen, onClose, user }: MobileSidebarPr
                         href="/"
                         onClick={(e) => {
                           e.preventDefault();
-                          // Technically we'd normally pass state here, but since this is just a UI
-                          // refresh and the main page will need to handle family selection
-                          // we'll just redirect to home
-                          navigate("/");
+                          if (onFamilySelect) {
+                            onFamilySelect(family.id);
+                          }
                           onClose();
                         }}
                         className="block py-2 px-3 text-sm rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
@@ -96,8 +101,9 @@ export default function MobileSidebar({ isOpen, onClose, user }: MobileSidebarPr
                         href="/" 
                         onClick={(e) => {
                           e.preventDefault();
-                          // Here we'd open the add family modal from the parent component
-                          navigate("/");
+                          if (onAddFamilyClick) {
+                            onAddFamilyClick();
+                          }
                           onClose();
                         }}
                         className="flex items-center gap-2 py-2 px-3 text-sm text-primary rounded-md hover:bg-primary/5 transition-colors"
