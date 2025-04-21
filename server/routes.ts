@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
@@ -6,17 +6,23 @@ import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import fs from "fs";
+import express from "express";
+
+// Interface étendue pour req.file avec multer
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 const upload = multer({
   storage: multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: function (req: Express.Request, file: Express.Multer.File, cb: any) {
       const uploadDir = path.join(process.cwd(), "uploads");
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
       cb(null, uploadDir);
     },
-    filename: function (req, file, cb) {
+    filename: function (req: Express.Request, file: Express.Multer.File, cb: any) {
       const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
       cb(null, uniqueFilename);
     }
@@ -24,7 +30,7 @@ const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB
   },
-  fileFilter: function (req, file, cb) {
+  fileFilter: function (req: Express.Request, file: Express.Multer.File, cb: any) {
     const allowedTypes = ['image/jpeg', 'image/png'];
     if (!allowedTypes.includes(file.mimetype)) {
       return cb(new Error('Only JPEG and PNG files are allowed'));
@@ -36,6 +42,9 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
   setupAuth(app);
+  
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // API Routes
   // Families

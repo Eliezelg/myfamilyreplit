@@ -81,7 +81,18 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
         formData.append("caption", file.caption || "");
         formData.append("familyId", familyId.toString());
         
-        return apiRequest("POST", "/api/photos/upload", formData);
+        // Utiliser fetch directement car apiRequest ne gère pas FormData correctement
+        const res = await fetch('/api/photos/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!res.ok) {
+          const error = await res.text();
+          throw new Error(error);
+        }
+        
+        return res.json();
       });
       
       // Upload all files
