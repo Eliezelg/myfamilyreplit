@@ -300,6 +300,192 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invitations
+  app.get("/api/families/:id/invitation", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const familyId = parseInt(req.params.id);
+      
+      // Check if user is a member of this family
+      const isMember = await storage.userIsFamilyMember(req.user.id, familyId);
+      if (!isMember) {
+        return res.status(403).send("Not a member of this family");
+      }
+      
+      // Get or create invitation code
+      const invitation = await storage.getFamilyInvitation(familyId);
+      if (!invitation) {
+        return res.status(404).send("No invitation found");
+      }
+      
+      res.json(invitation);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/families/:id/invitation", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const familyId = parseInt(req.params.id);
+      
+      // Check if user is an admin of this family
+      const isAdmin = await storage.userIsFamilyAdmin(req.user.id, familyId);
+      if (!isAdmin) {
+        return res.status(403).send("Only family admins can create invitation codes");
+      }
+      
+      // Create a unique random token
+      const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+      
+      // Set expiration to 30 days from now
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30);
+      
+      // Create or update invitation
+      const invitation = await storage.createInvitation({
+        familyId,
+        invitedByUserId: req.user.id,
+        token,
+        expiresAt,
+        type: "code",
+      });
+      
+      res.status(201).json(invitation);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/families/:id/invite-email", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const familyId = parseInt(req.params.id);
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).send("Email is required");
+      }
+      
+      // Check if user is an admin of this family
+      const isAdmin = await storage.userIsFamilyAdmin(req.user.id, familyId);
+      if (!isAdmin) {
+        return res.status(403).send("Only family admins can send email invitations");
+      }
+      
+      // Create a unique random token
+      const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+      
+      // Set expiration to 7 days from now
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7);
+      
+      // Create invitation
+      const invitation = await storage.createInvitation({
+        familyId,
+        invitedByUserId: req.user.id,
+        email,
+        token,
+        expiresAt,
+        message: req.body.message || "",
+        type: "email",
+      });
+      
+      // TODO: Actually send the email with a link 
+      // to join/register using the token
+      
+      res.status(201).json(invitation);
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.get("/api/invitations/:token/validate", async (req, res, next) => {
+    try {
+      const token = req.params.token;
+      
+      // Get invitation by token
+      const invitation = await storage.getInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).send("Invalid invitation code");
+      }
+      
+      // Check if invitation is expired
+      if (new Date(invitation.expiresAt) < new Date()) {
+        return res.status(400).send("Invitation code has expired");
+      }
+      
+      // Check if invitation is already used
+      if (invitation.status !== "pending") {
+        return res.status(400).send("Invitation code has already been used");
+      }
+      
+      // Get family info
+      const family = await storage.getFamily(invitation.familyId);
+      
+      res.json({
+        valid: true,
+        familyId: invitation.familyId,
+        familyName: family?.name,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  app.post("/api/invitations/:token/join", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      
+      const token = req.params.token;
+      
+      // Get invitation by token
+      const invitation = await storage.getInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).send("Invalid invitation code");
+      }
+      
+      // Check if invitation is expired
+      if (new Date(invitation.expiresAt) < new Date()) {
+        return res.status(400).send("Invitation code has expired");
+      }
+      
+      // Check if invitation is already used
+      if (invitation.status !== "pending") {
+        return res.status(400).send("Invitation code has already been used");
+      }
+      
+      // Check if user is already a member of this family
+      const isMember = await storage.userIsFamilyMember(req.user.id, invitation.familyId);
+      if (isMember) {
+        return res.status(400).send("You are already a member of this family");
+      }
+      
+      // Add user as member to the family
+      const familyMember = await storage.addFamilyMember(invitation.familyId, {
+        userId: req.user.id,
+        role: "member",
+      });
+      
+      // Update invitation status
+      await storage.updateInvitationStatus(invitation.id, "accepted");
+      
+      // Get family name
+      const family = await storage.getFamily(invitation.familyId);
+      
+      res.status(201).json({
+        success: true,
+        familyMember,
+        familyId: invitation.familyId,
+        familyName: family?.name,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Events
   app.get("/api/families/:id/events", async (req, res, next) => {
     try {

@@ -128,12 +128,13 @@ export const invitations = pgTable("invitations", {
   id: serial("id").primaryKey(),
   familyId: integer("family_id").notNull().references(() => families.id),
   invitedByUserId: integer("invited_by_user_id").notNull().references(() => users.id),
-  email: text("email").notNull(),
+  email: text("email"),
   token: text("token").notNull().unique(),
   message: text("message"),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   status: text("status").notNull().default("pending"), // pending, accepted, rejected, expired
+  type: text("type").notNull().default("code"), // code, email
 });
 
 export const insertInvitationSchema = createInsertSchema(invitations).omit({

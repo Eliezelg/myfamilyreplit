@@ -61,6 +61,7 @@ export interface IStorage {
   addRecipient(recipient: InsertRecipient): Promise<Recipient>;
   
   // Invitation operations
+  getFamilyInvitation(familyId: number): Promise<Invitation | undefined>;
   createInvitation(invitation: InsertInvitation): Promise<Invitation>;
   getInvitationByToken(token: string): Promise<Invitation | undefined>;
   updateInvitationStatus(id: number, status: string): Promise<Invitation>;
@@ -274,6 +275,25 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Invitation operations
+  async getFamilyInvitation(familyId: number): Promise<Invitation | undefined> {
+    // Get the most recent active invitation (code type) for this family
+    const [invitation] = await db
+      .select()
+      .from(invitations)
+      .where(
+        and(
+          eq(invitations.familyId, familyId),
+          eq(invitations.type, "code"),
+          eq(invitations.status, "pending"),
+          gt(invitations.expiresAt, new Date())
+        )
+      )
+      .orderBy(desc(invitations.createdAt))
+      .limit(1);
+      
+    return invitation || undefined;
+  }
+  
   async createInvitation(invitation: InsertInvitation): Promise<Invitation> {
     const [newInvitation] = await db.insert(invitations)
       .values(invitation)
