@@ -66,7 +66,9 @@ export default function Header({ onMobileMenuClick, user }: HeaderProps) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>החשבון שלי</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>פרופיל</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">פרופיל</Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem>הגדרות</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logoutMutation.mutate()}>

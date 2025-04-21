@@ -78,8 +78,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).send("User not found");
       }
       
-      // Import comparePasswords from auth.ts
-      const { comparePasswords, hashPassword } = require("./auth");
+      // Use imported comparePasswords and hashPassword
       
       // Verify current password
       const isPasswordValid = await comparePasswords(currentPassword, user.password);
