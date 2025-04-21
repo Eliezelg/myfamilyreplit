@@ -9,8 +9,10 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   fullName: text("full_name").notNull(),
+  displayName: text("display_name"),
   email: text("email").notNull(),
   profileImage: text("profile_image"),
+  birthDate: timestamp("birth_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -158,12 +160,29 @@ export const insertEventSchema = createInsertSchema(events).omit({
   createdAt: true,
 });
 
+// Children model
+export const children = pgTable("children", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  birthDate: timestamp("birth_date"),
+  gender: text("gender"),
+  profileImage: text("profile_image"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertChildSchema = createInsertSchema(children).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Define relationships between models
 export const usersRelations = relations(users, ({ many }) => ({
   familyMembers: many(familyMembers),
   photos: many(photos),
   fundTransactions: many(fundTransactions),
   invitations: many(invitations),
+  children: many(children),
 }));
 
 export const familiesRelations = relations(families, ({ many, one }) => ({
@@ -213,6 +232,10 @@ export const eventsRelations = relations(events, ({ one }) => ({
   family: one(families, { fields: [events.familyId], references: [families.id] }),
 }));
 
+export const childrenRelations = relations(children, ({ one }) => ({
+  parent: one(users, { fields: [children.userId], references: [users.id] }),
+}));
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -243,3 +266,6 @@ export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
 
 export type Event = typeof events.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
+
+export type Child = typeof children.$inferSelect;
+export type InsertChild = z.infer<typeof insertChildSchema>;

@@ -8,7 +8,8 @@ import {
   fundTransactions, type FundTransaction, type InsertFundTransaction,
   recipients, type Recipient, type InsertRecipient,
   invitations, type Invitation, type InsertInvitation,
-  events, type Event, type InsertEvent
+  events, type Event, type InsertEvent,
+  children, type Child, type InsertChild
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, gt } from "drizzle-orm";
@@ -26,6 +27,15 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserProfile(id: number, profileData: Partial<User>): Promise<User>;
+  updateUserPassword(id: number, newPassword: string): Promise<User>;
+  
+  // Children operations
+  getUserChildren(userId: number): Promise<Child[]>;
+  getChild(id: number): Promise<Child | undefined>;
+  addChild(child: InsertChild): Promise<Child>;
+  updateChild(id: number, childData: Partial<Child>): Promise<Child>;
+  deleteChild(id: number): Promise<void>;
   
   // Family operations
   getFamily(id: number): Promise<Family | undefined>;
@@ -115,6 +125,62 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+  
+  async updateUserProfile(id: number, profileData: Partial<User>): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set(profileData)
+      .where(eq(users.id, id))
+      .returning();
+    
+    return updatedUser;
+  }
+  
+  async updateUserPassword(id: number, newPassword: string): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set({ password: newPassword })
+      .where(eq(users.id, id))
+      .returning();
+    
+    return updatedUser;
+  }
+  
+  // Children operations
+  async getUserChildren(userId: number): Promise<Child[]> {
+    return db.select()
+      .from(children)
+      .where(eq(children.userId, userId))
+      .orderBy(children.name);
+  }
+  
+  async getChild(id: number): Promise<Child | undefined> {
+    const [child] = await db.select()
+      .from(children)
+      .where(eq(children.id, id));
+    
+    return child || undefined;
+  }
+  
+  async addChild(child: InsertChild): Promise<Child> {
+    const [newChild] = await db.insert(children)
+      .values(child)
+      .returning();
+    
+    return newChild;
+  }
+  
+  async updateChild(id: number, childData: Partial<Child>): Promise<Child> {
+    const [updatedChild] = await db.update(children)
+      .set(childData)
+      .where(eq(children.id, id))
+      .returning();
+    
+    return updatedChild;
+  }
+  
+  async deleteChild(id: number): Promise<void> {
+    await db.delete(children)
+      .where(eq(children.id, id));
   }
   
   // Family operations
