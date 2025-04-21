@@ -122,7 +122,7 @@ export class ZCreditAPI {
         Track2: '',
         CardNumber: creditCard.cardNumber,
         CVV: creditCard.cvv || '',
-        ExpDate_MMYY: creditCard.expDate,
+        ExpDate_MMYY: this.formatExpDate(creditCard.expDate),
         TransactionSum: transactionSum,
         NumberOfPayments: transaction.numOfPayments ? transaction.numOfPayments.toString() : "1",
         FirstPaymentSum: firstPaymentSum || "0",
@@ -210,6 +210,23 @@ export class ZCreditAPI {
   isSuccessResponse(response: ZCreditResponse): boolean {
     return response.ReturnValue === 0 && response.IsApproved === true;
   }
+  
+  /**
+   * Formate la date d'expiration au format attendu par Z-Credit
+   * Si la date est au format MMYY, on l'adapte au format YY/MM car
+   * Z-Credit semble inverser le mois et l'année dans sa lecture
+   */
+  private formatExpDate(expDate: string): string {
+    // Si la date est au format MMYY
+    if (expDate.length === 4) {
+      const month = expDate.substring(0, 2);
+      const year = expDate.substring(2, 4);
+      // Inverser pour correspondre au format attendu par Z-Credit
+      return `${year}${month}`;
+    }
+    // Si la date est déjà dans un autre format ou contient un séparateur, renvoyer tel quel
+    return expDate;
+  }
 
   /**
    * Crée un token pour la carte de crédit
@@ -222,7 +239,7 @@ export class ZCreditAPI {
         Password: this.config.password,
         Track2: '',
         CardNumber: creditCard.cardNumber,
-        ExpDate_MMYY: creditCard.expDate,
+        ExpDate_MMYY: this.formatExpDate(creditCard.expDate),
         CVV: creditCard.cvv || '',
         TransactionSum: 0, // 0 pour juste créer un token
         J: 2, // 2 pour authentification uniquement
