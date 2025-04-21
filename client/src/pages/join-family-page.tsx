@@ -16,8 +16,6 @@ export default function JoinFamilyPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, params] = useRoute("/join-family");
-  const [, query] = useLocation();
-  const [, navigate] = useLocation();
   const [inviteCode, setInviteCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -25,12 +23,12 @@ export default function JoinFamilyPage() {
   
   // Extract token from URL query params (if any)
   useEffect(() => {
-    const searchParams = new URLSearchParams(query);
+    const searchParams = new URLSearchParams(window.location.search);
     const token = searchParams.get("token");
     if (token) {
       setInviteCode(token);
     }
-  }, [query]);
+  }, []);
   
   // Mutation to join a family with an invitation code
   const joinFamilyMutation = useMutation({

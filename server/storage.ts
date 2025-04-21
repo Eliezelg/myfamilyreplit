@@ -15,13 +15,11 @@ import { eq, and, desc, gt } from "drizzle-orm";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 
-type SessionStore = ReturnType<typeof createMemoryStore>;
-
 const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   // Session store
-  sessionStore: ReturnType<typeof createMemoryStore>;
+  sessionStore: session.SessionStore;
   
   // User operations
   getUser(id: number): Promise<User | undefined>;

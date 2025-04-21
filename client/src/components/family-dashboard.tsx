@@ -52,8 +52,8 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   });
 
   // Helper function to format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | Date) => {
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     return new Intl.DateTimeFormat("he-IL", {
       day: "2-digit",
       month: "2-digit",
@@ -240,7 +240,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                       </div>
                       <div>
                         <p className="font-medium">משתמש <span className="font-normal text-gray-500">העלה תמונה</span></p>
-                        <p className="text-sm text-gray-500">{formatDate(photo.uploadedAt)}</p>
+                        <p className="text-sm text-gray-500">{formatDate(photo.uploadedAt.toString())}</p>
                       </div>
                     </div>
                   ))
