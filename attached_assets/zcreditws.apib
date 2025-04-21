@@ -1,0 +1,1785 @@
+FORMAT: 1A
+HOST: https://pci.zcredit.co.il/ZCreditWS/api/
+
+# Z-Credit Gateway API
+
+This is the full reference for the Z-Credit gateway Transaction API.    
+With our API you can:
+* Allow merchants to accept credit card payments
+* Create standard transactions 
+* Create transactions with EMV Pinpads and terminal
+* Create and use tokens though our Tokenization solution, for delayed & future payments
+* Use our secured redirect or iFrame payment pages
+* Query transaction data
+* Get full transactions reports
+
+# API Structure and Security
+Use the **POST** method and post data to our target URL using the **JSON** format.
+The response will also be returned in JSON. You are free to use whatever programming language you prefer.
+Note: Do not forget to add the header Content-Type: application/json to your requests!
+
+>**Note:** When sending the request, you must use **TLS1.2 encryption** (HTTPS). 
+
+#Getting Started 
+This document contains our API info. You can review each API function description, and test it live using
+the right panel.
+
+You need the following credentials to use the API:
+
+
+| Attribute   |      Description      |
+|:----------|:-------------|
+| `TerminalNumber` |  This is your business ID |
+| `password` |    This is your terminal password. **Do not share it!**   |
+| `PINPAD_ID` |    If you use Pinpads, this will be the device ID (optional)   |
+
+**Do not share your terminal Number or Password!**
+
+>To get your credentials, Please [Contact Us](https://www.z-credit.com/site/contact-us/ "Contact Us")
+
+#Production URL
+Our API is at:
+[https://pci.zcredit.co.il/ZCreditWS/api/Transaction/XXXXXXX](#)       
+
+XXXXXXX - Is the relevant function you want to call.
+
+You can use the right panel to test our API live.
+
+#Transaction Information
+
+####Test Credit Cards
+| Card Number   |      Description      |
+|:----------:|:-------------|
+| xxxx-xxxx-xxxx-xxxx |  Please [Contact Us](https://www.z-credit.com/site/contact-us/ "Contact Us") for test cards |
+
+
+
+####Activating PinPads
+Our Pinpads (PP) are PCI certified, with the ability to swipe, tap(nfc) and chip (pin code).  
+The PP also support Android Pay, Apple Pay, Samsung Pay, WeChat Pay and AliPAy.  
+To connect to a PP you need to have the **Pinpad ID**. with this ID you can call our API and work with our PP.
+
+POST CommitFullTransaction JSON to our API, Use the "Track2" parameter with a "PINPAD" prefix:
+>`Track2`: "PINPADXXXXXXX"  
+
+Where "XXXXXXX" is your PinPad ID
+
+####Payments Division Instructions
+To make an installments transaction (עסקת תשלומים), first of all you must declare this type of transaction using `CreditType`:
+>`CreditType` = 8   
+
+If you are looking for an even split of installments, don't send the fields: FirstPaymentSum and OtherPaymentsSum.   
+When those fields are not sent, the API will auto-calulcate the amounts for you.   
+If you want to change the amounts on those fields, you need to declare the first and other payments amount yourselfs.   
+In general you can divide the "TransactionSum" with the "NumOfPayments" 
+and round the result to ##.##. Then take the reminder of the division, and add it to the "FirstPaymentSum" value.
+
+    Use this formula:    
+>`TransactionSum` = ((`NumOfPayments`– 1)*`OtherPaymentsSum`)+`FirstPaymentSum`
+    
+The FirstPaymentSum actually is meant for overloading the differences when the
+TransactionSum/ NumOfPayments doesn't divide equally.
+
+Here is an example:
+*   `TransactionSum`= 40
+*   `NumOfPayments`= 6
+
+We will use the following values:
+* `FirstPaymentSum`= 6.7
+* `OtherPaymentsSum`= 6.66
+* So that: (5*6.66) + 6.7 = 40
+
+####Phone Authorization Process
+In some cased the transaction will end with a phone authorization request. When this happens, the credit card company will want to merchant to call it for a special authorization.
+In this case, you will receive a response with the following:
+* IsTelApprovalNeeded = true
+* ReturnMessage = Will contain the phone number you should call to get the phone authorization. Present the message **As Is**
+
+After you got the phone authorization code, you need to resend JSON request same as before, with:
+> `AuthNum` = authorization code
+
+**Note: Keep the `AuthNum` empty at all times, **except** when you want to pass the phone authorization code
+
+####Tokenization - How To Create And Use Tokens
+1. To create a token from credit card data, use "CommitFullTransaction" JSON, and pass the relevant card data.   
+**Note:** If you want a create token **without** charging the card, use J=2 parameter (for authentication only) or J=5 (for Authorization only)
+2. If "CommitFullTransaction" is successful, a token will be return inside the `Token` parameter
+    >`Token` = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+3. A Token represents:
+
+        1. Credit card number
+        2. Expiration date
+        3. Holder ID
+    
+4. To charge a transaction using the token, use "CommitFullTransaction" JSON, but instead of credit card number, pass the token value (no need to pass ExpDate_MMYY and HolderID if it's stored inside the token)
+    >`CardNumber` = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+    
+5. The gateway will use the token to charge the credit card, and send a JSON response.
+
+####Authorization and Capture - J5
+######Authorization Process
+Authorization (J5) will allow to secure an amount from the credit card holder account.
+This is a way to secure the funds, and charge it after a certain amount of time.
+To make an Authorization transaction, when you call the **CommitFullTransaction** function, use the J parameter:
+> `J` = 5
+
+After you get a success response, keep the transaction ID inside the `ReferenceNumber` parameter in the response. This will allow you to Capture/Release later.
+Also if you are using our Tokenization service, keep the `Token` parameter to use for capture later.    
+**Note:** Is you use our WebCheckout app to get the card details, the ID of the transaction will be returned in the `ID` parameter inside the callback data.
+
+######Capture/Release Process
+Capture will transfer the authorized funds to your account.     
+Release will cancel the authorization process.    
+To Capture or Release a transaction, POST a JSON request of the **CommitFullTransaction** function, with all relevant parameters, and use the J parameter as so:
+> `J` = 0        
+
+Use this parameters to specify your action and transaction ID.
+> `ObeligoAction` =  **1** for Capture | **2** for Release 
+> `OriginalZCreditReferenceNumber` = Transaction ID  \(ReferenceNumber\)
+
+Also if you are using our Tokenization service, use the `Token` value you got from the authorization process, and send it in the `CardNumber` parameter instead of the card data.    
+If you don't use Tokenization, you need to send the card data yourself (card number and expiration date).    
+POST the JSON and wait for transaction success.
+
+####Duplicate transactions check and block
+######Regular transaction (manual card entry)
+The gateway can allow you to block a duplicate transactions based on a unique ID that is passed to it.   
+In order to use the duplicate checks algorithm, use the `TransactionUniqueID` parameter:
+> `TransactionUniqueID` = AAA-BBBBBB-CCCC-DDDDD
+
+When this parameter will be sent, the gateway will check if another transaction exists with the **exact same TransactionUniqueID**.
+If so, the transaction will be blocked.   
+In this mode, when a duplication was found, you will receive the "-88001" error code.   
+
+**Note:** It is your responsibility to create a relevant TransactionUniqueID, please choose wisely.
+
+######PinPad Transactions (using a smart card)
+When using a pinpad to make a transaction, the regular `TransactionUniqueID` check can be enhanced using the `UseAdvancedDuplicatesCheck` paraemter.
+> `UseAdvancedDuplicatesCheck` = true
+
+When setting the `UseAdvancedDuplicatesCheck` to true, the system will use the `TransactionUniqueID` parameter value, and will add to it the Hash of the card number currently being used.   
+This will allow you to setup a relevant `TransactionUniqueID` , for the same order, and take into consideration a specific card duplication.   
+For example:    
+You can choose a uniqueID as the : "Document ID + Payment ID + Payment Sum".   
+If `UseAdvancedDuplicatesCheck` to true , the gatweway will add the card number hash to it, making it a uniqueID for this card in this order. ("Document ID + Payment ID + Payment Sum + CardNumHash").      
+In this mode, when a duplication was found, you will receive the "-88002" error code.      
+
+**Note:** This advanced algorithm works only when using a pinpad.
+
+
+
+####Credit Card Companies
+| Code | Company Name       |
+|--------------|--------------------|
+| 0            | International Card |
+| 1            | Isracard           |
+| 2            | Visa CAL           |
+| 3            | Diners             |
+| 4            | Amex               |
+| 5            | Tranzilla          |
+| 6            | Max                |
+| 7            | CardCom            |
+| 9            | FinitiOne          |
+
+####Credit Card Brands
+| Code | Brand               |
+|------|---------------------|
+| 0    | Private Label Brand |
+| 1    | Mastercard          |
+| 2    | Visa                |
+| 3    | Diners              |
+| 4    | Amex                |
+| 5    | Isracard            |
+| 6    | JCB                 |
+| 7    | Discover            |
+| 8    | Maestro             |
+
+####Gateway Error Codes
+|   Code   | Description                      | How to handle                                                                                                                                                                             |
+|:--------------:|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|    -1 to -20   | Credentials Errors               | Please read the returned error message for details about the cause of this error.                                                                                                         |
+|       -21      | Error Saving Data                | Critical Error! Contact customer support for further information                                                                                                                          |
+|       -22      | Error during transaction process | Critical Error! Contact customer support for further information                                                                                                                          |
+|       -96      | Security Error                   | You must call the API through a TLS1.2 secured connection                                                                                                                                 |
+|       -97      | Input Error                      | One or more of the parameters are not in a valid format. F.E: Letters was send to the "TerminalNumber" parameter. **Note:** Special characters are not allowed! only letters and numbers. |
+|       -98      | Web service execution error      | Critical Error! Error executing the web service process. Contact customer support for further information                                                                                 |
+|       -99      | Unexpected Error                 | Critical Error! Error executing the web service process. Contact customer support for further information                                                                                 |
+|      -100      | Unexpected Shva Error            | Critical Error! Error executing the web service process. Contact customer support for further information                                                                                 |
+| -9000 to -9999 | PinPad Errors                    | Please read the returned error message for details about the cause of this error.                                                                                                         |
+|      Other     | Shva Company Errors              | Please see the "Shva Error Codes" table                                                                                                                                                   |
+    
+
+####Shva Error Codes
+| Code |                                                                                                    Description |
+|:----:|---------------------------------------------------------------------------------------------------------------:|
+|   1  |                                                                                                     כרטיס חסום |
+|   2  |                                                                                                גנוב החרם כרטיס |
+|   3  |                                                                                             התקשר לחברת האשראי |
+|   4  |                                                                                                 העסקה לא אושרה |
+|   5  |                                                                                              כרטיס מזוייף החרם |
+|   6  |                                                                                             דחה עסקה  cvv2שגוי |
+|   7  |                                                                                      דחה עסקה : cavv/ucaf שגוי |
+|   8  |                                                                                              דחה עסקה avs שגוי |
+|   9  |                                                                                              דחייה,נתק בתקשורת |
+|  10  |                                                                                                     אישור חלקי |
+|  11  |                                                                דחה עסקה : חוסר בנקודות/כוכבים/מיילים/הטבה אחרת |
+|  12  |                                                                                          בכרטיס לא מורשה במסוף |
+|  13  |                                                                                        דחה בקשה. קוד יתרה שגוי |
+|  14  |                                                                                    דחייה. כרטיס לא משוייך לרשת |
+|  15  |                                                                                   דחה עסקה : הכרטיס אינו בתוקף |
+|  16  |                                                                                      דחייה,אין הרשאה לסוג מטבע |
+|  17  |                                                                               דחייה,אין הרשאה לסוג אשראי בעסקה |
+|  26  |                                                                                               דחה עסקה,id שגוי |
+|  41  |                                                       ישנה חובת יציאה לשאילתא בגין תקרה בלבד לעסקה עם פרמטר J2 |
+|  42  |                                                     ישנה חובת יציאה לשאילתא לא רק בגין תקרה, לעסקה עם פרמטר J2 |
+|  51  |                                                                                              חסר קובץ ווקטור 1 |
+|  52  |                                                                                              חסר קובץ ווקטור 4 |
+|  53  |                                                                                              חסר קובץ ווקטור 6 |
+|  55  |                                                                                             חסר קובץ ווקטור 11 |
+|  56  |                                                                                             חסר קובץ ווקטור 12 |
+|  57  |                                                                                             חסר קובץ ווקטור 15 |
+|  58  |                                                                                             חסר קובץ ווקטור 18 |
+|  59  |                                                                                             חסר קובץ ווקטור 31 |
+|  60  |                                                                                             חסר קובץ ווקטור 34 |
+|  61  |                                                                                             חסר קובץ ווקטור 41 |
+|  62  |                                                                                             חסר קובץ ווקטור 44 |
+|  63  |                                                                                             חסר קובץ ווקטור 64 |
+|  64  |                                                                                             חסר קובץ ווקטור 80 |
+|  65  |                                                                                             חסר קובץ ווקטור 81 |
+|  66  |                                                                                             חסר קובץ ווקטור 82 |
+|  67  |                                                                                             חסר קובץ ווקטור 83 |
+|  68  |                                                                                             חסר קובץ ווקטור 90 |
+|  69  |                                                                                             חסר קובץ ווקטור 91 |
+|  70  |                                                                                             חסר קובץ ווקטור 92 |
+|  71  |                                                                                             חסר קובץ ווקטור 93 |
+|  73  |                                                                                            חסר קובץ  PARAM_3_1 |
+|  74  |                                                                                            חסר קובץ  PARAM_3_2 |
+|  75  |                                                                                            חסר קובץ  PARAM_3_3 |
+|  76  |                                                                                            חסר קובץ  PARAM_3_4 |
+|  77  |                                                                                            חסר קובץ  PARAM_361 |
+|  78  |                                                                                            חסר קובץ  PARAM_363 |
+|  79  |                                                                                            חסר קובץ  PARAM_364 |
+|  80  |                                                                                             חסר קובץ  PARAM_61 |
+|  81  |                                                                                             חסר קובץ  PARAM_62 |
+|  82  |                                                                                            חסר קובץ   PARAM_63 |
+|  83  |                                                                                              חסר קובץ  CEIL_41 |
+|  84  |                                                                                              חסר קובץ  CEIL_42 |
+|  85  |                                                                                              חסר קובץ  CEIL_43 |
+|  86  |                                                                                              חסר קובץ  CEIL_44 |
+|  87  |                                                                                                  חסר קובץ DATA |
+|  88  |                                                                                                  חסר קובץ JENR |
+|  89  |                                                                                                 חבר קובץ Start |
+|  101 |                                                                                            חסרה כניסה בוקטור 1 |
+|  103 |                                                                                            חסרה כניסה בוקטור 4 |
+|  104 |                                                                                            חסרה כניסה בוקטור 6 |
+|  106 |                                                                                           חסרה כניסה בוקטור 11 |
+|  107 |                                                                                           חסרה כניסה בוקטור 12 |
+|  108 |                                                                                           חסרה כניסה בוקטור 15 |
+|  110 |                                                                                           חסרה כניסה בוקטור 18 |
+|  111 |                                                                                           חסרה כניסה בוקטור 31 |
+|  112 |                                                                                           חסרה כניסה בוקטור 34 |
+|  113 |                                                                                           חסרה כניסה בוקטור 41 |
+|  114 |                                                                                           חסרה כניסה בוקטור 44 |
+|  116 |                                                                                           חסרה כניסה בוקטור 64 |
+|  117 |                                                                                           חסרה כניסה בוקטור 81 |
+|  118 |                                                                                           חסרה כניסה בוקטור 82 |
+|  119 |                                                                                           חסרה כניסה בוקטור 83 |
+|  120 |                                                    חסרה כניסה בוקטור 90 (כרטיס לא קיים, נא לפנות לחברת האשראי) |
+|  121 |                                                            חסרה כניסה בוקטור 91 (סולק לא קיים, נא לפנות למפיץ) |
+|  122 |                                                           חסרה כניסה בוקטור 92 (מותג  לא קיים, נא לפנות למפיץ) |
+|  123 |                                                          חסרה כניסה בוקטור 93 (מנפיק  לא קיים, נא לפנות למפיץ) |
+|  141 |                             חסרה כניסה מתאימה בקובץ פרמטרים 3.2 ( אין אישור לעבודה עם המותג הזה, כרטיס ישראלי) |
+|  142 |                               חסרה כניסה מתאימה בקובץ פרמטרים 3.3 ( אין אישור לעבודה עם המותג הזה, כרטיס תייר) |
+|  143 |                    חסרה כניסה בקובץ תחומי מועדון 3.6.1  ( אין אישור לעבודה עם כרטיס המועדון ,כרטיס של ישראכרט) |
+|  144 |                  חסרה כניסה בקובץ תחומי מועדון  3.6.3 ( אין אישור לעבודה עם כרטיס המועדון ,כרטיס של לאומיקארד) |
+|  145 |                        חסרה כניסה בקובץ תחומי מועדון 3.6.4  ( אין אישור לעבודה עם כרטיס המועדון ,כרטיס של כאל) |
+|  146 |                                       חסרה כניסה בקובץ תקרות לכרטיסי PL  4.1 ( אין אישור לעבודה עם המותג פרטי) |
+|  147 |                                                    חסרה כניסה בקובץ תקרות לכרטיסים ישראלים שאינם PL שיטה 0 4.2 |
+|  148 |                                                    חסרה כניסה בקובץ תקרות לכרטיסים ישראלים שאינם PL שיטה 1 4.3 |
+|  149 |                                                                        חסרה כניסה בקובץ תקרות לכרטיסי תייר 4.4 |
+|  150 |                                                                         חסרה כניסה בקובץ כרטיסים תקפים,ישראכרט |
+|  151 |                                                                             חסרה כניסה בקובץ כרטיסים תקפים,כאל |
+|  152 |                                                                     חסרה כניסה בקובץ כרטיסים תקפים,מנפיק עתידי |
+|  182 |                                                                                            שגיאה בערכי וקטור 4 |
+|  183 |                                                                                         שגיאה בערכי וקטור 6/12 |
+|  186 |                                                                                           שגיאה בערכי וקטור 18 |
+|  187 |                                                                                           שגיאה בערכי וקטור 34 |
+|  188 |                                                                                           שגיאה בערכי וקטור 64 |
+|  190 |                                                                                           שגיאה בערכי וקטור 90 |
+|  191 |                                                                           נתונים לא תקינים בוקטור הרשאות מנפיק |
+|  192 |                                                                                  נתונים לא ולידים בסט הפרמטרים |
+|  193 |                                                                       נתונים לא ולידים בקובץ פרמטרים ברמת מסוף |
+|  250 |                                                               בעיית זיהוי (שם משתמש/סיסמא/מספר מסוף לא תקינים) |
+|  255 |                                                                                         תקלה כללית,לפנות לשב"א |
+|  256 |                                   מספר עסקה (TransactionNumber) אינו ייחודי עבור תאריך העסקה (TransactionDate) |
+|  257 |                                                                                              לא נמצא מידע נדרש |
+|  260 |                                  אחד או יותר מהפרמטרים המועברים לפונקציה לא תקין (בדכ ערך לא נומרי בשדה נומרי) |
+|  262 |                                                                         נכשל פיענוח חלק מהעסקאות שנשלחו להפקדה |
+|  280 |                                    timeout (משך זמן חזרה למשתמש,יותר מדקה). במידה וחוזר על עצמו יש לפנות לשב"א |
+|  298 |                                                                          נסיון לעבוד עם מסוף ייצור דרך אתר בטא |
+|  300 |                                                                                 אין הרשאה לסוג עסקה,הרשאת סולק |
+|  301 |                                                                                     אין הרשאה למטבע,הרשאת סולק |
+|  303 |                                                                 אין הרשאת סולק לביצוע עסקה כאשר הכרטיס לא נוכח |
+|  304 |                                                                                    אין הרשאה לאשראי,הרשאת סולק |
+|  308 |                                                                                    אין הרשאה להצמדה,הרשאת סולק |
+|  309 |                                                                               אין הרשאת סולק לאשראי במועד קבוע |
+|  310 |                                                                               אין הרשאה להקלדת מספר אישור מראש |
+|  311 |                                                                            אין הרשאה לבצע עסקאות לקוד שרות 587 |
+|  312 |                                                                                     אין הרשאת סולק לאשראי דחוי |
+|  313 |                                                                                          אין הרשאת סולק להטבות |
+|  314 |                                                                                         אין הרשאת סולק למבצעים |
+|  315 |                                                                                אין הרשאת סולק לקוד מבצע ספציפי |
+|  316 |                                                                                     אין הרשאת סולק לעסקת טעינה |
+|  317 |                                                  אין הרשאת סולק לטעינה/פריקה בקוד אמצעי התשלום בשילוב קוד מטבע |
+|  318 |                                                                             אין הרשאת סולק למטבע בסוג אשראי זה |
+|  319 |                                                                                            אין הרשאת סולק לטיפ |
+|  341 |                                                                                    אין הרשאה לעסקה,הרשאת מנפיק |
+|  342 |                                                                                    אין הרשאה למטבע,הרשאת מנפיק |
+|  343 |                                                                אין הרשאת מנפיק לביצוע עסקה כאשר הכרטיס לא נוכח |
+|  344 |                                                                                   אין הרשאה לאשראי,הרשאת מנפיק |
+|  348 |                                                                  אין הרשאה לביצוע אישור בקשה יזומה עי  קמעונאי |
+|  349 |                                                                אין הרשאה מתאימה לביצוע בקשה לאישור ללא עסקה J5 |
+|  350 |                                                                                         אין הרשאת מנפיק להטבות |
+|  351 |                                                                                    אין הרשאת מנפיק לאשראי דחוי |
+|  352 |                                                                                    אין הרשאת מנפיק לעסקת טעינה |
+|  353 |                                                                 אין הרשאת מנפיק לטעינה/פריקה בקוד אמצעי התשלום |
+|  354 |                                                                            אין הרשאת מנפיק למטבע בסוג אשראי זה |
+|  381 |                                                                 אין הרשאה לבצע עסקת contactless  מעל סכום מרבי |
+|  382 |                                                        במסוף המוגדר כשרות עצמי ניתן לבצע רק עסקאות בשירות עצמי |
+|  384 |                                                                     מסוף מוגדר כרב-ספק /מוטב,חסר מספר ספק/מוטב |
+|  385 |                                                                במסוף המוגדר כמסוף סחר אלקטרוני חובה להעביר eci |
+|  401 |                                                               מספר התשלומים גדול מערך שדה מספר תשלומים מקסימלי |
+|  402 |                                                                מספר התשלומים קטן מערך שדה מספר תשלומים מינימלי |
+|  403 |                                                                 סכום העסקה קטן מערך שדה סכום מינמלי לתשלום !!! |
+|  404 |                                                                                       לא הוזן שדה מספר תשלומים |
+|  405 |                                                                                חסר נתון סכום תשלום ראשון /קבוע |
+|  406 |                                         סהכ סכום העסקה שונה מסכום תשלום ראשון + סכום תשלום קבוע * מספר תשלומים |
+|  407 |                                                                                                ערוץ 2 לא ולידי |
+|  408 |                                                                                        ערוץ 2  קצר  מ 37-תווים |
+|  410 |                                                         דחיה מסיבת  dcode (דחיה בגין דרישת המנפיק לסוג הכרטיס) |
+|  411 |                                                                                                  שדה UID  שגוי |
+|  414 |                                                  בעסקה עם חיוב בתאריך קבוע הוכנס תאריך מאוחר משנה מבצוע העיסקה |
+|  415 |                                                                                         הוזנו נתונים לא תקינים |
+|  416 |                                                                                       תאריך תוקף לא במבנה תקין |
+|  417 |                                                                                            מספר מסוף אינו תקין |
+|  418 |                                                                                          חסרים פרמטרים חיוניים |
+|  419 |                                                                             שגיאה בהעברת מאפיין clientInputPan |
+|  420 |                                                  מספר כרטיס לא ולידי -במצב של הזנת ערוץ 2 בעסקה ללא כרטיס נוכח |
+|  421 |                                                                                   שגיאה כללי- נתונים לא ולידים |
+|  422 |                                                                                           שגיאה בבנית מסר  ISO |
+|  423 |                                                                                שגיאה בבנית מחרוזת לשליחה לטנדם |
+|  424 |                                                                                                   שדה לא נומרי |
+|  425 |                                                                                                    רשומה כפולה |
+|  426 |                                                                           הסכום הוגדל לאחר ביצוע בדיקות אשראית |
+|  428 |                                                                                            חסר קוד שרות בכרטיס |
+|  429 |                                                                          כרטיס אינו תקף לפי קובץ כרטיסים תקפים |
+|  431 |                                                                     שגיאה כללית (על המפיץ לפנות למחלקת התמיכה) |
+|  432 |                                                                          אין הראשה להעברת כרטיס דרך קורא מגנטי |
+|  433 |                                                                                           חיוב להעביר ב,PinPad |
+|  434 |                                                                            אסור  להעביר כרטיס במכשיר ה- PinPad |
+|  435 |                                                                         המכשיר לא מוגדר להעברת כרטיס מגנטי CTL |
+|  436 |                                                                           המכשיר לא מוגדר להעברת כרטיס EMV CTL |
+|  439 |                                                                              אין הרשאה לסוג אשראי לפי סוג עסקה |
+|  440 |                                                                            כרטיס תייר אינו מורשה לסוג אשראי זה |
+|  441 |                                         אין הרשאה לביצוע סוג עסקה,כרטיס קיים בוקטור 80 (סוג אשראי אסור לכרטיס) |
+|  442 |               אין לבצע Stand-in לאימות אישור לסולק זה (אין אפשרות לבצע אימות מס אישור מול הסולק, נא לנסות שוב) |
+|  443 |                                                לא ניתן לבצע עסקת ביטול ,כרטיס לא נמצא בקובץ תנועות הקיים במסוף |
+|  445 |                                                              בכרטיס חיוב מיידי ניתן לבצע אשראי חיוב מיידי בלבד |
+|  447 |                                                                                                מספר כרטיס שגוי |
+|  448 |                                                                  חיוב להקליד כתובת לקוח (מיקוד ,מספר בית ועיר) |
+|  449 |                                                                                              חיוב להקליד מיקוד |
+|  450 |                                                                            קוד מבצע מחוץ לתחום, צל בתחום 1-12" |
+|  451 |                                                                                    שגיאה במהלך בנית רשומת עסקה |
+|  452 |                                                    בעסקת טעינה/פריקה/בירור יתרה חיוב להזין שדה קוד אמצעי תשלום |
+|  453 |                                                                               אין אפשרות לבטל עסקת פריקה 7.9.3 |
+|  455 |                                              לא ניתן לבצע עסקת חיוב מאולצת כאשר נדרשת בקשה לאישור (למעט תקרות) |
+|  456 |                                                              כרטיס נמצא בקובץ תנועות עם קוד תשובה 'החרם כרטיס' |
+|  457 |                                                            בכרטיס חיוב מיידי מותרת עסקת חיוב רגילה/זיכוי/ביטול |
+|  458 |                                                                                            קוד מועדון לא בתחום |
+|  470 |                                                                   בעסקת הוק סכום התשלומים גבוה משדה סכום העסקה |
+|  471 |                                                             בעסקת הוק מספר תשלום תורן גדול מסה"כ מספר התשלומים |
+|  472 |                                                                     בעסקת חיוב עם מזומן חיוב להזין סכום במזומן |
+|  473 |                                                     בעסקת חיוב עם מזומן סכום המזומן צריך להיות קטן מסכום העסקה |
+|  474 |                                                                         עסקת איתחול בהוראת קבע מחייבת פרמטר J5 |
+|  475 |                                                           עסקת הק מחייבת אחד מהשדות :מספר תשלומים או סכום כולל |
+|  476 |                                                                     עסקת תורן בהוראת קבע מחייבת שדה מספר תשלום |
+|  477 |                                                           עסקת תורן בהוראת קבע מחייבת מספר מזהה של עסקת איתחול |
+|  478 |                                                          עסקת תורן בהוראת קבע מחייבת מספר אישור של עסקת איתחול |
+|  479 |                                                        עסקת תורן בהוראת קבע מחייבת שדות תאריך וזמן עסקת איתחול |
+|  480 |                                                                                         חסר שדה מאשר עסקת מקור |
+|  481 |                                             חסר שדה מספר יחידות כאשר העסקה מתבצעת בקוד אמצעי תשלום השונה ממטבע |
+|  482 |                                           בכרטיס נטען מותרת עסקת חיוב רגילה/זיכוי/ביטול/פריקה/טעינה/בירור יתרה |
+|  483 |                                                                עסקה עם כרטיס דלק במסוף דלק חיוב להזין מספר רכב |
+|  484 | מספר רכב המוקלד שונה ממספר הרכב הצרוב עג הפס המגנטי/מספר בנק שונה מ-012/ספרות שמאליות של מספר הסניף שונה מ- 44 |
+|  485 | מספר רכב קצר  מ- 6 ספרות /שונה ממספר הרכב המופיע עג ערוץ 2 (פוזיציה 34 בערוץ 2) כרטיס מאפיין דלק של לאומי קארד |
+|  486 |                                ישנה חובת הקלדת קריאת מונה (פוזיציה 30 בערוץ 2)  כרטיס מאפיין דלק של לאומי קארד |
+|  487 |                                                        רק במסוף המוגדר כדלק דו שלבי ניתן להשתמש בעדכון אובליגו |
+|  489 |                                                      בכרטיס דלקן מותרת עסקת חיוב רגילה בלבד (עסקת ביטול אסורה) |
+|  490 |                                                     בכרטיסי דלק/דלקן/דלק מועדון ניתן לבצע עסקאות רק במסופי דלק |
+|  491 |      עסקה הכוללת המרה חייבת להכיל את כל השדות conversion_amount_06, conversion_rate_09, conversion_currency_51 |
+|  492 |                                אין המרה על עסקאות שקל /דולר (אין למלא שדה conversion_amount, conversion_rate,) |
+|  493 |                               בעסקה הכוללת הטבה חיוב שיהיו רק אחד מהשדות הבאים: סכום הנחה/מספר יחידות/ % ההנחה |
+|  494 |                                                                    מספר מסוף שונה (קובץ JENR שונה מקובץ Start) |
+|  495 |                                                                                            אין הרשאת  fallback |
+|  496 |                                                                לא ניתן להצמיד אשראי השונה מאשראי קרדיט/תשלומים |
+|  497 |                                                                      לא ניתן להצמיד לדולר/מדד במטבע השונה משקל |
+|  498 |         כרטיס ישראכרט מקומי הספרטור  צל בפוזיציה 18 (רב הסיכויים הם שהכרטיס לא נקרא בצורה תקינה, נא לנסות שוב) |
+|  500 |                                                                                         העסקה הופסקה עי המשתמש |
+|  504 |                                                           חוסר התאמה בין שדה מקור נתוני הכרטיס לשדה מספר כרטיס |
+|  505 |                                                                                      ערך לא חוקי בשדה סוג עסקה |
+|  506 |                                                                                           ערך לא חוקי בשדה eci |
+|  507 |                                                                            סכום העסקה בפועל גבוה מהסכום המאושר |
+|  509 |                                                                                 שגיאה במהלך כתיבה לקובץ תנועות |
+|  510 |                                                                                            קובץ איתחול לא תקין |
+|  512 |                                                                לא ניתן להכניס אישור שהתקבל ממענה קולי לעסקה זו |
+|  513 |                                                                          יש להעביר תגים מיוחדים עפ''י כללי xml |
+|  514 |                                                                             לא ניתן לבצע עסקת הטבה בכרטיס תייר |
+|  515 |                                                                                    קובץ לא קיים TranFinalDll64 |
+|  516 |                                                                                      קובץ לא קיים TranFinalDll |
+|  517 |                                             חסרה התקנה של Visual c++ Redistribute Pack version 2010 for 32 bit |
+|  518 |                                             חסרה התקנה של Visual c++ Redistribute Pack version 2010 for 64 bit |
+|  519 |                                                                                 עסקת ביטול קיימת בקובץ התנועות |
+|  551 |                                                                                מסר תשובה אינו מתאים למסר הבקשה |
+|  552 |                                                       שגיאה בשדה 55 (הכרטיס לא נקרא בצורה תקינה, נא לנסות שוב) |
+|  553 |                                                                              התקבלה שגיאה מהטנדם (תקלת תקשורת) |
+|  554 |                                                                                    במסר התשובה חסר שדה  mcc_18 |
+|  555 |                                                                          במסר התשובה חסר שדה  response_code_25 |
+|  556 |                                                                                     במסר התשובה חסר שדה rrn_37 |
+|  557 |                                                                      במסר התשובה חסר שדה  comp_retailer_num_42 |
+|  558 |                                                                              במסר התשובה חסר שדה  auth_code_43 |
+|  559 |                                                                            במסר התשובה חסר שדה f39_response_39 |
+|  560 |                                                                        במסר התשובה חסר שדה authorization_no_38 |
+|  561 |                                                    במסר התשובה חסר / ריק שדה  additional_data_48.solek_auth_no |
+|  562 |                    במסר התשובה חסר אחד מהשדות conversion_amount_06, conversion_rate_09, conversion_currency_51 |
+|  563 |                                                         ערך השדה אינו מתאים למספרי האישור שהתקבלו auth_code_43 |
+|  564 |                                                   במסר התשובה חסר/ריק שדה additional_amounts54.cashback_amount |
+|  565 |                                                                                    אי-התאמה בין שדה 25 לשדה 43 |
+|  566 |                                                     במסוף המוגדר כתומך בדלק דו-שלבי יש חובה להחזיר שדות 90,119 |
+|  567 |                                            שדות 25,127 לא תקינים במסר עידכון אובליגו במסוף המוגדר כדלק דו-שלבי |
+|  996 |                                                                      שגיאה בבדיקת רשומת תנועה לפני רישום לקובץ |
+|  997 |                                                                                                    שגיאה כללית |
+|  998 |                                                                                              ERROR_IN_NEG_FILE |
+    
+## Make Transaction [/Transaction/CommitFullTransaction]
+
++ Attributes (Make Transaction Request)
+
+### CommitFullTransaction [POST]
+
+With this API you can make all types of transactions, including sales, refunds, validation, authorization and PinPad activation. 
+Please review the request attributes for full parameter documentation.
+
++ Attributes (Make Transaction Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "Track2": "",
+                "CardNumber": "",
+                "CVV": "",
+                "ExpDate_MMYY": "",
+                "TransactionSum": "1.00",
+                "NumberOfPayments": "1",
+                "FirstPaymentSum": "0",
+                "OtherPaymentsSum": "0",
+                "TransactionType": "01",
+                "CurrencyType": "1",
+                "CreditType": "1",
+                "J": "0",
+                "IsCustomerPresent":  "false",
+                "AuthNum": "",
+                "HolderID": "",
+                "ExtraData": "",
+                "CustomerName": "",
+                "CustomerAddress": "",
+                "CustomerEmail":  "",
+                "PhoneNumber": "",
+                "ItemDescription":"",
+                "ObeligoAction":  "",
+                "OriginalZCreditReferenceNumber": "",
+                "TransactionUniqueIdForQuery" : "",
+                "TransactionUniqueID" : "",
+                "UseAdvancedDuplicatesCheck" : ""
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + CardNumber: "4580458045804580" (string) - Card number that was processed (Full card or masked card, depends on the "AllowFullCardNumberInResponse" value)
+        + Card4Digits: "4580" (string) - Last 4 digits of the processed card
+        + CardBIN: "458045" (string) - The BIN (first 6 digits) of the processed card        
+        + ExpDate_MMYY: "01/23" (string) - Expiration date of the card that was processed
+        + CardName: "לאומי קארד" (string) - Card Description
+        + CardIssuerCode: 1 (number) - The credit card company which issued the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardFinancerCode: 2 (number) - The credit card company currently processing the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardBrandCode: 2 (number) - The credit card brand (See [card brands list](/introduction/transaction-information/credit-card-brands))
+        + ReferenceNumber: "998877665" (string) - The Gateway ID for the transaction. With this ID you can query the transaction.
+        + VoucherNumber: "00000000" (string) - The voucher number (Shovar) from SHVA
+        + ApprovalNumber: "00000000" (string) - Approval number from the credit card company. Can be "0" if there was an automatic approval.
+        + IsTelApprovalNeeded: false (boolean) - If "true", prompt for phone authorization. the "ReturnMessage" value contains the message to prompt.
+        + Token: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" (string) - Token represents the credit card used for this transaction ([How to use Tokens?](/transaction-information/how-to-create-and-use-tokens-(tokenization)))
+        + ClientReciept: "" (string) - Receipt note for printing, Customers copy (formatted for 80mm printers)
+        + SellerReciept: "" (string) - Receipt note for printing, Merchants copy (formatted for 80mm printers)
+        + ResultRecord: "" (string) - The deposit encrypted record
+        + `IntOt_JSON` : "" (string) - The transaction record (`int_ot`) in a JSON format   
+        + IntOt: "" (string) - The transaction record (int_ot) in a XML format   
+        + PanEntryMode: "05" (number) 
+            The entry mode of this transaction:
+            - "05" = Contactless (Tap)
+            - "40" = Contact (Chip)
+            - "00" = Magnetic (Swipe)
+            - "50" = CNP (Card Not Present)
+            - "51" = CP  (Card Present)
+            - "52" = Internet  (e-commerce online transaction: 3DS, apple pay, google pay)
+        + PaymentMethod: 2 (number) 
+            The payment method of this transaction:
+            - 0 = Regular credit card
+            - 1 = 3DS
+            - 2 = Bit
+            - 4 = Apple Pay
+            - 6 = Google Pay
+        + ApprovalType: "03" (string) 
+            The authority which supplied approval/Decline for this transaction (string):
+            - "0" = None (no approval number)
+            - "1" = Approved by issuer
+            - "2" = Declined by issuer
+            - "3" = Approved By Shva (STIP)
+            - "4" = Declined By Shva (STIP)
+            - "5" = Approved By a voice phonecall
+            - "6" = Declined By a voice phonecall
+            - "7" = Approved by issuer for a pre-auth transaction only (J5)
+            - "8" = Approved by Smart Card (offline)
+        
+        
+        
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                "CardNumber": "",
+                "Card4Digits": "4580",
+                "CardBIN": "458045",
+                "ExpDate_MMYY": "",
+                "CardName": "",
+                "CardIssuerCode": "",
+                "CardFinancerCode": "",
+                "CardBrandCode": "",
+                "ReferenceNumber": ,
+                "VoucherNumber": "",
+                "ApprovalNumber": " ",
+                "IsTelApprovalNeeded": false,
+                "Token": "",
+                "ClientReciept": "",
+                "SellerReciept": "",
+                "ResultRecord": "XXXXXXXXXX",
+                "IntOt_JSON": "Some Json Here",
+                "IntOt": "Some XML Here",
+                "PanEntryMode": "05",
+                "PaymentMethod": 2,
+                "ApprovalType": "03"
+            }
+            
+
+## Make Transaction With Invoice/Receipt Creation [/Transaction/CommitFullTransaction]
+
++ Attributes (Make Transaction Request)
+
+### CommitFullTransaction With Invoice [POST]
+
+This API is the same as CommitFullTransaction, and allows to automatically create an invoice or a receipt after the payment.
+
++ Attributes (Make Transaction Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "Track2": "",
+                "CardNumber": "",
+                "CVV": "",
+                "ExpDate_MMYY": "",
+                "TransactionSum": "1.00",
+                "NumberOfPayments": "1",
+                "FirstPaymentSum": "0",
+                "OtherPaymentsSum": "0",
+                "TransactionType": "01",
+                "CurrencyType": "1",
+                "CreditType": "1",
+                "J": "0",
+                "IsCustomerPresent":  "false",
+                "AuthNum": "",
+                "HolderID": "",
+                "ExtraData": "",
+                "CustomerName": "",
+                "CustomerAddress": "",
+                "CustomerEmail":  "",
+                "PhoneNumber": "",
+                "ItemDescription":"",
+                "ObeligoAction":  "",
+                "OriginalZCreditReferenceNumber": "",
+                "TransactionUniqueIdForQuery" : "",
+                "TransactionUniqueID" : "",
+                "UseAdvancedDuplicatesCheck" : "",
+                "ZCreditInvoiceReceipt": {
+                     "Type": "0",
+                     "RecepientName":"",
+                     "RecepientCompanyID":"",
+                     "Address":"",
+                     "City":"",
+                     "ZipCode":"",
+                     "PhoneNum":"",
+                     "FaxNum":"",
+                     "TaxRate":"17",
+                     "Comment":"",
+                     "ReceipientEmail":"",
+                     "EmailDocumentToReceipient":"",
+                     "ReturnDocumentInResponse":"",
+                     "Items": [{
+                        "ItemDescription":  "Item name" ,
+                        "ItemQuantity":  "2" ,
+                        "ItemPrice":  "0.5" ,
+                        "IsTaxFree":  "false"
+                     }]
+                }
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + CardNumber: "4580458045804580" (string) - Card number that was processed (Full card or masked card, depends on the "AllowFullCardNumberInResponse" value)
+        + Card4Digits: "4580" (string) - Last 4 digits of the processed card
+        + CardBIN: "458045" (string) - The BIN (first 6 digits) of the processed card        
+        + ExpDate_MMYY: "01/23" (string) - Expiration date of the card that was processed
+        + CardName: "לאומי קארד" (string) - Card Description
+        + CardIssuerCode: 1 (number) - The credit card company which issued the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardFinancerCode: 2 (number) - The credit card company currently processing the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardBrandCode: 2 (number) - The credit card brand (See [card brands list](/introduction/transaction-information/credit-card-brands))
+        + ReferenceNumber: "998877665" (string) - The Gateway ID for the transaction. With this ID you can query the transaction.
+        + VoucherNumber: "00000000" (string) - The voucher number from SHVA
+        + ApprovalNumber: "00000000" (string) - Approval number from the credit card company. Can be "0" if there was an automatic approval.
+        + IsTelApprovalNeeded: false (boolean) - If "true", prompt for phone authorization. the "ReturnMessage" value contains the message to prompt.
+        + Token: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" (string) - Token represents the credit card used for this transaction ([How to use Tokens?](/transaction-information/how-to-create-and-use-tokens-(tokenization)))
+        + ClientReciept: "" (string) - Receipt note for printing, Customers copy (formatted for 80mm printers)
+        + SellerReciept: "" (string) - Receipt note for printing, Merchants copy (formatted for 80mm printers)
+        + ResultRecord: "" (string) - The deposit encrypted record
+        + `IntOt_JSON` : "" (string) - The transaction record (`int_ot`) in a JSON format   
+        + IntOt: "" (string) - The transaction record (int_ot) in a XML format   
+        + PanEntryMode: "05" (number) 
+            The entry mode of this transaction:
+            - "05" = Contactless (Tap)
+            - "40" = Contact (Chip)
+            - "00" = Magnetic (Swipe)
+            - "50" = CNP (Card Not Present)
+            - "51" = CP  (Card Present)
+            - "52" = Internet  (e-commerce online transaction: 3DS, apple pay, google pay)
+        + PaymentMethod: 2 (number) 
+            The payment method of this transaction:
+            - 0 = Regular credit card
+            - 1 = 3DS
+            - 2 = Bit
+            - 4 = Apple Pay
+            - 6 = Google Pay
+        + ApprovalType: "03" (string) 
+            The authority which supplied approval/Decline for this transaction (string):
+            - "0" = None (no approval number)
+            - "1" = Approved by issuer
+            - "2" = Declined by issuer
+            - "3" = Approved By Shva (STIP)
+            - "4" = Declined By Shva (STIP)
+            - "5" = Approved By a voice phonecall
+            - "6" = Declined By a voice phonecall
+            - "7" = Approved by issuer for a pre-auth transaction only (J5)
+            - "8" = Approved by Smart Card (offline)
+        + ZCreditInvoiceReceiptResponse: "" (object) - Invoice creation response
+            + HasError: false (boolean) - Does the response contains errors (false = success)
+            + ReturnCode: 0 (number) - Error code (0 in case of success)
+            + ReturnMessage: "" (string) - Error description (empty in case of success)
+            + DocumentID: 0 (number) - Invoice or Receipt number (מספר קבלה או חשבונית)
+            + InvoiceId: 0 (number) - Document unique ID on our gateway
+            + PDFDocumentContent: "" (string) - Bytes array of the PDF document
+        
+        
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                "CardNumber": "",
+                "CardNumber": "",
+                "Card4Digits": "4580",
+                "CardBIN": "458045",                
+                "ExpDate_MMYY": "",
+                "CardName": "",
+                "CardIssuerCode": "",
+                "CardFinancerCode": "",
+                "CardBrandCode": "",
+                "ReferenceNumber": ,
+                "VoucherNumber": "",
+                "ApprovalNumber": " ",
+                "IsTelApprovalNeeded": false,
+                "Token": "",
+                "ClientReciept": "",
+                "SellerReciept": "",
+                "ResultRecord": "XXXXXXXXXX",
+                "IntOt_JSON": "Some Json Here",
+                "IntOt": "Some XML Here",
+                "PanEntryMode": "05",
+                "PaymentMethod": 2,
+                "ApprovalType": "03",                
+                "ZCreditInvoiceReceiptResponse": {
+                    "HasError": false,
+                    "ReturnCode": 0,
+                    "ReturnMessage": "",
+                    "DocumentID": 0,
+                    "InvoiceId": 0,
+                    "PDFDocumentContent": ""
+                }
+            }
+            
+
+
+            
+## Validate a Card [/Transaction/ValidateCard]
+
++ Attributes (Validate card Request)
+
+### ValidateCard [POST]
+
+With this API you can validate a single credit card, and get some information about it. 
+This function is a good way to send Track2 data and get back the card number, Or to send the card data and get back a Token without charging the card.
+
++ Attributes (Validate card Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "Track2": "",
+                "CardNumber": "",
+                "ExpDate_MMYY": ""
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + CardNumber: "4580000000000000" (string) - Card number that was processed
+        + ExpDate_MMYY: "01/23" (string) - Expiration date of the card that was processed
+        + CardName: "לאומי קארד" (string) - Card Description
+        + CardIssuerCode: 1 (number) - The credit card company which issued the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardFinancerCode: 2 (number) - The credit card company currently processing the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardBrandCode: 2 (number) - The credit card brand (See [card brands list](/introduction/transaction-information/credit-card-brands))
+        + Token: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" (string) - Token represents the credit card used for this transaction ([How to use Tokens?](/transaction-information/how-to-create-and-use-tokens-(tokenization)))
+        
+        
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                "CardNumber": "",
+                "ExpDate_MMYY": "",
+                "CardName": "",
+                "CardIssuerCode": "",
+                "CardFinancerCode": "",
+                "CardBrandCode": "",
+                "Token": ""
+            }
+            
+            
+            
+            
+## Refund A Transaction [/Transaction/RefundTransaction]
+
++ Attributes (Refund Transaction Request)
+
+### RefundTransaction [POST]
+
+With this API you can refund or cancel transactions with a single request.
+Just pass the transaction ID (referenceID) of the requested transaction, and it will be refunded.
+Keep in mind, that transactions before deposit will be canceled , and not refunded.
+
++ Attributes (Refund Transaction Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "TransactionIdToCancelOrRefund": "",
+                "TransactionSum": ""
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + ReferenceNumber: "998877665" (number) - The Gateway ID for the transaction. With this ID you can query the transaction.
+        
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                "ReferenceNumber": ""
+            }
+            
+
+## Get Token Data [/Token/GetTokenData]
+
++ Attributes (Get Token Data Request)
+
+### GetTokenData [POST]
+
+With this API you can get the card details for a single token.   
+The method will return card number, expiration date and holderId (if supplied).
+
++ Attributes (Get Token Data Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "Token": ""
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + CardNumber: "4580000000000000" (string) - Card number that was processed
+        + ExpDate: "01/23" (string) - Expiration date of the card that was processed
+        + HolderID: 000000000 (string) - Holder ID of the buyer (תעודת זהות)
+        
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                "CardNumber":"",
+                "ExpDate":"",
+                "HolderID":""
+            }
+            
+
+## Query Transaction With Reference ID [/Transaction/GetTransactionStatusByReferenceId]         
+
++ Attributes (Query Transaction Request)
+
+### GetTransactionStatusByReferenceId [POST]
+
+With this API you can query a single transaction with the reference ID, and get its state and full data. Please review the request attributes for full parameter documentation.
+
++ Attributes (Query Transaction Request)
+    
++ Request (application/json; charset=utf-8)
+
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "ReferenceID": ""
+            }
+       
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + IsTelAuthAbilty: false (boolean) - If "true", prompt for phone authorization. the "ReturnMessage" value contains the message to prompt.
+        + ReferenceNumber: "998877665" (string) - The Gateway ID for the transaction. With this ID you can query the transaction.
+        + ClientReciept: "" (string) - Receipt note for printing, Customers copy (formatted for 80mm printers)
+        + SellerReciept: "" (string) - Receipt note for printing, Merchants copy (formatted for 80mm printers)
+        + ApprovalNumber: "00000000" (string) - Approval number from the credit card company. Can be "0" if there was an automatic approval.
+        + CardBrandCode: 2 (number) - The credit card brand (See [card brands list](/introduction/transaction-information/credit-card-brands))
+        + CardFinancerCode: 2 (number) - The credit card company currently processing the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardIssuerCode: 1 (number) - The credit card company which issued the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardName: "לאומי קארד" (string) - Card Description
+        + CardNumber: "0000" (string) - Last 4 digits of the credit card
+        + ExpDate_MMYY: "01/23" (string) - Expiration date of the card that was processed
+        + Token: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" (string) - Token represents the credit card used for this transaction ([How to use Tokens?](/transaction-information/how-to-create-and-use-tokens-(tokenization)))
+        + VoucherNumber: "00000000" (string) - The voucher number from SHVA
+        + SaveDate: "2019-03-04T21:06:37" (string) - Date and Time of the transaction
+        + TransactionSum: 10.35 (number) - The total sum of the transaction, in decimal format ##.##
+        + NumberOfPayments: 1 (number) - The number of payments for this transaction:
+        + FirstPaymentSum: 00.00 (number) - The sum of the first payment, in decimal format ##.##  
+        + OtherPaymentsSum: 00.00 (number) - The sum of the other payment, in decimal format ##.##  
+        + J: 0 (number)
+            Transaction billing type
+            - 0 - Regular 
+            - 2 - Authentication Only (**Card won't be charged!**)
+            - 5 - Authorization (The amount will be secured for future use)
+        
+        + HolderID: 000000000 (string) - Holder ID of the buyer (תעודת זהות)
+        + IsCustomerPresent: false (boolean)
+            Is the customer present at the transaction
+            - false: This is a phone (card missing) transaction
+            - true: This is a "card present" transaction
+            
+        + CustomerName: Joni Joe (string) - Customers name. **Note:** Please use letters and numbers only!
+        + CustomerAddress: 21 Demo Street (string) - Customers Address. **Note:** Please use letters and numbers only!
+        + CustomerEmail: customer@demo.com (string) - Customers Email
+        + DealTypeCode: 01 (string) 
+            The type of the transaction:
+            - "01" - Regular transaction
+            - "51" - Refund transaction
+            
+        + CreditTypeCode: 1 (number) 
+            The credit type of the transaction:
+            - 1 = רגיל
+            - 2 = ישראכרדיט+ / 30
+            - חיוב מיידי = 3
+            - 6 = קרדיט
+            - 8 = תשלומים
+            
+        + CurrencyTypeCode: 1 (number) 
+            The currency of the transaction: 
+            - 1 - NIS
+            - 2 - USD
+            - 3 - EUR
+        + CustomerPhone: 077-3233190 (string) - Customers Phone Number
+        + ExtraInfo: Customer asks for fast shipping (string) - This is additional data for this transaction.
+        + ItemDescription: Vanilla Candle (string) - Description of the sold item. **Note:** Please use letters and numbers only!
+        + DepositID: 00000000 (string) - The number of the deposit for this transaction
+        + StatusCode: 2 (number) 
+            The current status of this transaction:
+            - 1 = Approved, Not Deposited yet (Can be Voided)
+            - 2 = Approved, After Deposit (Can be refunded)
+            - 3 = Voided (Canceled)
+            - 4 = Fully Refunded
+            - 6 = Partialy Refunded
+            - 6 = Partialy Refunded
+            - 900 = J5 transaction is valid and not completed/released yet (only for J5 transactions)
+            - 903 = J5 transaction is fully used (only for J5 transactions)
+            - 904 = J5 transaction is partially used (only for J5 transactions)
+            - 901 = J5 transaction is fully released (only for J5 transactions)
+            - 902 = J5 transaction is partially released (only for J5 transactions)
+        + PanEntryMode: "05" (number) 
+            The entry mode of this transaction:
+            - "05" = Contactless (Tap)
+            - "40" = Contact (Chip)
+            - "00" = Magnetic (Swipe)
+            - "50" = CNP (Card Not Present)
+            - "51" = CP  (Card Present)
+            - "52" = Internet  (e-commerce online transaction: 3DS, apple pay, google pay)
+        + PaymentMethod: 2 (number) 
+            The payment method of this transaction:
+            - 0 = Regular credit card
+            - 1 = 3DS
+            - 2 = Bit
+            - 4 = Apple Pay
+            - 6 = Google Pay
+            
+
+        
+    + Body
+
+            {
+               "HasError":true,
+               "ReturnCode":-99,
+               "ReturnMessage":"Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+               "IsTelAuthAbilty":false,
+               "ReferenceNumber":"",
+               "ClientReciept":"",
+               "SellerReciept":"",
+               "ApprovalNumber":"",
+               "CardBrandCode":"",
+               "CardFinancerCode":"",
+               "CardIssuerCode":"",
+               "CardName":"",
+               "CardNumber":"",
+               "ExpDate_MMYY":"",
+               "Token":"",
+               "VoucherNumber":"",
+               "SaveDate":"",
+               "TransactionSum":1.24,
+               "NumberOfPayments":0,
+               "FirstPaymentSum":0.0,
+               "OtherPaymentsSum":0.0,
+               "J":0,
+               "HolderID":"",
+               "IsCustomerPresent":false,
+               "CustomerName":"CustomerName",
+               "CustomerAddress":null,
+               "CustomerEmail":"rnd@z-credit.com",
+               "DealTypeCode":1,
+               "CreditTypeCode":1,
+               "CurrencyTypeCode":1,
+               "CustomerPhone":"031234567",
+               "ExtraInfo":"",
+               "ItemDescription":"סמארטפון סמסונג דגם SX3345",
+               "DepositID":"00000000",
+               "StatusCode": 2,
+               "PanEntryMode": "05",
+               "PaymentMethod": 0
+            }
+            
+## Query Transaction With Unique ID [/Transaction/GetTransactionStatusByTransactionUniqueIdForQuery]         
+
++ Attributes (Query Transaction Request With UniqueID)
+
+### GetTransactionStatusByTransactionUniqueIdForQuery [POST]
+
+With this API you can query a single transaction with the TransactionUniqueIdForQuery, and get its state and full data. Please review the request attributes for full parameter documentation.
+
++ Attributes (Query Transaction Request With UniqueID)
+    
++ Request (application/json; charset=utf-8)
+
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "UniqueQuery": ""
+            }
+       
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + IsTelAuthAbilty: false (boolean) - If "true", prompt for phone authorization. the "ReturnMessage" value contains the message to prompt.
+        + ReferenceNumber: "998877665" (string) - The Gateway ID for the transaction. With this ID you can query the transaction.
+        + ClientReciept: "" (string) - Receipt note for printing, Customers copy (formatted for 80mm printers)
+        + SellerReciept: "" (string) - Receipt note for printing, Merchants copy (formatted for 80mm printers)
+        + ApprovalNumber: "00000000" (string) - Approval number from the credit card company. Can be "0" if there was an automatic approval.
+        + CardBrandCode: 2 (number) - The credit card brand (See [card brands list](/introduction/transaction-information/credit-card-brands))
+        + CardFinancerCode: 2 (number) - The credit card company currently processing the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardIssuerCode: 1 (number) - The credit card company which issued the card (See [card companies list](/introduction/transaction-information/credit-card-companies))
+        + CardName: "לאומי קארד" (string) - Card Description
+        + CardNumber: "0000" (string) - Last 4 digits of the credit card
+        + ExpDate_MMYY: "01/23" (string) - Expiration date of the card that was processed
+        + Token: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" (string) - Token represents the credit card used for this transaction ([How to use Tokens?](/transaction-information/how-to-create-and-use-tokens-(tokenization)))
+        + VoucherNumber: "00000000" (string) - The voucher number from SHVA
+        + SaveDate: "2019-03-04T21:06:37" (string) - Date and Time of the transaction
+        + TransactionSum: 10.35 (number) - The total sum of the transaction, in decimal format ##.##
+        + NumberOfPayments: 1 (number) - The number of payments for this transaction:
+        + FirstPaymentSum: 00.00 (number) - The sum of the first payment, in decimal format ##.##  
+        + OtherPaymentsSum: 00.00 (number) - The sum of the other payment, in decimal format ##.##  
+        + J: 0 (number)
+            Transaction billing type
+            - 0 - Regular 
+            - 2 - Authentication Only (**Card won't be charged!**)
+            - 5 - Authorization (The amount will be secured for future use)
+        
+        + HolderID: 000000000 (string) - Holder ID of the buyer (תעודת זהות)
+        + IsCustomerPresent: false (boolean)
+            Is the customer present at the transaction
+            - false: This is a phone (card missing) transaction
+            - true: This is a "card present" transaction
+            
+        + CustomerName: Joni Joe (string) - Customers name. **Note:** Please use letters and numbers only!
+        + CustomerAddress: 21 Demo Street (string) - Customers Address. **Note:** Please use letters and numbers only!
+        + CustomerEmail: customer@demo.com (string) - Customers Email
+        + DealTypeCode: 01 (string) 
+            The type of the transaction:
+            - "01" - Regular transaction
+            - "51" - Refund transaction
+            
+        + CreditTypeCode: 1 (number) 
+            The credit type of the transaction:
+            - 1 = רגיל
+            - 2 = ישראכרדיט+ / 30
+            - חיוב מיידי = 3
+            - 6 = קרדיט
+            - 8 = תשלומים
+            
+        + CurrencyTypeCode: 1 (number) 
+            The currency of the transaction: 
+            - 1 - NIS
+            - 2 - USD
+            - 3 - EUR
+        + CustomerPhone: 077-3233190 (string) - Customers Phone Number
+        + ExtraInfo: Customer asks for fast shipping (string) - This is additional data for this transaction.
+        + ItemDescription: Vanilla Candle (string) - Description of the sold item. **Note:** Please use letters and numbers only!
+        + DepositID: 00000000 (string) - The number of the deposit for this transaction
+        + StatusCode: 2 (number) 
+            The current status of this transaction:
+            - 1 = Approved, Not Deposited yet (Can be Voided)
+            - 2 = Approved, After Deposit (Can be refunded)
+            - 3 = Voided (Canceled)
+            - 4 = Fully Refunded
+            - 6 = Partialy Refunded
+            - 900 = J5 transaction is valid and not completed/released yet (only for J5 transactions)
+            - 903 = J5 transaction is fully used (only for J5 transactions)
+            - 904 = J5 transaction is partially used (only for J5 transactions)
+            - 901 = J5 transaction is fully released (only for J5 transactions)
+            - 902 = J5 transaction is partially released (only for J5 transactions)            
+        + PanEntryMode: "05" (number) 
+            The entry mode of this transaction:
+            - "05" = Contactless (Tap)
+            - "40" = Contact (Chip)
+            - "00" = Magnetic (Swipe)
+            - "50" = CNP (Card Not Present)
+            - "51" = CP  (Card Present)
+            - "52" = Internet  (e-commerce online transaction: 3DS, apple pay, google pay)
+        + PaymentMethod: 2 (number) 
+            The payment method of this transaction:
+            - 0 = Regular credit card
+            - 1 = 3DS
+            - 2 = Bit
+            - 4 = Apple Pay
+            - 6 = Google Pay
+
+        
+    + Body
+
+            {
+               "HasError":true,
+               "ReturnCode":-99,
+               "ReturnMessage":"Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+               "IsTelAuthAbilty":false,
+               "ReferenceNumber":"",
+               "ClientReciept":"",
+               "SellerReciept":"",
+               "ApprovalNumber":"",
+               "CardBrandCode":"",
+               "CardFinancerCode":"",
+               "CardIssuerCode":"",
+               "CardName":"",
+               "CardNumber":"",
+               "ExpDate_MMYY":"",
+               "Token":"",
+               "VoucherNumber":"",
+               "SaveDate":"",
+               "TransactionSum":1.24,
+               "NumberOfPayments":0,
+               "FirstPaymentSum":0.0,
+               "OtherPaymentsSum":0.0,
+               "J":0,
+               "HolderID":"",
+               "IsCustomerPresent":false,
+               "CustomerName":"CustomerName",
+               "CustomerAddress":null,
+               "CustomerEmail":"rnd@z-credit.com",
+               "DealTypeCode":1,
+               "CreditTypeCode":1,
+               "CurrencyTypeCode":1,
+               "CustomerPhone":"031234567",
+               "ExtraInfo":"",
+               "ItemDescription":"סמארטפון סמסונג דגם SX3345",
+               "DepositID":"00000000",
+               "StatusCode": 2,
+               "PanEntryMode": "05",
+               "PaymentMethod": 0
+            }
+            
+
+## Get Transactions Report [/Reports/GetTransactionsReport]
+
++ Attributes (Get Transactions Report Request)
+
+### GetTransactionsReport [POST]
+
+With this API you can get a reports of transaction made, and with specific filters.   
+The method will return a JSON structured report of all transactions.
+
++ Attributes (Get Transactions Report Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "FromDate": "",
+                "ToDate": "",
+                "FromTransactionSum": "",
+                "ToTransactionSum": "",
+                "Card4Digits": "",
+                "IncludeJ5": "",
+                "SearchType": ""
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + Transactions: "" (object) - an object that hold the transactions structure. (Look [here](/reference/0/query-transaction-with-reference-id/gettransactionstatusbyreferenceid)) for response structure info
+        
+        
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                "Transactions": "[
+                   {"HasError":true,
+                   "ReturnCode":-99,
+                   "ReturnMessage":"Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                   "IsTelAuthAbilty":false,
+                   "ReferenceNumber":"",
+                   "ClientReciept":"",
+                   "SellerReciept":"",
+                   "ApprovalNumber":"",
+                   "CardBrandCode":"",
+                   "CardFinancerCode":"",
+                   "CardIssuerCode":"",
+                   "CardName":"",
+                   "CardNumber":"",
+                   "ExpDate_MMYY":"",
+                   "Token":"",
+                   "VoucherNumber":"",
+                   "SaveDate":"",
+                   "TransactionSum":1.24,
+                   "NumberOfPayments":0,
+                   "FirstPaymentSum":0.0,
+                   "OtherPaymentsSum":0.0,
+                   "J":0,
+                   "HolderID":"",
+                   "IsCustomerPresent":false,
+                   "CustomerName":"CustomerName",
+                   "CustomerAddress":null,
+                   "CustomerEmail":"rnd@z-credit.com",
+                   "DealTypeCode":1,
+                   "CreditTypeCode":1,
+                   "CurrencyTypeCode":1,
+                   "CustomerPhone":"031234567",
+                   "ExtraInfo":"",
+                   "ItemDescription":"סמארטפון סמסונג דגם SX3345",
+                   "DepositID":"00000000"},
+                   {"HasError":true,
+                   "ReturnCode":-99,
+                   "ReturnMessage":"Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                   "IsTelAuthAbilty":false,
+                   "ReferenceNumber":"",
+                   "ClientReciept":"",
+                   "SellerReciept":"",
+                   "ApprovalNumber":"",
+                   "CardBrandCode":"",
+                   "CardFinancerCode":"",
+                   "CardIssuerCode":"",
+                   "CardName":"",
+                   "CardNumber":"",
+                   "ExpDate_MMYY":"",
+                   "Token":"",
+                   "VoucherNumber":"",
+                   "SaveDate":"",
+                   "TransactionSum":1.24,
+                   "NumberOfPayments":0,
+                   "FirstPaymentSum":0.0,
+                   "OtherPaymentsSum":0.0,
+                   "J":0,
+                   "HolderID":"",
+                   "IsCustomerPresent":false,
+                   "CustomerName":"CustomerName",
+                   "CustomerAddress":null,
+                   "CustomerEmail":"rnd@z-credit.com",
+                   "DealTypeCode":1,
+                   "CreditTypeCode":1,
+                   "CurrencyTypeCode":1,
+                   "CustomerPhone":"031234567",
+                   "ExtraInfo":"",
+                   "ItemDescription":"סמארטפון סמסונג דגם SX3345",
+                   "DepositID":"00000000",
+                   "StatusCode": 2,
+                   "PanEntryMode": "05",
+                   "PaymentMethod": 0}
+                   ]"
+            }
+            
+## Create Invoice OR Receipt [/Transaction/CreateInvoiceReceipt]
+
++ Attributes (Make CreateInvoiceReceipt Request)
+
+### CreateInvoiceReceipt [POST]
+
+This API allows you to create a tax document (Invoice/Receipt) based on an existing transaction.
+
++ Attributes (Make CreateInvoiceReceipt Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "TransactionId": "",
+                "ZCreditInvoiceReceipt": {
+                     "Type": "0",
+                     "RecepientName":"",
+                     "RecepientCompanyID":"",
+                     "Address":"",
+                     "City":"",
+                     "ZipCode":"",
+                     "PhoneNum":"",
+                     "FaxNum":"",
+                     "TaxRate":"17",
+                     "Comment":"",
+                     "ReceipientEmail":"",
+                     "EmailDocumentToReceipient":"",
+                     "ReturnDocumentInResponse":"",
+                     "Items": [{
+                        "ItemDescription":  "Item name" ,
+                        "ItemQuantity":  "2" ,
+                        "ItemPrice":  "0.5" ,
+                        "IsTaxFree":  "false"
+                     }]
+                }
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+        + DocumentID: 0 (number) - Invoice or Receipt number (מספר קבלה או חשבונית)
+        + InvoiceId: 0 (number) - Document unique ID on our gateway
+        + PDFDocumentContent: "" (string) - Bytes array containing the PDF file representing the invoice/receipt
+
+
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server",
+                "DocumentID": 0,
+                "InvoiceId": 0,
+                "PDFDocumentContent": ""
+            }
+            
+            
+## Release Pinpad [/Transaction/ReleasePinpad]
+
++ Attributes (Release Pinpad Request)
+
+### ReleasePinpad [POST]
+
+With this API you can cancel a pending transaction, as long as it is still in the "swipe screen" stage (the blue screen).   
+That means, every transaction on pinpad, which has started and didn't tapped/inserted/swiped yet, can be canceled with this API.
+
++ Attributes (Release Pinpad Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "Track2": ""
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server"
+            }
+            
+
+## Show QRCode [/Transaction/ShowQRCode]
+
++ Attributes (Show QRCode Request)
+
+### ShowQRCode [POST]
+
+With this API you can show a QRCode with a relevant data.
+
++ Attributes (Show QRCode Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "Track2": "",
+                "QRData": "",
+                "TransactionSum": 00.00,   
+                "UITimeout": 10
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description (empty in case of success)
+
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server"
+            }
+            
+
+
+## Deposit Terminal [/Terminal/DepositTerminal]
+
++ Attributes (Deposit Terminal Request)
+
+### DepositTerminal [POST]
+
+With this API you can deposit a specific terminal via API.
+
++ Attributes (Deposit Terminal Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": ""
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description ("Deposit OK" in case of success)
+        + ReferenceNumber: "" (string) - The desposit ID
+        + TotalDebit: "" (number) - The total amount of sale transactions (in agorot)
+        + TotalCredit: "" (number) - The total amount of refund transactions (in agorot)
+        + TotalNumber: "" (number) - The total number of transactions deposited.
+        + TotalXML: "" (string) - The XML deposit report from SHVA
+        + Report: "" (string) - A printable deposit report from SHVA
+
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server"
+            }
+              
+
+## Get Deposit Report [/Terminal/GetDepositReport]
+
++ Attributes (Deposit Report Request)
+
+### GetDepositReport [POST]
+
+With this API you can request deposit reports for a certain time range, or a specific report ID.
+The deposit reports will be returned in a "Data" object as an array.
+Each array element will have the structure as a deposit report.  (Look [here](/reference/0/deposit-terminal/depositterminal) for response structure info)
+
++ Attributes (Deposit Report Request)
+
++ Request (application/json; charset=utf-8)
+
+        
+    + Body
+
+            {
+                "TerminalNumber": "",
+                "Password": "",
+                "FromDate": "",
+                "ToDate": "",
+                "DepositID": -1 
+            }
+
++ Response 201 (application/json; charset=utf-8)
+
+    + Attributes (object)
+        + HasError: false (boolean) - Does the response contains errors (false = success)
+        + ReturnCode: 0 (number) - Error code (0 in case of success)
+        + ReturnMessage: "" (string) - Error description ("Deposit OK" in case of success)
+        + Data: "" (object) - an object that hold the deposit response data structure. (Look [here](/reference/0/deposit-terminal/depositterminal)) for response structure info
+
+    + Body
+
+            {
+                "HasError": true,
+                "ReturnCode": -99,
+                "ReturnMessage": "Please do not use the mock server or the Debugging Proxy. Use only our Production Server"
+            }
+         
+
+## Data Structures
+
+### Make Transaction Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + Track2: 000000000000000000=00000000000000000000 (string)
+        This attribute can be on of the following
+        - The data received from the MSR (card reader) , is one is used. (If not used fill "")
+        - A PinPad number with the "PINPAD" prefix , such as "PINPAD100000"
+    + CardNumber: 4580000000000000 (string) 
+        This attribute can be on of the following
+        - A credit card number (for manual transactions)
+        - A credit card **token** , which will be in the GUID format ("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+        
+    + CVV: 123 (string) - 3 or 4 CVV digits at the back of the credit card
+    + ExpDate_MMYY: 0129 (string) - Expiration date for the credit card. **For manual card number only**. Format : MMYY (FE: 1229)
+    + TransactionSum: 10.35 (number, required) - The total sum of the transaction, in decimal format ##.##
+    + NumberOfPayments: 1 (number)
+        The number of installments for this transaction (used with CreditType=6 OR 8)
+        - 1 - for a regular transaction without installments
+        - 2-999 - for installments transaction (put the installments number here)
+    + FirstPaymentSum: 00.00 (number) - The sum of the first payment, in decimal format ##.##  (Optional - keep empty for auto calculation. Used only for payments transaction, CreditType=8)
+    + OtherPaymentsSum: 00.00 (number) - The sum of the other payment, in decimal format ##.##  (Optional - keep empty for auto calculation. Used only for payments transaction, CreditType=8)
+    + TransactionType: 01 (string) 
+        The type of the transaction:
+        - "01" - Regular transaction
+        - "53" - Refund transaction
+    + CurrencyType: 1 (number) 
+        The currency of the transaction: 
+        - 1 - NIS
+        - 2 - USD
+        - 3 - EUR
+    + CreditType: 1 (number) 
+        The credit type of the transaction:
+        - 1 = רגיל
+        - 2 = ישראכרדיט+ / 30
+        - חיוב מיידי = 3
+        - 6 = קרדיט
+        - 8 = תשלומים
+    
+    + J: 0 (number)
+        Transaction billing type
+        - 0 - Regular 
+        - 2 - Authentication Only (**Card won't be charged!**)
+        - 5 - Authorization (The amount will be secured for future use)
+    
+    + IsCustomerPresent: false (boolean)
+        Is the customer present at the transaction
+        - false: This is a phone (card missing) transaction
+        - true: This is a "card present" transaction
+        
+    + AuthNum: 0000000 (string) - 
+        Phone Authorization Code (when supplied by the credit card company)  
+        When you get the code, Resend the JSON with the code inside this parameter.
+        **Note:** Please keep this parameter empty if not used for phone authorization!
+        
+    + HolderID: 000000000 (string) - Holder ID of the buyer (תעודת זהות)
+    + ExtraData: Customer asks for fast shipping (string) - This is additional data you need to add t0 your transaction. **Note:** Please use letters and numbers only!
+    + CustomerName: Joni Joe (string) - Customers name. **Note:** Please use letters and numbers only!
+    + CustomerAddress: 21 Demo Street (string) - Customers Address. **Note:** Please use letters and numbers only!
+    + CustomerEmail: customer@demo.com (string) - Customers Email
+    + PhoneNumber: 0773233190 (string) - Customers Phone Number
+    + ItemDescription: Vanilla Candle (string) - Description of the sold item. **Note:** Please use letters and numbers only!
+    
+    + ObeligoAction: 0 (number)
+        When preforming a Capture/Release transaction
+        - 0 - None (Regular transaction) 
+        - 1 - Capture (will capture authorization for transaction with the ID in the OriginalZCreditReferenceNumber parameter)
+        - 2 - Release (will release authorization for transaction with the ID in the OriginalZCreditReferenceNumber parameter)     
+                    
+        [How to use Authorization and Capture?](/introduction/transaction-information/authorization-and-capture-j5)
+            
+    + OriginalZCreditReferenceNumber: 99881111 (number) - The ID of the transaction, to Capture/Release according to the `ObeligoAction` parameter
+    + TransactionUniqueIdForQuery: ABCDEFG (string) - This is the uniqueID of the request, on the user side. It can be later queried by the "GetTransactionStatusByTransactionUniqueIdForQuery" function
+    + TransactionUniqueID: LKJH_ASFR (string) - This is the uniqueID for a duplicate transactions blocking algorithm. If sent, the gateway will check if there is a similar UniqueID in the database. if so, the transaction will be blocked!
+    + UseAdvancedDuplicatesCheck: false (boolean) - ** Only for pinpads ** If send with the "TransactionUniqueID", the gateway duplication check algorithm will consider the card used, along with the UniqueID sent. please reffer to the Duplication check section
+    + ZCreditInvoiceReceipt: "" (object) - If you want to create an invoice or a receipt for this transaction, add this object to your request
+        + Type: 1 (number) - 
+            Type of document to be created
+            - 0 - Auto select from settings (default)
+            - 1 - Invoice
+            - 2 - Receipt
+        + TaxRate: 17 (number, required) - VAT Tax rate for the invoice tax calculation (מעמ). If you pass the -1 value, the tax rate will be taken from the backoffice settings value.
+        + RecepientName: Demo Customer (string) - This name will be printed as the document recepient.
+        + RecepientCompanyID: 000000000 (string) - Company ID will be printed as the recepient ID/Business number.
+        + Address: 21 Demo Street (string) - Address to be printed in the document.
+        + City: My City (string) - City to be printed in the document.
+        + ZipCode: 00000 (string) - Zip Code to be printed in the document.
+        + PhoneNum: 0773233190 (string) - Phone number to be printed in the document.
+        + FaxNum: 0770000000 (string) - Fax number to be printed in the document.
+        + Comment: My Comments (string) - Comments to be printed in the document.
+        + ReceipientEmail: customer@demo.com (string) - Documents will be sent to this email address
+        + EmailDocumentToReceipient: true (boolean) - Set to true if you want a document to be sent to the customer.
+        + ReturnDocumentInResponse: false (boolean) - Set to true if you want the file to be returned in the response.
+        + Items: "" (object, required) - This is an **array of Items**. You can send many items in this object,using the array format: [{items 1 object},{item 2 object} .... ,{item x object}]. Total of all items **must be equal** to the total of the transaction. Each item object will contain the following data:
+            
+            + ItemDescription: Item name (string, required) - Item desciption
+            + ItemQuantity: 1 (number, required) - Item quantity sold
+            + ItemPrice: 2.34 (number, required) - A single unit item price
+            + IsTaxFree: false (boolean) - Set to true if this item has VAT=0% , like vegtables and fruites               
+
+### Make CreateInvoiceReceipt Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + TransactionId: 99881111 (number) - The ID (referenceID) of the transaction, to create the tax documnent from
+    + ZCreditInvoiceReceipt: "" (object) - If you want to create an invoice or a receipt for this transaction, add this object to your request
+        + Type: 1 (number) - 
+            Type of document to be created
+            - 0 - Auto select from settings (default)
+            - 1 - Invoice
+            - 2 - Receipt
+        + TaxRate: 17 (number, required) - VAT Tax rate for the invoice tax calculation (מעמ). If you pass the -1 value, the tax rate will be taken from the backoffice settings value.
+        + RecepientName: Demo Customer (string) - This name will be printed as the document recepient.
+        + RecepientCompanyID: 000000000 (string) - Company ID will be printed as the recepient ID/Business number.
+        + Address: 21 Demo Street (string) - Address to be printed in the document.
+        + City: My City (string) - City to be printed in the document.
+        + ZipCode: 00000 (string) - Zip Code to be printed in the document.
+        + PhoneNum: 0773233190 (string) - Phone number to be printed in the document.
+        + FaxNum: 0770000000 (string) - Fax number to be printed in the document.
+        + Comment: My Comments (string) - Comments to be printed in the document.
+        + ReceipientEmail: customer@demo.com (string) - Documents will be sent to this email address
+        + EmailDocumentToReceipient: true (boolean) - Set to true if you want a document to be sent to the customer.
+        + ReturnDocumentInResponse: false (boolean) - Set to true if you want the file to be returned in the response.
+        + Items: "" (object, required) - This is an **array of Items**. You can send many items in this object,using the array format: [{items 1 object},{item 2 object} .... ,{item x object}]. Total of all items **must be equal** to the total of the transaction. Each item object will contain the following data:
+            
+            + ItemDescription: Item name (string, required) - Item desciption
+            + ItemQuantity: 1 (number, required) - Item quantity sold
+            + ItemPrice: 2.34 (number, required) - A single unit item price
+            + IsTaxFree: false (boolean) - Set to true if this item has VAT=0% , like vegtables and fruites                
+
+### Query Transaction Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + ReferenceID: XXXXXXXXXXX (string) - The Reference ID of the transaction to query. **Note:** This is Z-credits transaction ID
+
+### Query Transaction Request With UniqueID
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + UniqueQuery: XXXXXXXXXXX (string) - This is the value of the "TransactionUniqueIdForQuery" parameter, that was sent in the transaction that you want to query.
+
+
+### Validate card Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + Track2: 000000000000000000=00000000000000000000 (string) - The data received from the MSR (card reader) , is one is used. (If not used fill "")
+    + CardNumber: 4580000000000000 (string) 
+        This attribute can be on of the following
+        - A credit card number (for manual transactions)
+        - A credit card **token** , which will be in the GUID format ("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX")
+        - A PinPad number with the "PINPAD" prefix , such as "PINPAD100000"
+        
+    + ExpDate_MMYY: 0129 (string) - Expiration date for the credit card. **For manual card number only**. Format : MMYY (FE: 1229)
+
+    
+### Refund Transaction Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + TransactionIdToCancelOrRefund: 99881111 (number, required) - The ID of the original transaction to be refunded. This is the *ReferenceNumber* returned from CommitFullTransaction 
+    + TransactionSum: 00.00 (number,optional)
+        This sum to be refunded
+        - **Don't pass this attribute if you wish to refund the entire original amount**
+        - If you wish to refund a partial amount, pass it in this attribute.
+        - TransactionSum value must be lower or equals the original transaction amount
+        
+        
+### Get Token Data Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + Token: `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX` (string, required) - The Token you want to get the details for
+        
+### Release Pinpad Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + Track2: `PINPADXXXXXXXX` (string, required) - The Pinpad ID for this request
+             
+### Show QRCode Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + Track2: `PINPADXXXXXXXX` (string, required) - The Pinpad ID for this request
+    + QRData: `Put QR Data Here` (string, required) - The QRCode data 
+    + TransactionSum: 12.34 (number,optional) - The amount that represents the QRCode transaction
+    + UITimeout: 5 (number,optional) - How long, in seconds, to show the QRCode UI
+              
+### Get Transactions Report Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + FromDate: `yyyy-MM-dd HH:mm:ss` (string, required) - The start date from which you need the transaction
+    + ToDate: `yyyy-MM-dd HH:mm:ss` (string, required) - The end date from which you need the transaction
+    + FromTransactionSum: 00.00 (number,optional) -  This lower sum amount of the transactions
+    + ToTransactionSum: 00.00 (number,optional) -  This upper sum amount of the transactions
+    + Card4Digits: "0000" (string,optional) - enter a specific last 4 digits of a credit card to search for
+    + IncludeJ5: false (boolean,optional) - Set to true if you want to include J5 transactions in your report
+    + SearchType: 0 (number,optional) - 0 = get successfull transactions only , 1 = get failed transactions only
+
+### Deposit Terminal Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    
+### Deposit Report Request
+
++ Attributes (object)
+    + TerminalNumber: XXXXXXXXXXX (string, required) - Credentials - The business number of the account
+    + Password: XXXXXXXXXXX (string, required) - Credentials - The password of the account
+    + FromDate: `yyyy-MM-dd HH:mm:ss` (string, required) - The start date from which you need the deposit reports
+    + ToDate: `yyyy-MM-dd HH:mm:ss` (string, required) - The end date from which you need the deposit reports
+    + DepositID: 0 (number,optional) - get a specific report by stating its deposit ID
+    
+
