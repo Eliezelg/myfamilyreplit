@@ -247,6 +247,10 @@ export class ZCreditAPI {
         payload.HolderID = creditCard.holderId;
       }
 
+      // Log détaillé pour debug
+      console.log('URL Z-Credit:', `${this.config.apiUrl}/Transaction/CommitFullTransaction`);
+      console.log('Contenu de la requête Z-Credit (tokenisation):', JSON.stringify(payload));
+      
       // Effectuer la requête HTTP vers l'API Z-Credit
       const response = await axios.post(
         `${this.config.apiUrl}/Transaction/CommitFullTransaction`,
@@ -258,6 +262,9 @@ export class ZCreditAPI {
         }
       );
 
+      // Log de la réponse
+      console.log('Réponse Z-Credit (tokenisation):', JSON.stringify(response.data));
+
       // Vérifier la réponse
       if (response.data && response.data.Token) {
         return response.data.Token;
@@ -267,7 +274,11 @@ export class ZCreditAPI {
     } catch (error) {
       console.error('Erreur lors de la création du token:', error);
       if (axios.isAxiosError(error) && error.response) {
+        console.error('Détails de l\'erreur Z-Credit:', JSON.stringify(error.response.data));
         throw new Error(`Erreur Z-Credit: ${error.response.data?.ReturnMessage || 'Erreur inconnue'}`);
+      } else if (axios.isAxiosError(error)) {
+        console.error('Erreur de connexion Z-Credit:', error.message);
+        throw new Error(`Erreur de connexion à Z-Credit: ${error.message}`);
       }
       throw error;
     }
@@ -520,4 +531,4 @@ export const zcreditAPI = new ZCreditSimulationAPI({
   terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
   password: process.env.ZCREDIT_PASSWORD || '',
   apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
-}, process.env.NODE_ENV === 'development'); // Mode simulation activé en développement
+}, false); // Mode production pour test réel
