@@ -344,23 +344,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           path: req.file.path
         });
         
-        return res.status(200).json({
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(200).send(JSON.stringify({
           success: true,
           file: req.file.filename,
           message: "Test upload successful"
-        });
+        }));
       } else {
-        return res.status(400).json({
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).send(JSON.stringify({
           success: false,
           message: "No file received"
-        });
+        }));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("TEST Upload error:", error);
-      return res.status(500).json({
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(500).send(JSON.stringify({
         success: false,
         message: error.message || "Unknown error occurred"
-      });
+      }));
     }
   });
 
@@ -370,13 +373,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!req.isAuthenticated()) {
         console.log("UPLOAD AUTH FAIL");
-        return res.status(401).send("Unauthorized");
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(401).send(JSON.stringify({ 
+          success: false,
+          message: "Unauthorized" 
+        }));
       }
       
       console.log("UPLOAD FILE CHECK:", !!req.file);
       if (!req.file) {
         console.log("UPLOAD NO FILE");
-        return res.status(400).send("No file uploaded");
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).send(JSON.stringify({ 
+          success: false,
+          message: "No file uploaded" 
+        }));
       }
       
       // Log what we received
@@ -390,7 +401,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("UPLOAD FAMILY ID:", familyId);
       if (isNaN(familyId)) {
         console.log("UPLOAD INVALID FAMILY ID");
-        return res.status(400).send("Invalid family ID");
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).send(JSON.stringify({ 
+          success: false,
+          message: "Invalid family ID" 
+        }));
       }
       
       // Check if user is a member of this family
@@ -399,7 +414,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("UPLOAD IS MEMBER:", isMember);
       if (!isMember) {
         console.log("UPLOAD NOT A MEMBER");
-        return res.status(403).send("Not a member of this family");
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(403).send(JSON.stringify({ 
+          success: false,
+          message: "Not a member of this family" 
+        }));
       }
       
       // Check if number of photos doesn't exceed the monthly limit
@@ -409,7 +428,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("UPLOAD CURRENT PHOTOS:", photos.length);
       if (photos.length >= 28) {
         console.log("UPLOAD LIMIT REACHED");
-        return res.status(400).send("Monthly photo limit reached (28 photos)");
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).send(JSON.stringify({ 
+          success: false,
+          message: "Monthly photo limit reached (28 photos)" 
+        }));
       }
       
       // Save photo info to database
@@ -424,10 +447,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       console.log("UPLOAD SUCCESS:", photo.id);
-      res.status(201).json(photo);
-    } catch (error) {
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(201).send(JSON.stringify(photo));
+    } catch (error: any) {
       console.error("Error uploading photo:", error);
-      next(error);
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(500).send(JSON.stringify({ 
+        success: false,
+        message: error.message || "An unknown error occurred" 
+      }));
     }
   });
 

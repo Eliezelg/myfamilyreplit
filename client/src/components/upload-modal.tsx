@@ -93,7 +93,7 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
           
           console.log("Uploading file:", fileObj.file.name, "Size:", fileObj.file.size);
           
-          // Pour le débogage, utilisons notre endpoint de test
+          // Utilisons l'endpoint normal après avoir corrigé le problème
           const result = await new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             
@@ -109,13 +109,19 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
                     resolve({ success: true });
                   }
                 } else {
-                  console.error("Upload failed:", xhr.status, xhr.statusText, xhr.responseText);
-                  reject(new Error(xhr.responseText || `Upload failed with status ${xhr.status}`));
+                  try {
+                    const errorData = JSON.parse(xhr.responseText);
+                    console.error("Upload failed:", xhr.status, errorData);
+                    reject(new Error(errorData.message || `Upload failed with status ${xhr.status}`));
+                  } catch (e) {
+                    console.error("Upload failed:", xhr.status, xhr.responseText);
+                    reject(new Error(xhr.responseText || `Upload failed with status ${xhr.status}`));
+                  }
                 }
               }
             };
             
-            xhr.open("POST", "/api/test-upload", true);
+            xhr.open("POST", "/api/photos/upload", true);
             xhr.withCredentials = true;
             xhr.send(formData);
           });
