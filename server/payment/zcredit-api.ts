@@ -19,7 +19,7 @@ interface CreditCardDetails {
 
 // Type pour les détails de la transaction
 interface TransactionDetails {
-  amount: number; // En centimes
+  amount: number; // En centimes (aggorot)
   description: string;
   numOfPayments?: number;
   creditType?: number; // 1 pour transaction régulière, 8 pour paiement échelonné
@@ -28,30 +28,47 @@ interface TransactionDetails {
   uniqueId?: string;
 }
 
-// Type pour la réponse de Z-Credit
+// Type pour la réponse de Z-Credit basé sur la documentation
 export interface ZCreditResponse {
-  ReturnValue: number; // 0 pour succès
-  ReferenceNumber?: string;
-  Token?: string;
+  // Structure basée sur la documentation Z-Credit
+  HasError?: boolean;
+  ReturnCode?: number;
   ReturnMessage?: string;
-  ErrorCode?: string;
-  CompanyName?: string;
-  CardBrand?: string;
-  CardBrandCode?: number;
+  ReturnValue?: number; // Pour compatibilité avec le code existant
   CardNumber?: string;
+  Card4Digits?: string;
+  CardBIN?: string;
+  ExpDate_MMYY?: string;
+  CardName?: string;
+  CardIssuerCode?: number;
+  CardFinancerCode?: number;
+  CardBrandCode?: number;
+  ReferenceNumber?: string;
+  VoucherNumber?: string;
+  ApprovalNumber?: string;
+  IsTelApprovalNeeded?: boolean;
+  Token?: string;
+  ClientReciept?: string;
+  SellerReciept?: string;
+  ResultRecord?: string;
+  IntOt_JSON?: string;
+  IntOt?: string;
+  PanEntryMode?: string;
+  PaymentMethod?: number;
+  ApprovalType?: string;
+  
+  // Propriétés supplémentaires pour compatibilité avec le code existant
+  IsApproved?: boolean;
   CardNumberMask?: string;
-  CardExpiration?: string;
+  CardBrand?: string;
   CardHolderID?: string;
   CreditCardCompanyCode?: number;
-  IsApproved?: boolean;
-  IsTelApprovalNeeded?: boolean;
   TransactionSum?: number;
   TransactionID?: string;
   AuthNumber?: string;
   PaymentsNumber?: number;
   FirstPaymentSum?: number;
   OtherPaymentsSum?: number;
-  // ... autres propriétés selon les besoins
 }
 
 /**
@@ -72,26 +89,65 @@ export class ZCreditAPI {
     transaction: TransactionDetails
   ): Promise<ZCreditResponse> {
     try {
+      // Conversion de l'amount de aggorot (centimes) à NIS avec 2 décimales comme attendu par l'API
+      const transactionSum = (transaction.amount / 100).toFixed(2);
+      
+      // Préparation des montants de paiements échelonnés si nécessaire
+      let firstPaymentSum = undefined;
+      let otherPaymentsSum = undefined;
+      
+      if (transaction.numOfPayments && transaction.numOfPayments > 1) {
+        if (transaction.firstPaymentSum && transaction.otherPaymentsSum) {
+          firstPaymentSum = (transaction.firstPaymentSum / 100).toFixed(2);
+          otherPaymentsSum = (transaction.otherPaymentsSum / 100).toFixed(2);
+        } else {
+          // Calcul automatique des montants pour paiements échelonnés égaux
+          const totalAmount = transaction.amount / 100;
+          const numPayments = transaction.numOfPayments;
+          
+          // Calcul du montant pour chaque paiement (sauf le premier)
+          const paymentAmount = Math.floor((totalAmount / numPayments) * 100) / 100;
+          otherPaymentsSum = paymentAmount.toFixed(2);
+          
+          // Le premier paiement prend le reste pour égaliser le montant total
+          const firstAmount = totalAmount - (paymentAmount * (numPayments - 1));
+          firstPaymentSum = firstAmount.toFixed(2);
+        }
+      }
+
       // Construction du payload selon la documentation Z-Credit
       const payload = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
         Track2: '',
         CardNumber: creditCard.cardNumber,
-        ExpDate_MMYY: creditCard.expDate,
         CVV: creditCard.cvv || '',
-        TransactionSum: transaction.amount,
-        J: 1, // 1 pour transaction standard
-        CreditType: transaction.creditType || 1,
-        NumOfPayments: transaction.numOfPayments || 1,
-        FirstPaymentSum: transaction.firstPaymentSum,
-        OtherPaymentsSum: transaction.otherPaymentsSum,
-        HolderID: creditCard.holderId || '',
-        CellPhone: '',
-        TransactionUniqueID: transaction.uniqueId || this.generateUniqueId(),
-        ApprovalNumber: '',
-        ParamX: transaction.description
+        ExpDate_MMYY: creditCard.expDate,
+        TransactionSum: transactionSum,
+        NumberOfPayments: transaction.numOfPayments ? transaction.numOfPayments.toString() : "1",
+        FirstPaymentSum: firstPaymentSum || "0",
+        OtherPaymentsSum: otherPaymentsSum || "0",
+        TransactionType: "01", // Transaction standard
+        CurrencyType: "1", // ILS
+        CreditType: transaction.creditType ? transaction.creditType.toString() : "1",
+        J: "0", // Transaction standard
+        IsCustomerPresent: "false",
+        AuthNum: "",
+        HolderID: creditCard.holderId || "",
+        ExtraData: "",
+        CustomerName: "",
+        CustomerAddress: "",
+        CustomerEmail: "",
+        PhoneNumber: "",
+        ItemDescription: transaction.description,
+        TransactionUniqueID: transaction.uniqueId || this.generateUniqueId()
       };
+
+      console.log('Envoi de requête à Z-Credit:', JSON.stringify({
+        url: `${this.config.apiUrl}/Transaction/CommitFullTransaction`,
+        ...payload,
+        Password: '******' // Masquer le mot de passe dans les logs
+      }));
 
       // Effectuer la requête HTTP vers l'API Z-Credit
       const response = await axios.post(
@@ -99,21 +155,41 @@ export class ZCreditAPI {
         payload,
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json; charset=utf-8'
           }
         }
       );
 
+      console.log('Réponse de Z-Credit:', JSON.stringify(response.data));
+
       // Vérifier la réponse
       if (response.data) {
-        return response.data as ZCreditResponse;
+        // Adapter la réponse pour compatibilité avec le code existant
+        const result = response.data as ZCreditResponse;
+        
+        // S'assurer que IsApproved est défini pour compatibilité
+        if (result.ReturnCode === 0 && !result.HasError) {
+          result.IsApproved = true;
+          result.ReturnValue = 0; // Pour compatibilité
+        } else {
+          result.IsApproved = false;
+          result.ReturnValue = result.ReturnCode || -1; // Pour compatibilité
+        }
+        
+        // Mapper CardNumberMask si besoin
+        if (!result.CardNumberMask && result.CardNumber) {
+          result.CardNumberMask = result.CardNumber;
+        }
+        
+        return result;
       }
 
       throw new Error('Réponse Z-Credit invalide');
     } catch (error) {
       console.error('Erreur lors du traitement de paiement Z-Credit:', error);
       if (axios.isAxiosError(error) && error.response) {
-        throw new Error(`Erreur Z-Credit: ${error.response.data?.ReturnMessage || 'Erreur inconnue'}`);
+        console.error('Détails de l\'erreur Z-Credit:', error.response.data);
+        throw new Error(`Erreur Z-Credit: ${error.response.data?.ReturnMessage || error.message || 'Erreur inconnue'}`);
       }
       throw error;
     }
@@ -188,20 +264,56 @@ export class ZCreditAPI {
     transaction: TransactionDetails
   ): Promise<ZCreditResponse> {
     try {
-      // Construction du payload pour le paiement par token
+      // Conversion de l'amount de aggorot (centimes) à NIS avec 2 décimales comme attendu par l'API
+      const transactionSum = (transaction.amount / 100).toFixed(2);
+      
+      // Préparation des montants de paiements échelonnés si nécessaire
+      let firstPaymentSum = undefined;
+      let otherPaymentsSum = undefined;
+      
+      if (transaction.numOfPayments && transaction.numOfPayments > 1) {
+        if (transaction.firstPaymentSum && transaction.otherPaymentsSum) {
+          firstPaymentSum = (transaction.firstPaymentSum / 100).toFixed(2);
+          otherPaymentsSum = (transaction.otherPaymentsSum / 100).toFixed(2);
+        } else {
+          // Calcul automatique des montants pour paiements échelonnés égaux
+          const totalAmount = transaction.amount / 100;
+          const numPayments = transaction.numOfPayments;
+          
+          // Calcul du montant pour chaque paiement (sauf le premier)
+          const paymentAmount = Math.floor((totalAmount / numPayments) * 100) / 100;
+          otherPaymentsSum = paymentAmount.toFixed(2);
+          
+          // Le premier paiement prend le reste pour égaliser le montant total
+          const firstAmount = totalAmount - (paymentAmount * (numPayments - 1));
+          firstPaymentSum = firstAmount.toFixed(2);
+        }
+      }
+      
+      // Construction du payload pour le paiement par token selon la documentation Z-Credit
       const payload = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
         CardNumber: token, // Utiliser le token au lieu du numéro de carte
-        TransactionSum: transaction.amount,
-        J: 1, // 1 pour transaction standard
-        CreditType: transaction.creditType || 1,
-        NumOfPayments: transaction.numOfPayments || 1,
-        FirstPaymentSum: transaction.firstPaymentSum,
-        OtherPaymentsSum: transaction.otherPaymentsSum,
-        TransactionUniqueID: transaction.uniqueId || this.generateUniqueId(),
-        ParamX: transaction.description
+        TransactionSum: transactionSum,
+        NumberOfPayments: transaction.numOfPayments ? transaction.numOfPayments.toString() : "1",
+        FirstPaymentSum: firstPaymentSum || "0",
+        OtherPaymentsSum: otherPaymentsSum || "0",
+        TransactionType: "01", // Transaction standard
+        CurrencyType: "1", // ILS
+        CreditType: transaction.creditType ? transaction.creditType.toString() : "1",
+        J: "0", // Transaction standard
+        IsCustomerPresent: "false",
+        HolderID: "",
+        ItemDescription: transaction.description,
+        TransactionUniqueID: transaction.uniqueId || this.generateUniqueId()
       };
+
+      console.log('Envoi de requête token à Z-Credit:', JSON.stringify({
+        url: `${this.config.apiUrl}/Transaction/CommitFullTransaction`,
+        ...payload,
+        Password: '******' // Masquer le mot de passe dans les logs
+      }));
 
       // Effectuer la requête HTTP vers l'API Z-Credit
       const response = await axios.post(
@@ -209,21 +321,41 @@ export class ZCreditAPI {
         payload,
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json; charset=utf-8'
           }
         }
       );
 
+      console.log('Réponse de Z-Credit (token):', JSON.stringify(response.data));
+
       // Vérifier la réponse
       if (response.data) {
-        return response.data as ZCreditResponse;
+        // Adapter la réponse pour compatibilité avec le code existant
+        const result = response.data as ZCreditResponse;
+        
+        // S'assurer que IsApproved est défini pour compatibilité
+        if (result.ReturnCode === 0 && !result.HasError) {
+          result.IsApproved = true;
+          result.ReturnValue = 0; // Pour compatibilité
+        } else {
+          result.IsApproved = false;
+          result.ReturnValue = result.ReturnCode || -1; // Pour compatibilité
+        }
+        
+        // Mapper CardNumberMask si besoin
+        if (!result.CardNumberMask && result.CardNumber) {
+          result.CardNumberMask = result.CardNumber;
+        }
+        
+        return result;
       }
 
       throw new Error('Réponse Z-Credit invalide');
     } catch (error) {
       console.error('Erreur lors du traitement de paiement par token:', error);
       if (axios.isAxiosError(error) && error.response) {
-        throw new Error(`Erreur Z-Credit: ${error.response.data?.ReturnMessage || 'Erreur inconnue'}`);
+        console.error('Détails de l\'erreur Z-Credit (token):', error.response.data);
+        throw new Error(`Erreur Z-Credit: ${error.response.data?.ReturnMessage || error.message || 'Erreur inconnue'}`);
       }
       throw error;
     }
@@ -352,5 +484,5 @@ export class ZCreditSimulationAPI extends ZCreditAPI {
 export const zcreditAPI = new ZCreditSimulationAPI({
   terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
   password: process.env.ZCREDIT_PASSWORD || '',
-  apiUrl: process.env.ZCREDIT_API_URL || 'https://secure.zcredit.co.il/WebService/SecurePayment.asmx'
+  apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
 }, false); // Mode simulation désactivé pour utiliser l'API réelle
