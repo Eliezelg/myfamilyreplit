@@ -155,8 +155,19 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Family member operations
-  async getFamilyMembers(familyId: number): Promise<FamilyMember[]> {
-    return db.select().from(familyMembers).where(eq(familyMembers.familyId, familyId));
+  async getFamilyMembers(familyId: number): Promise<(FamilyMember & { user?: User })[]> {
+    const members = await db.select({
+      member: familyMembers,
+      user: users
+    })
+    .from(familyMembers)
+    .leftJoin(users, eq(familyMembers.userId, users.id))
+    .where(eq(familyMembers.familyId, familyId));
+    
+    return members.map(m => ({
+      ...m.member,
+      user: m.user || undefined
+    }));
   }
   
   async addFamilyMember(familyId: number, member: InsertFamilyMember): Promise<FamilyMember> {

@@ -352,8 +352,8 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                         </div>
                       </div>
                       <div className="flex-grow">
-                        <p className="font-medium">משתמש</p>
-                        <p className="text-sm text-gray-500">{member.role}</p>
+                        <p className="font-medium">{member.user?.fullName || member.user?.username || "משתמש"}</p>
+                        <p className="text-sm text-gray-500">{member.role === "admin" ? "מנהל" : "חבר"}</p>
                       </div>
                       <div className="flex items-center">
                         <span className={`w-3 h-3 ${index === 0 ? 'bg-green-500' : 'bg-gray-300'} rounded-full mr-1`}></span>
