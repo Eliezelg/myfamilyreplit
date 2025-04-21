@@ -35,7 +35,7 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 
 // Schéma de validation pour le formulaire du profil
 const profileSchema = z.object({
@@ -71,7 +71,7 @@ type ChildFormValues = z.infer<typeof childSchema>;
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isAddChildDialogOpen, setIsAddChildDialogOpen] = useState(false);

@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import JoinFamilyPage from "@/pages/join-family-page";
+import ProfilePage from "@/pages/profile-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { LocaleProvider } from "./components/ui/locale-provider";
 import { AuthProvider } from "./hooks/use-auth";
@@ -15,6 +16,7 @@ function Router() {
   return (
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/profile" component={ProfilePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/join-family" component={JoinFamilyPage} />
       <Route component={NotFound} />
