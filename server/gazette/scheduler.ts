@@ -1,62 +1,159 @@
-import cron from 'node-cron';
-import { db } from '../db';
-import { families } from '@shared/schema';
-import { generateGazetteForFamily } from './pdf-generator';
-import { storage } from '../storage';
-import { log } from '../vite';
+import cron from "node-cron";
+import { format } from "date-fns";
+import { storage } from "../storage";
+import { generateGazettePDF, getUpcomingBirthdays } from "./pdf-generator";
+import { Family, Gazette } from "@shared/schema";
 
-// Planifier la génération des gazettes mensuelles
-// Exécuter à 00:05 le premier jour de chaque mois
+/**
+ * Planifie la génération automatique des gazettes
+ * - Exécuté le premier jour de chaque mois à 00:05
+ * - Génère une gazette pour chaque famille avec des photos du mois précédent
+ */
 export function scheduleGazetteGeneration() {
-  log('Démarrage du planificateur de génération de gazettes mensuelles', 'gazette');
-  
-  // '5 0 1 * *' = 5 minutes après minuit, le premier jour de chaque mois
-  cron.schedule('5 0 1 * *', async () => {
+  // Planifier la tâche pour le premier jour de chaque mois à 00:05 du matin
+  cron.schedule("5 0 1 * *", async () => {
     try {
-      log('Début de la génération des gazettes mensuelles', 'gazette');
+      console.log("[Gazette] Début de la génération automatique des gazettes mensuelles");
       
-      // Obtenir tous les ID de famille actifs
-      const allFamilies = await db.select({ id: families.id }).from(families);
+      // Obtenir la date du mois précédent (YYYY-MM)
+      const date = new Date();
+      date.setMonth(date.getMonth() - 1);
+      const previousMonth = format(date, "yyyy-MM");
       
-      // Obtenir le mois précédent au format YYYY-MM
-      const now = new Date();
-      now.setDate(1); // Premier jour du mois actuel
-      now.setHours(0, 0, 0, 0);
-      now.setMonth(now.getMonth() - 1); // Mois précédent
+      // Récupérer toutes les familles
+      const families = await getAllFamilies();
       
-      const year = now.getFullYear();
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const monthYear = `${year}-${month}`;
+      let successCount = 0;
+      let errorCount = 0;
       
-      log(`Génération des gazettes pour le mois: ${monthYear}`, 'gazette');
-      
-      // Générer une gazette pour chaque famille
-      for (const family of allFamilies) {
+      // Pour chaque famille, générer une gazette
+      for (const family of families) {
         try {
-          log(`Génération de la gazette pour la famille ID: ${family.id}`, 'gazette');
-          const result = await generateGazetteForFamily(family.id, monthYear);
-          log(`Gazette générée avec succès: ${result.photoCount} photos, ${result.birthdayCount} anniversaires`, 'gazette');
+          await generateGazetteForFamily(family.id, previousMonth);
+          successCount++;
         } catch (error) {
-          log(`Erreur lors de la génération de la gazette pour la famille ID: ${family.id}: ${error}`, 'gazette');
+          console.error(`[Gazette] Erreur lors de la génération pour la famille ${family.id}:`, error);
+          errorCount++;
         }
       }
       
-      log('Fin de la génération des gazettes mensuelles', 'gazette');
+      console.log(`[Gazette] Génération terminée: ${successCount} réussies, ${errorCount} échouées`);
     } catch (error) {
-      log(`Erreur lors de la génération des gazettes: ${error}`, 'gazette');
+      console.error("[Gazette] Erreur lors de la génération automatique des gazettes:", error);
     }
   });
+  
+  console.log("[Gazette] Planification des gazettes configurée: chaque mois le 1er à 00:05");
 }
 
-// Fonction pour générer une gazette à la demande
-export async function generateGazetteOnDemand(familyId: number, monthYear: string) {
+/**
+ * Récupère toutes les familles enregistrées dans le système
+ */
+async function getAllFamilies(): Promise<Family[]> {
   try {
-    log(`Génération de la gazette à la demande pour la famille ID: ${familyId}, mois: ${monthYear}`, 'gazette');
-    const result = await generateGazetteForFamily(familyId, monthYear);
-    log(`Gazette générée avec succès: ${result.photoCount} photos, ${result.birthdayCount} anniversaires`, 'gazette');
-    return result;
+    // Récupérer toutes les familles depuis la base de données
+    // Cette fonction n'existe pas encore dans notre interface IStorage, il faudra la créer si nécessaire
+    // Pour l'instant, nous allons utiliser une requête directe à la base de données
+    const families = await storage.db.query.families.findMany();
+    return families;
   } catch (error) {
-    log(`Erreur lors de la génération de la gazette à la demande: ${error}`, 'gazette');
+    console.error("[Gazette] Erreur lors de la récupération des familles:", error);
+    return [];
+  }
+}
+
+/**
+ * Génère une gazette pour une famille et un mois spécifique à la demande
+ */
+export async function generateGazetteOnDemand(familyId: number, monthYear: string): Promise<Gazette> {
+  try {
+    console.log(`[Gazette] Génération à la demande pour la famille ${familyId}, mois ${monthYear}`);
+    
+    return await generateGazetteForFamily(familyId, monthYear);
+  } catch (error) {
+    console.error(`[Gazette] Erreur lors de la génération à la demande pour famille ${familyId}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Génère une gazette pour une famille et un mois spécifique
+ */
+export async function generateGazetteForFamily(familyId: number, monthYear: string): Promise<Gazette> {
+  try {
+    // Vérifier si une gazette existe déjà pour ce mois et cette famille
+    let gazette = await storage.getFamilyGazetteByMonthYear(familyId, monthYear);
+    
+    // Récupérer les informations de la famille
+    const family = await storage.getFamily(familyId);
+    if (!family) {
+      throw new Error(`Famille ${familyId} non trouvée`);
+    }
+    
+    // Récupérer les photos du mois pour cette famille
+    const photos = await storage.getFamilyPhotos(familyId, monthYear);
+    
+    // Si aucune photo, ne pas générer de gazette
+    if (photos.length === 0) {
+      throw new Error(`Aucune photo disponible pour la famille ${familyId} au mois ${monthYear}`);
+    }
+    
+    // Récupérer les détails utilisateur pour chaque photo
+    const photosWithUser = await Promise.all(
+      photos.map(async (photo) => {
+        const user = await storage.getUser(photo.userId);
+        return { ...photo, user };
+      })
+    );
+    
+    // Récupérer les anniversaires du mois
+    const birthdays = await getUpcomingBirthdays(familyId, monthYear);
+    
+    // Générer le PDF
+    const result = await generateGazettePDF(photosWithUser, family, birthdays, monthYear);
+    
+    // Mettre à jour ou créer l'enregistrement de la gazette
+    if (gazette) {
+      gazette = await storage.updateGazette(gazette.id, {
+        filePath: result.pdfPath,
+        status: "complete",
+        photoCount: result.photoCount,
+        birthdayCount: result.birthdayCount
+      });
+    } else {
+      gazette = await storage.createGazette({
+        familyId,
+        monthYear,
+        filePath: result.pdfPath,
+        status: "complete",
+        photoCount: result.photoCount,
+        birthdayCount: result.birthdayCount
+      });
+    }
+    
+    console.log(`[Gazette] Génération réussie pour famille ${familyId}, mois ${monthYear}`);
+    return gazette;
+  } catch (error) {
+    // Si une erreur survient, créer une gazette avec statut "error" si elle n'existe pas déjà
+    console.error(`[Gazette] Erreur de génération pour famille ${familyId}, mois ${monthYear}:`, error);
+    
+    const existingGazette = await storage.getFamilyGazetteByMonthYear(familyId, monthYear);
+    if (!existingGazette) {
+      await storage.createGazette({
+        familyId,
+        monthYear,
+        status: "error",
+        errorMessage: error.message,
+        photoCount: 0,
+        birthdayCount: 0
+      });
+    } else {
+      await storage.updateGazette(existingGazette.id, {
+        status: "error",
+        errorMessage: error.message
+      });
+    }
+    
     throw error;
   }
 }

@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import fs from "fs";
 import express from "express";
+import { registerGazetteRoutes } from "./gazette/routes";
+import { scheduleGazetteGeneration } from "./gazette/scheduler";
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -741,8 +743,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Register gazette routes
+  registerGazetteRoutes(app);
+  
   // Create HTTP server
   const httpServer = createServer(app);
+  
+  // Schedule gazette generation
+  scheduleGazetteGeneration();
 
   return httpServer;
 }
