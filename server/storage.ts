@@ -359,7 +359,7 @@ export class DatabaseStorage implements IStorage {
           eq(photos.monthYear, monthYear)
         )
       )
-      .orderBy(desc(photos.uploadedAt));
+      .orderBy(photos.uploadedAt, "desc");
   }
   
   async addPhoto(photo: InsertPhoto): Promise<Photo> {
@@ -377,7 +377,7 @@ export class DatabaseStorage implements IStorage {
     return db.select()
       .from(gazettes)
       .where(eq(gazettes.familyId, familyId))
-      .orderBy(desc(gazettes.createdAt));
+      .orderBy(gazettes.createdAt);
   }
   
   async getFamilyGazetteByMonthYear(familyId: number, monthYear: string): Promise<Gazette | undefined> {
@@ -447,7 +447,7 @@ export class DatabaseStorage implements IStorage {
     return db.select()
       .from(fundTransactions)
       .where(eq(fundTransactions.familyFundId, fundId))
-      .orderBy(desc(fundTransactions.transactionDate));
+      .orderBy(fundTransactions.createdAt);
   }
   
   async addFundTransaction(transaction: InsertFundTransaction): Promise<FundTransaction> {
@@ -487,7 +487,7 @@ export class DatabaseStorage implements IStorage {
           gt(invitations.expiresAt, new Date())
         )
       )
-      .orderBy(desc(invitations.createdAt))
+      .orderBy(invitations.createdAt)
       .limit(1);
       
     return invitation || undefined;
