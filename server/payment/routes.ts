@@ -2,6 +2,7 @@ import { Express, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { storage } from '../storage';
 import { paymentService } from './payment-service';
+import { zcreditAPI } from './zcredit-api';
 
 // Schéma de validation pour les détails de la carte
 const creditCardSchema = z.object({
@@ -201,7 +202,7 @@ export function registerPaymentRoutes(app: Express) {
         try {
           // Traiter le paiement directement (sans cascade, car c'est un dépôt)
           if (cardToken) {
-            const creditResponse = await paymentService['zcreditAPI'].processTokenPayment(
+            const creditResponse = await zcreditAPI.processTokenPayment(
               cardToken,
               {
                 amount,
@@ -210,12 +211,12 @@ export function registerPaymentRoutes(app: Express) {
             );
 
             paymentResult = {
-              success: paymentService['zcreditAPI'].isSuccessResponse(creditResponse),
+              success: zcreditAPI.isSuccessResponse(creditResponse),
               referenceNumber: creditResponse.ReferenceNumber,
               cardMask: creditResponse.CardNumberMask
             };
           } else if (cardDetails) {
-            const creditResponse = await paymentService['zcreditAPI'].processPayment(
+            const creditResponse = await zcreditAPI.processPayment(
               cardDetails,
               {
                 amount,
@@ -224,7 +225,7 @@ export function registerPaymentRoutes(app: Express) {
             );
 
             paymentResult = {
-              success: paymentService['zcreditAPI'].isSuccessResponse(creditResponse),
+              success: zcreditAPI.isSuccessResponse(creditResponse),
               referenceNumber: creditResponse.ReferenceNumber,
               cardMask: creditResponse.CardNumberMask
             };
