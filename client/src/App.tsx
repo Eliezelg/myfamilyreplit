@@ -8,7 +8,7 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import JoinFamilyPage from "@/pages/join-family-page";
 import ProfilePage from "@/pages/profile-page";
-import TestUpload from "@/components/test-upload";
+import TestUploadPage from "@/pages/test-upload-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { LocaleProvider } from "./components/ui/locale-provider";
 import { AuthProvider } from "./hooks/use-auth";
@@ -20,7 +20,7 @@ function Router() {
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/join-family" component={JoinFamilyPage} />
-      <Route path="/test-upload" component={TestUpload} />
+      <Route path="/test-upload" component={TestUploadPage} />
       <Route component={NotFound} />
     </Switch>
   );
