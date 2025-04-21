@@ -353,4 +353,4 @@ export const zcreditAPI = new ZCreditSimulationAPI({
   terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
   password: process.env.ZCREDIT_PASSWORD || '',
   apiUrl: process.env.ZCREDIT_API_URL || 'https://secure.zcredit.co.il/WebService/SecurePayment.asmx'
-}, process.env.NODE_ENV === 'development');
+}, false); // Mode simulation désactivé pour utiliser l'API réelle

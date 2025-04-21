@@ -325,6 +325,7 @@ export class PaymentService {
       'התקשר לחברת האשראי': 'Contactez la société de carte de crédit',
       'כרטיס האשראי לא תקין': 'La carte de crédit n\'est pas valide',
       'עסקה לא אושרה': 'Transaction non approuvée',
+      'העסקה לא אושרה': 'La transaction n\'a pas été approuvée',
       'העסקה נדחתה': 'Transaction refusée',
       'תוקף הכרטיס פג': 'La carte a expiré',
       'מספר תשלומים לא חוקי': 'Nombre de paiements non valide',
