@@ -20,10 +20,12 @@ interface UploadModalProps {
   familyId: number;
 }
 
-interface FileWithPreview extends File {
+// Utiliser une structure simple pour éviter les problèmes de types
+interface FileWithPreview {
+  file: File;
   id: string;
   preview: string;
-  caption?: string;
+  caption: string;
 }
 
 export default function UploadModal({ isOpen, onClose, familyId }: UploadModalProps) {
@@ -42,13 +44,12 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
       return;
     }
     
-    const newFiles = acceptedFiles.map(file => 
-      Object.assign(file, {
-        id: Math.random().toString(36).substring(2),
-        preview: URL.createObjectURL(file),
-        caption: "",
-      })
-    );
+    const newFiles = acceptedFiles.map(file => ({
+      file,
+      id: Math.random().toString(36).substring(2),
+      preview: URL.createObjectURL(file),
+      caption: "",
+    }));
     
     setFiles((prev) => [...prev, ...newFiles]);
   }, [files.length, toast]);
@@ -67,40 +68,45 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
   };
   
   const updateCaption = (id: string, caption: string) => {
-    setFiles(files.map(file => 
-      file.id === id ? { ...file, caption } : file
-    ));
+    setFiles(prevFiles => 
+      prevFiles.map(fileObj => 
+        fileObj.id === id 
+          ? { ...fileObj, caption } 
+          : fileObj
+      )
+    );
   };
   
   const uploadMutation = useMutation({
     mutationFn: async () => {
       // Create FormData for each file
-      const uploads = files.map(async (fileWithPreview) => {
-        // Créer un nouveau blob à partir du fichier original pour garantir la compatibilité
-        // On utilise le fichier natif sans propriétés ajoutées
-        const formData = new FormData();
-        
-        // Important: Utiliser le File original directement, pas un blob dérivé
-        formData.append("file", fileWithPreview);
-        formData.append("caption", fileWithPreview.caption || "");
-        formData.append("familyId", familyId.toString());
-        
-        console.log("Uploading file:", fileWithPreview.name, "Size:", fileWithPreview.size);
-        
-        // Utiliser fetch directement car apiRequest ne gère pas FormData correctement
-        const res = await fetch('/api/photos/upload', {
-          method: 'POST',
-          body: formData,
-          credentials: 'include' // Nécessaire pour envoyer les cookies d'authentification
-        });
-        
-        if (!res.ok) {
-          const error = await res.text();
-          console.error("Upload failed:", error);
-          throw new Error(error);
+      const uploads = files.map(async (fileObj) => {
+        try {
+          const formData = new FormData();
+          formData.append("file", fileObj.file);
+          formData.append("caption", fileObj.caption);
+          formData.append("familyId", familyId.toString());
+          
+          console.log("Uploading file:", fileObj.file.name, "Size:", fileObj.file.size, "Caption:", fileObj.caption);
+          
+          // Utiliser fetch directement pour FormData
+          const res = await fetch('/api/photos/upload', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+          });
+          
+          if (!res.ok) {
+            const error = await res.text();
+            console.error("Upload failed:", error);
+            throw new Error(error);
+          }
+          
+          return res.json();
+        } catch (error) {
+          console.error("Error uploading file:", error);
+          throw error;
         }
-        
-        return res.json();
       });
       
       // Upload all files
@@ -208,7 +214,7 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
                       >
                         הסר
                       </Button>
-                      <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
+                      <span className="text-xs text-gray-500">{formatFileSize(file.file.size)}</span>
                     </div>
                   </div>
                 ))}
