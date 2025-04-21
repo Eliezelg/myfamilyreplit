@@ -91,7 +91,12 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    // Recherche insensible à la casse en utilisant SQL ILIKE
+    const lowercaseUsername = username.toLowerCase();
+    const allUsers = await db.select().from(users);
+    
+    // Comparer manuellement sans tenir compte de la casse
+    const user = allUsers.find(u => u.username.toLowerCase() === lowercaseUsername);
     return user || undefined;
   }
   

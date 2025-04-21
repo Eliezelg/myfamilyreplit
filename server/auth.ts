@@ -105,21 +105,28 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const existingUser = await storage.getUserByUsername(req.body.username);
+      // Normaliser le nom d'utilisateur pour la cohérence
+      const normalizedUsername = req.body.username.trim();
+      
+      const existingUser = await storage.getUserByUsername(normalizedUsername);
       if (existingUser) {
         return res.status(400).send("שם המשתמש כבר קיים במערכת");
       }
 
       const user = await storage.createUser({
         ...req.body,
+        username: normalizedUsername,
         password: await hashPassword(req.body.password),
       });
+
+      console.log(`Nouvel utilisateur créé: ${user.username} (ID: ${user.id})`);
 
       req.login(user, (err) => {
         if (err) return next(err);
         res.status(201).json(user);
       });
     } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error);
       next(error);
     }
   });
