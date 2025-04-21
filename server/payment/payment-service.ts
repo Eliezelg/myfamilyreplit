@@ -333,6 +333,11 @@ export class PaymentService {
       'סכום העסקה חורג מהמותר': 'Le montant de la transaction dépasse la limite autorisée',
       'תאריך תוקף לא במבנה תקין': 'La date d\'expiration n\'est pas dans un format valide'
     };
+    
+    // Recherche par substring pour les messages d'erreur contenant des numéros de téléphone ou autres détails
+    if (errorMessage.includes('נא להתקשר לקבלת אישור טלפוני')) {
+      return 'Une autorisation téléphonique est requise. Veuillez contacter le service de paiement.';
+    }
 
     // Si le message existe dans notre mapping, retourner la traduction
     if (errorMessage in errorTranslations) {
