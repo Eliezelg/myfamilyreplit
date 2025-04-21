@@ -116,32 +116,32 @@ export class ZCreditAPI {
       }
 
       // Construction du payload selon la documentation Z-Credit
-      const payload = {
+      // Inclusion des paramètres obligatoires uniquement, en suivant strictement la documentation
+      const payload: Record<string, string> = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
-        Track2: '',
         CardNumber: creditCard.cardNumber,
-        CVV: creditCard.cvv || '',
         ExpDate_MMYY: this.formatExpDate(creditCard.expDate),
         TransactionSum: transactionSum,
+        CVV: creditCard.cvv || '',
         NumberOfPayments: transaction.numOfPayments ? transaction.numOfPayments.toString() : "1",
-        FirstPaymentSum: firstPaymentSum || "0",
-        OtherPaymentsSum: otherPaymentsSum || "0",
-        TransactionType: "01", // Transaction standard
-        CurrencyType: "1", // ILS
         CreditType: transaction.creditType ? transaction.creditType.toString() : "1",
+        CurrencyType: "1", // ILS (shekels)
+        TransactionType: "01", // Transaction standard
         J: "0", // Transaction standard
-        IsCustomerPresent: "false",
-        AuthNum: "",
-        HolderID: creditCard.holderId || "",
-        ExtraData: "",
-        CustomerName: "",
-        CustomerAddress: "",
-        CustomerEmail: "",
-        PhoneNumber: "",
-        ItemDescription: transaction.description,
+        ItemDescription: transaction.description || "Paiement MyFamily",
         TransactionUniqueID: transaction.uniqueId || this.generateUniqueId()
       };
+      
+      // Ajouter les paramètres conditionnels uniquement lorsqu'ils sont nécessaires
+      if (transaction.numOfPayments && transaction.numOfPayments > 1) {
+        payload["FirstPaymentSum"] = firstPaymentSum || "0";
+        payload["OtherPaymentsSum"] = otherPaymentsSum || "0";
+      }
+      
+      if (creditCard.holderId) {
+        payload["HolderID"] = creditCard.holderId;
+      }
 
       console.log('Envoi de requête à Z-Credit:', JSON.stringify({
         url: `${this.config.apiUrl}/Transaction/CommitFullTransaction`,
@@ -306,23 +306,25 @@ export class ZCreditAPI {
       }
       
       // Construction du payload pour le paiement par token selon la documentation Z-Credit
-      const payload = {
+      const payload: Record<string, string> = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
         CardNumber: token, // Utiliser le token au lieu du numéro de carte
         TransactionSum: transactionSum,
         NumberOfPayments: transaction.numOfPayments ? transaction.numOfPayments.toString() : "1",
-        FirstPaymentSum: firstPaymentSum || "0",
-        OtherPaymentsSum: otherPaymentsSum || "0",
-        TransactionType: "01", // Transaction standard
-        CurrencyType: "1", // ILS
         CreditType: transaction.creditType ? transaction.creditType.toString() : "1",
+        CurrencyType: "1", // ILS (shekels)
+        TransactionType: "01", // Transaction standard
         J: "0", // Transaction standard
-        IsCustomerPresent: "false",
-        HolderID: "",
-        ItemDescription: transaction.description,
+        ItemDescription: transaction.description || "Paiement MyFamily",
         TransactionUniqueID: transaction.uniqueId || this.generateUniqueId()
       };
+      
+      // Ajouter les paramètres conditionnels uniquement lorsqu'ils sont nécessaires
+      if (transaction.numOfPayments && transaction.numOfPayments > 1) {
+        payload["FirstPaymentSum"] = firstPaymentSum || "0";
+        payload["OtherPaymentsSum"] = otherPaymentsSum || "0";
+      }
 
       console.log('Envoi de requête token à Z-Credit:', JSON.stringify({
         url: `${this.config.apiUrl}/Transaction/CommitFullTransaction`,
