@@ -18,14 +18,29 @@ const scryptAsync = promisify(scrypt);
 async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+  const hashedPassword = `${buf.toString("hex")}.${salt}`;
+  console.log(`Mot de passe haché: ${hashedPassword.substring(0, 10)}...`);
+  return hashedPassword;
 }
 
 async function comparePasswords(supplied: string, stored: string) {
+  console.log(`Comparaison de mot de passe: ${supplied} avec ${stored.substring(0, 10)}...`);
   const [hashed, salt] = stored.split(".");
+  
+  if (!hashed || !salt) {
+    console.error(`Format de mot de passe invalide: ${stored}`);
+    return false;
+  }
+  
+  console.log(`Sel extrait: ${salt.substring(0, 5)}...`);
+  
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  
+  const result = timingSafeEqual(hashedBuf, suppliedBuf);
+  console.log(`Résultat de la comparaison: ${result}`);
+  
+  return result;
 }
 
 export function setupAuth(app: Express) {
@@ -49,13 +64,30 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        console.log(`Tentative de connexion pour l'utilisateur: ${username}`);
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
+        
+        if (!user) {
+          console.log(`Utilisateur non trouvé: ${username}`);
+          return done(null, false);
+        }
+        
+        // Vérifier le format du mot de passe stocké
+        if (!user.password.includes('.')) {
+          console.log(`Format de mot de passe invalide pour l'utilisateur: ${username}`);
+          return done(null, false);
+        }
+        
+        const isPasswordValid = await comparePasswords(password, user.password);
+        console.log(`Vérification du mot de passe pour ${username}: ${isPasswordValid ? 'réussie' : 'échouée'}`);
+        
+        if (!isPasswordValid) {
           return done(null, false);
         } else {
           return done(null, user);
         }
       } catch (error) {
+        console.error('Erreur d\'authentification:', error);
         return done(error);
       }
     }),

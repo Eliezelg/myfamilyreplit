@@ -13,9 +13,10 @@ import {
 import { db } from "./db";
 import { eq, and, desc, gt } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PgSession = connectPgSimple(session);
 
 export interface IStorage {
   // Session store
@@ -76,8 +77,10 @@ export class DatabaseStorage implements IStorage {
   sessionStore: any;
   
   constructor() {
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000, // prune expired entries every 24h
+    this.sessionStore = new PgSession({
+      pool,
+      createTableIfMissing: true,
+      tableName: 'session' // Nom de la table pour les sessions
     });
   }
   
