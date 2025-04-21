@@ -37,6 +37,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      // Vider tous les caches précédents pour assurer une isolation complète entre utilisateurs
+      queryClient.removeQueries({ queryKey: ["/api/families"] });
+      queryClient.removeQueries({ predicate: (query) => {
+        const queryKey = Array.isArray(query.queryKey) ? query.queryKey[0] : query.queryKey;
+        return typeof queryKey === 'string' && queryKey.startsWith("/api/families/");
+      }});
+      
+      // Définir l'utilisateur actuel
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "התחברת בהצלחה",
@@ -58,6 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
+      // Vider tous les caches précédents pour assurer une isolation complète entre utilisateurs
+      queryClient.removeQueries({ queryKey: ["/api/families"] });
+      queryClient.removeQueries({ predicate: (query) => {
+        const queryKey = Array.isArray(query.queryKey) ? query.queryKey[0] : query.queryKey;
+        return typeof queryKey === 'string' && queryKey.startsWith("/api/families/");
+      }});
+      
+      // Définir l'utilisateur actuel
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "נרשמת בהצלחה",
@@ -78,7 +94,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/logout");
     },
     onSuccess: () => {
+      // Vider le cache utilisateur
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Vider le cache des familles et des données associées
+      queryClient.removeQueries({ queryKey: ["/api/families"] });
+      // Vider tous les caches qui commencent par "/api/families/"
+      queryClient.removeQueries({ predicate: (query) => {
+        const queryKey = Array.isArray(query.queryKey) ? query.queryKey[0] : query.queryKey;
+        return typeof queryKey === 'string' && queryKey.startsWith("/api/families/");
+      }});
+      
       toast({
         title: "התנתקת בהצלחה",
         description: "להתראות!",
