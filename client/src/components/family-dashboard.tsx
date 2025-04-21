@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient, User } from "@shared/schema";
 import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
@@ -54,6 +55,11 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   // Recipients query for this family
   const { data: recipients } = useQuery<Recipient[]>({
     queryKey: [`/api/families/${familyId}/recipients`],
+  });
+  
+  // Gazettes query for this family
+  const { data: gazettes } = useQuery({
+    queryKey: [`/api/families/${familyId}/gazettes`],
   });
 
   // Helper function to format date
