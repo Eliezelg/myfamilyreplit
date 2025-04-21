@@ -150,14 +150,11 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
         familyId,
         monthYear,
         status: "error",
-        errorMessage: error.message,
-        photoCount: 0,
-        birthdayCount: 0
+        errorMessage: error.message
       });
     } else {
       await storage.updateGazette(existingGazette.id, {
-        status: "error",
-        errorMessage: error.message
+        status: "error"
       });
     }
     

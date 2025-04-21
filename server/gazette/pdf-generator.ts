@@ -18,8 +18,6 @@ interface BirthdayEvent {
 export interface GazetteGenerationResult {
   pdfPath: string;
   monthYear: string;
-  photoCount: number;
-  birthdayCount: number;
 }
 
 // Constantes pour les chemins de fichiers
@@ -94,9 +92,7 @@ export async function generateGazettePDF(
 
   return {
     pdfPath: relativePath,
-    monthYear,
-    photoCount: photos.length,
-    birthdayCount: birthdays.length
+    monthYear
   };
 }
 
