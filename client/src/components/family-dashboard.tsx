@@ -31,6 +31,42 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   const [isGeneratingGazette, setIsGeneratingGazette] = useState(false);
   const { toast } = useToast();
   
+  // Mutation pour générer une gazette
+  const generateGazetteMutation = useMutation({
+    mutationFn: async (monthYear: string) => {
+      const response = await apiRequest('POST', `/api/families/${familyId}/gazettes/generate`, { monthYear });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to generate gazette");
+      }
+      return await response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Gazette générée avec succès",
+        description: "La gazette a été générée et est maintenant disponible",
+        variant: "default",
+      });
+      setIsGeneratingGazette(false);
+      // Invalider la requête des gazettes pour rafraîchir les données
+      queryClient.invalidateQueries({ queryKey: [`/api/families/${familyId}/gazettes`] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur lors de la génération",
+        description: error.message || "Une erreur est survenue lors de la génération de la gazette",
+        variant: "destructive",
+      });
+      setIsGeneratingGazette(false);
+    }
+  });
+  
+  // Fonction pour gérer la génération d'une gazette
+  const handleGenerateGazette = () => {
+    setIsGeneratingGazette(true);
+    generateGazetteMutation.mutate(currentMonthYear);
+  };
+  
   // Family data query
   const { data: family } = useQuery<Family>({
     queryKey: [`/api/families/${familyId}`],
@@ -180,14 +216,46 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   </svg>
                   העלה תמונות
                 </Button>
-                <Button variant="outline" className="gap-2">
-                  <Eye className="w-5 h-5" />
-                  תצוגה מקדימה
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  disabled={isGeneratingGazette}
+                  onClick={handleGenerateGazette}
+                >
+                  {isGeneratingGazette ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      מייצר גזטה...
+                    </>
+                  ) : (
+                    <>
+                      <Newspaper className="h-4 w-4" />
+                      הפק גזטה לחודש {getCurrentMonth()}
+                    </>
+                  )}
                 </Button>
-                <Button variant="ghost" className="gap-2">
-                  <HelpCircle className="w-5 h-5" />
-                  מידע
-                </Button>
+                <Select
+                  value={currentMonthYear}
+                  onValueChange={setCurrentMonthYear}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue placeholder="בחר חודש" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 6 }, (_, index) => {
+                      const date = new Date();
+                      date.setMonth(date.getMonth() - index);
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                      const value = `${year}-${month}`;
+                      return (
+                        <SelectItem key={value} value={value}>
+                          {format(date, 'MMMM yyyy', { locale: fr })}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -421,6 +489,64 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     </div>
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Available Gazettes */}
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">גזטות זמינות</h3>
+                <Button variant="link" className="gap-1 p-0">
+                  הצג הכל
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </Button>
+              </div>
+              
+              <div className="space-y-3">
+                {gazettes && gazettes.length > 0 ? (
+                  gazettes.slice(0, 3).map((gazette) => (
+                    <div key={gazette.id} className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className="h-10 w-10 bg-blue-100 rounded-md flex items-center justify-center text-blue-600">
+                          <FileDown className="h-5 w-5" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-medium">גזטה {gazette.monthYear}</span>
+                          <span className="text-xs text-gray-500">{gazette.photoCount} תמונות</span>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="gap-1"
+                        onClick={() => window.open(`/api/families/${familyId}/gazettes/${gazette.id}/download`)}
+                      >
+                        <Download className="h-4 w-4" />
+                        הורד
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500">אין גזטות זמינות</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={handleGenerateGazette}
+                      disabled={isGeneratingGazette}
+                    >
+                      {isGeneratingGazette ? 
+                        <><RefreshCw className="h-4 w-4 animate-spin mr-2" /> מייצר גזטה...</> : 
+                        <><Newspaper className="h-4 w-4 mr-2" /> יצירת גזטה</>
+                      }
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
