@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient, User } from "@shared/schema";
-import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus, Download, RefreshCw, FileDown, Newspaper } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import InviteFamilyModal from "./invite-family-modal";
+import { format, parse } from "date-fns";
+import { fr } from "date-fns/locale";
+import { useToast } from "@/hooks/use-toast";
 
 // Type étendu pour inclure les données utilisateur
 interface FamilyMemberWithUser extends FamilyMember {
@@ -21,6 +24,12 @@ interface FamilyDashboardProps {
 
 export default function FamilyDashboard({ familyId, familyName, onUploadClick }: FamilyDashboardProps) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [currentMonthYear, setCurrentMonthYear] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+  const [isGeneratingGazette, setIsGeneratingGazette] = useState(false);
+  const { toast } = useToast();
   
   // Family data query
   const { data: family } = useQuery<Family>({
