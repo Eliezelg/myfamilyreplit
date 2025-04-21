@@ -96,10 +96,11 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
             credentials: 'include'
           });
           
+          // Ajouter un log détaillé de l'erreur si la réponse n'est pas ok
           if (!res.ok) {
-            const error = await res.text();
-            console.error("Upload failed:", error);
-            throw new Error(error);
+            const errorText = await res.text();
+            console.error(`Upload failed with status ${res.status}: ${errorText}`);
+            throw new Error(errorText || `Upload failed with status ${res.status}`);
           }
           
           return res.json();
