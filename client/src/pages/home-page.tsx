@@ -7,13 +7,32 @@ import MobileSidebar from "../components/mobile-sidebar";
 import UploadModal from "../components/upload-modal";
 import CreateFamilyForm from "../components/create-family-form";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
+import { Link } from "wouter";
+import { Loader2, PlusCircle, UserPlus, ChevronDown, Home } from "lucide-react";
 import { Family } from "@shared/schema";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription,
+  DialogFooter 
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function HomePage() {
   const { user } = useAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isAddFamilyModalOpen, setIsAddFamilyModalOpen] = useState(false);
   const [selectedFamilyId, setSelectedFamilyId] = useState<number | null>(null);
   
   // Query to get families for the current user
@@ -26,6 +45,14 @@ export default function HomePage() {
   const activeFamily = selectedFamilyId
     ? families?.find(f => f.id === selectedFamilyId)
     : families?.[0];
+
+  const handleFamilySelect = (familyId: number) => {
+    setSelectedFamilyId(familyId);
+  };
+
+  const handleAddFamilySuccess = () => {
+    setIsAddFamilyModalOpen(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-light text-neutral-dark">
@@ -71,12 +98,61 @@ export default function HomePage() {
             </div>
           </div>
         ) : (
-          // User has families, show the dashboard
-          <FamilyDashboard 
-            familyId={activeFamily?.id || 0}
-            familyName={activeFamily?.name || ""}
-            onUploadClick={() => setIsUploadModalOpen(true)}
-          />
+          // User has families
+          <div>
+            {/* Family Selector and Actions */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+              <div className="flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2">
+                      <Home className="h-4 w-4" />
+                      <span className="font-medium">{activeFamily?.name || "בחר משפחה"}</span>
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-56">
+                    {families?.map((family) => (
+                      <DropdownMenuItem 
+                        key={family.id}
+                        onClick={() => handleFamilySelect(family.id)}
+                        className={family.id === activeFamily?.id ? "bg-gray-100" : ""}
+                      >
+                        {family.name}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setIsAddFamilyModalOpen(true)}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      הוסף משפחה חדשה
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsAddFamilyModalOpen(true)}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  צור משפחה
+                </Button>
+                <Link href="/join-family">
+                  <Button variant="outline">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    הצטרף למשפחה
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            
+            {/* Dashboard for the selected family */}
+            {activeFamily && (
+              <FamilyDashboard 
+                familyId={activeFamily.id}
+                familyName={activeFamily.name}
+                onUploadClick={() => setIsUploadModalOpen(true)}
+              />
+            )}
+          </div>
         )}
       </main>
       
@@ -86,8 +162,11 @@ export default function HomePage() {
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
         user={user}
+        onFamilySelect={handleFamilySelect}
+        onAddFamilyClick={() => setIsAddFamilyModalOpen(true)}
       />
       
+      {/* Upload Modal */}
       {activeFamily && (
         <UploadModal 
           isOpen={isUploadModalOpen}
@@ -95,6 +174,50 @@ export default function HomePage() {
           familyId={activeFamily.id}
         />
       )}
+      
+      {/* Add Family Modal */}
+      <Dialog open={isAddFamilyModalOpen} onOpenChange={setIsAddFamilyModalOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">הוספת משפחה</DialogTitle>
+            <DialogDescription>
+              צור משפחה חדשה או הצטרף למשפחה קיימת
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Tabs defaultValue="create" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="create">צור משפחה חדשה</TabsTrigger>
+              <TabsTrigger value="join">הצטרף למשפחה קיימת</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="create" className="mt-6">
+              <CreateFamilyForm onSuccess={handleAddFamilySuccess} />
+            </TabsContent>
+            
+            <TabsContent value="join" className="mt-6">
+              <div className="text-center py-4">
+                <h3 className="text-lg font-medium mb-4">הזן קוד הזמנה שקיבלת</h3>
+                <p className="text-gray-600 mb-6">
+                  יש לך קוד הזמנה? הצטרף למשפחה קיימת
+                </p>
+                <Link href="/join-family">
+                  <Button>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    המשך להצטרפות
+                  </Button>
+                </Link>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddFamilyModalOpen(false)}>
+              סגור
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
