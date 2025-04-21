@@ -191,7 +191,9 @@ export class PaymentService {
             );
           }
 
-          throw new Error(`Échec du paiement par carte: ${creditResponse.ReturnMessage || 'Erreur inconnue'}`);
+          // Traduire les messages d'erreur hébreux en français pour une meilleure expérience utilisateur
+          const errorMessage = this.translateErrorMessage(creditResponse.ReturnMessage || 'Erreur inconnue');
+          throw new Error(`Échec du paiement par carte: ${errorMessage}`);
         }
       }
 
@@ -311,6 +313,37 @@ export class PaymentService {
     const maskedPart = 'X'.repeat(cardNumber.length - 8);
     
     return `${firstDigits}${maskedPart}${lastDigits}`;
+  }
+
+  /**
+   * Traduit les messages d'erreur hébreux en français
+   */
+  private translateErrorMessage(errorMessage: string): string {
+    // Mapping des messages d'erreur Z-Credit
+    const errorTranslations: Record<string, string> = {
+      'המסוף אינו קיים': 'Le terminal n\'existe pas',
+      'התקשר לחברת האשראי': 'Contactez la société de carte de crédit',
+      'כרטיס האשראי לא תקין': 'La carte de crédit n\'est pas valide',
+      'עסקה לא אושרה': 'Transaction non approuvée',
+      'העסקה נדחתה': 'Transaction refusée',
+      'תוקף הכרטיס פג': 'La carte a expiré',
+      'מספר תשלומים לא חוקי': 'Nombre de paiements non valide',
+      'שגיאת תקשורת': 'Erreur de communication',
+      'סכום העסקה חורג מהמותר': 'Le montant de la transaction dépasse la limite autorisée'
+    };
+
+    // Si le message existe dans notre mapping, retourner la traduction
+    if (errorMessage in errorTranslations) {
+      return errorTranslations[errorMessage];
+    }
+
+    // Si on est en mode développement, ajouter le message original
+    if (process.env.NODE_ENV === 'development') {
+      return `Erreur non traduite (${errorMessage})`;
+    }
+
+    // En production, retourner un message générique
+    return 'Erreur lors du traitement du paiement';
   }
 }
 

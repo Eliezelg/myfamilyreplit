@@ -230,9 +230,127 @@ export class ZCreditAPI {
   }
 }
 
+/**
+ * Classe pour simuler l'API Z-Credit (utile pour les tests)
+ */
+export class ZCreditSimulationAPI extends ZCreditAPI {
+  private simulationMode: boolean = true;
+
+  constructor(config: ZCreditConfig, simulationMode: boolean = true) {
+    super(config);
+    this.simulationMode = simulationMode;
+    if (this.simulationMode) {
+      console.log('Z-Credit API en mode simulation');
+    }
+  }
+
+  /**
+   * Simule un traitement de paiement
+   */
+  async processPayment(
+    creditCard: CreditCardDetails,
+    transaction: TransactionDetails
+  ): Promise<ZCreditResponse> {
+    if (!this.simulationMode) {
+      return super.processPayment(creditCard, transaction);
+    }
+
+    // Simuler un délai de traitement
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Simuler une réponse
+    return this.simulateResponse(creditCard, transaction);
+  }
+
+  /**
+   * Simule un paiement avec token
+   */
+  async processTokenPayment(
+    token: string,
+    transaction: TransactionDetails
+  ): Promise<ZCreditResponse> {
+    if (!this.simulationMode) {
+      return super.processTokenPayment(token, transaction);
+    }
+
+    // Simuler un délai de traitement
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Simuler une réponse
+    const dummyCard: CreditCardDetails = {
+      cardNumber: '4111111111111111',
+      expDate: '1225'
+    };
+
+    return this.simulateResponse(dummyCard, transaction);
+  }
+
+  /**
+   * Simule une réponse de l'API
+   */
+  private simulateResponse(
+    creditCard: CreditCardDetails,
+    transaction: TransactionDetails
+  ): ZCreditResponse {
+    // Numéros de carte qui déclenchent des erreurs spécifiques pour les tests
+    const errorCards: Record<string, string> = {
+      '4111111111111112': 'כרטיס האשראי לא תקין', // Carte invalide
+      '4111111111111113': 'עסקה לא אושרה', // Transaction non approuvée
+      '4111111111111114': 'תוקף הכרטיס פג', // Carte expirée
+      '4111111111111115': 'סכום העסקה חורג מהמותר' // Montant trop élevé
+    };
+
+    // Simuler une erreur si la carte est dans notre liste d'erreurs
+    const lastFourDigits = creditCard.cardNumber.slice(-4);
+    if (lastFourDigits in errorCards) {
+      return {
+        ReturnValue: 800,
+        IsApproved: false,
+        ReturnMessage: errorCards[lastFourDigits]
+      };
+    }
+
+    // Pour les transactions de plus de 10000 agorot, simuler une erreur de montant
+    if (transaction.amount > 10000) {
+      return {
+        ReturnValue: 801,
+        IsApproved: false,
+        ReturnMessage: 'סכום העסקה חורג מהמותר'
+      };
+    }
+
+    // Sinon, simuler une réponse réussie
+    return {
+      ReturnValue: 0,
+      ReferenceNumber: `SIM-${Date.now()}`,
+      Token: `TOK-${Math.random().toString(36).substring(2, 10)}`,
+      ReturnMessage: 'עסקה אושרה',
+      IsApproved: true,
+      TransactionSum: transaction.amount,
+      TransactionID: `TID-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      AuthNumber: `AUTH-${Math.floor(Math.random() * 100000)}`,
+      CardBrand: 'Visa',
+      CardBrandCode: 1,
+      CardNumber: creditCard.cardNumber,
+      CardNumberMask: this.maskCardNumber(creditCard.cardNumber),
+      PaymentsNumber: transaction.numOfPayments || 1
+    };
+  }
+
+  /**
+   * Masque un numéro de carte
+   */
+  private maskCardNumber(cardNumber: string): string {
+    if (cardNumber.length < 8) return cardNumber;
+    const firstDigits = cardNumber.slice(0, 4);
+    const lastDigits = cardNumber.slice(-4);
+    return `${firstDigits}${'X'.repeat(cardNumber.length - 8)}${lastDigits}`;
+  }
+}
+
 // Singleton pour l'API Z-Credit
-export const zcreditAPI = new ZCreditAPI({
+export const zcreditAPI = new ZCreditSimulationAPI({
   terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
   password: process.env.ZCREDIT_PASSWORD || '',
-  apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
-});
+  apiUrl: process.env.ZCREDIT_API_URL || 'https://secure.zcredit.co.il/WebService/SecurePayment.asmx'
+}, process.env.NODE_ENV === 'development');
