@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient, User } from "@shared/schema";
+import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient, User, Gazette } from "@shared/schema";
 import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus, Download, RefreshCw, FileDown, Newspaper } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import InviteFamilyModal from "./invite-family-modal";
@@ -103,7 +103,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   });
   
   // Gazettes query for this family
-  const { data: gazettes } = useQuery({
+  const { data: gazettes = [] } = useQuery<Gazette[]>({
     queryKey: [`/api/families/${familyId}/gazettes`],
   });
 
@@ -507,8 +507,8 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
               </div>
               
               <div className="space-y-3">
-                {gazettes && gazettes.length > 0 ? (
-                  gazettes.slice(0, 3).map((gazette) => (
+                {gazettes.length > 0 ? (
+                  gazettes.slice(0, 3).map((gazette: Gazette) => (
                     <div key={gazette.id} className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
                         <div className="h-10 w-10 bg-blue-100 rounded-md flex items-center justify-center text-blue-600">
@@ -516,7 +516,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                         </div>
                         <div className="flex flex-col">
                           <span className="font-medium">גזטה {gazette.monthYear}</span>
-                          <span className="text-xs text-gray-500">{gazette.photoCount} תמונות</span>
+                          <span className="text-xs text-gray-500">{photos?.length || 0} תמונות</span>
                         </div>
                       </div>
                       <Button 

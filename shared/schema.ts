@@ -72,9 +72,6 @@ export const gazettes = pgTable("gazettes", {
   monthYear: text("month_year").notNull(), // Format: "YYYY-MM"
   status: text("status").notNull(), // pending, complete, error, printed, sent
   pdfUrl: text("pdf_url"), // URL du fichier PDF généré
-  photoCount: integer("photo_count").default(0), // Nombre de photos dans la gazette
-  birthdayCount: integer("birthday_count").default(0), // Nombre d'anniversaires dans la gazette
-  errorMessage: text("error_message"), // Message d'erreur éventuel
   createdAt: timestamp("created_at").defaultNow().notNull(),
   closingDate: timestamp("closing_date"),
 });
