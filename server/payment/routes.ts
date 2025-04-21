@@ -29,6 +29,15 @@ const paymentRequestSchema = z.object({
   installments: installmentsSchema.optional()
 });
 
+// Schéma pour la requête de paiement avec token
+const tokenPaymentRequestSchema = z.object({
+  amount: z.number().int().positive(),
+  description: z.string().min(3).max(255),
+  familyId: z.number().int().positive(),
+  token: z.string(),
+  installments: installmentsSchema.optional()
+});
+
 // Schéma de validation pour l'enregistrement de carte
 const storeCardRequestSchema = z.object({
   cardDetails: creditCardSchema
@@ -129,6 +138,165 @@ export function registerPaymentRoutes(app: Express) {
       });
     } catch (error) {
       console.error('Erreur lors du stockage de la carte:', error);
+      next(error);
+    }
+  });
+  
+  // Route pour effectuer un paiement avec un token
+  app.post('/api/payments/process-with-token', checkFamilyMember, async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Valider les données de la requête
+      const validationResult = tokenPaymentRequestSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({
+          error: 'Données de paiement invalides',
+          details: validationResult.error.format()
+        });
+      }
+
+      const { amount, description, familyId, token, installments } = validationResult.data;
+      const userId = req.user!.id;
+
+      // Obtenir le fonds familial pour vérifier le solde
+      const fund = await storage.getFamilyFund(familyId);
+      if (!fund) {
+        return res.status(404).json({
+          error: 'Fonds familial non trouvé'
+        });
+      }
+
+      // Exécuter la cascade de paiement: d'abord le fonds, puis la carte
+      let amountFromFund = 0;
+      let amountFromCard = amount;
+      let fromCollectiveFund = false;
+
+      // Si le fonds a un solde, l'utiliser autant que possible
+      if (fund.balance > 0) {
+        if (fund.balance >= amount) {
+          // Le fonds couvre tout le montant
+          amountFromFund = amount;
+          amountFromCard = 0;
+          fromCollectiveFund = true;
+          
+          // Mettre à jour le solde du fonds
+          await storage.updateFundBalance(fund.id, fund.balance - amount);
+          
+          // Enregistrer la transaction depuis le fonds
+          await storage.addFundTransaction({
+            familyFundId: fund.id,
+            userId,
+            amount: -amount, // Montant négatif pour un débit
+            description: description
+          });
+
+          // Renvoyer le résultat sans paiement par carte
+          return res.json({
+            success: true,
+            message: 'Paiement effectué depuis le pot collectif',
+            fromCollectiveFund: true,
+            amountFromFund,
+            amountFromCard: 0
+          });
+        } else {
+          // Le fonds couvre partiellement le montant
+          amountFromFund = fund.balance;
+          amountFromCard = amount - fund.balance;
+          fromCollectiveFund = true;
+          
+          // Mettre à jour le solde du fonds à zéro
+          await storage.updateFundBalance(fund.id, 0);
+          
+          // Enregistrer la transaction depuis le fonds
+          await storage.addFundTransaction({
+            familyFundId: fund.id,
+            userId,
+            amount: -fund.balance, // Montant négatif pour un débit
+            description: `${description} (portion du pot familial)`
+          });
+        }
+      }
+
+      // S'il reste un montant à payer par carte
+      if (amountFromCard > 0) {
+        try {
+          // Traiter le paiement par carte avec le token
+          const creditResponse = await zcreditAPI.processTokenPayment(
+            token,
+            {
+              amount: amountFromCard,
+              description,
+              ...(installments && {
+                numOfPayments: installments.numOfPayments,
+                firstPaymentSum: installments.firstPayment,
+                otherPaymentsSum: installments.otherPayments
+              })
+            }
+          );
+
+          // Vérifier si le paiement par carte a réussi
+          if (!zcreditAPI.isSuccessResponse(creditResponse)) {
+            // Si le paiement par carte a échoué, rembourser le montant prélevé du fonds
+            if (amountFromFund > 0) {
+              await storage.updateFundBalance(fund.id, fund.balance + amountFromFund);
+              await storage.addFundTransaction({
+                familyFundId: fund.id,
+                userId,
+                amount: amountFromFund, // Remboursement positif
+                description: `Remboursement - Échec de paiement par carte pour: ${description}`
+              });
+            }
+
+            return res.status(400).json({
+              success: false,
+              message: 'Échec du paiement par carte',
+              error: creditResponse.ReturnMessage
+            });
+          }
+
+          // Enregistrer la transaction pour le montant total
+          if (amountFromCard === amount) {
+            await storage.addFundTransaction({
+              familyFundId: fund.id,
+              userId,
+              amount: -amount, // Négatif car c'est une dépense
+              description
+            });
+          }
+
+          // Log de l'opération réussie
+          console.log(`Transaction carte de crédit enregistrée: ${creditResponse.ReferenceNumber}, montant: ${amountFromCard}, carte: ${creditResponse.CardNumberMask || creditResponse.Card4Digits}`);
+
+          // Renvoyer le résultat
+          return res.json({
+            success: true,
+            message: fromCollectiveFund ? 'Paiement mixte effectué (pot collectif + carte)' : 'Paiement effectué par carte de crédit',
+            fromCollectiveFund,
+            amountFromFund,
+            amountFromCard,
+            referenceNumber: creditResponse.ReferenceNumber,
+            paymentDetails: {
+              cardMask: creditResponse.CardNumberMask || creditResponse.Card4Digits
+            }
+          });
+        } catch (error) {
+          // En cas d'erreur, rembourser le montant prélevé du fonds
+          if (amountFromFund > 0) {
+            await storage.updateFundBalance(fund.id, fund.balance + amountFromFund);
+            await storage.addFundTransaction({
+              familyFundId: fund.id,
+              userId,
+              amount: amountFromFund, // Remboursement positif
+              description: `Remboursement - Erreur de paiement par carte pour: ${description}`
+            });
+          }
+
+          console.error('Erreur lors du traitement du paiement par carte (token):', error);
+          throw error;
+        }
+      }
+
+    } catch (error) {
+      console.error('Erreur lors du traitement du paiement avec token:', error);
       next(error);
     }
   });
