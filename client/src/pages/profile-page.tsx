@@ -118,9 +118,12 @@ export default function ProfilePage() {
   // Mutation pour mettre à jour le profil
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
+      // Assurez-vous que birthDate est correctement formaté ou null
       const formattedData = {
         ...data,
-        birthDate: data.birthDate ? new Date(data.birthDate).toISOString() : undefined,
+        birthDate: data.birthDate && data.birthDate.trim() !== "" 
+          ? new Date(data.birthDate).toISOString() 
+          : null,
       };
       
       const response = await apiRequest("PUT", "/api/profile", formattedData);
@@ -229,7 +232,9 @@ export default function ProfilePage() {
     mutationFn: async (data: ChildFormValues) => {
       const formattedData = {
         ...data,
-        birthDate: data.birthDate ? new Date(data.birthDate).toISOString() : undefined,
+        birthDate: data.birthDate && data.birthDate.trim() !== "" 
+          ? new Date(data.birthDate).toISOString() 
+          : null,
       };
       
       const response = await apiRequest("POST", "/api/children", formattedData);
@@ -258,7 +263,9 @@ export default function ProfilePage() {
     mutationFn: async ({ id, data }: { id: number, data: ChildFormValues }) => {
       const formattedData = {
         ...data,
-        birthDate: data.birthDate ? new Date(data.birthDate).toISOString() : undefined,
+        birthDate: data.birthDate && data.birthDate.trim() !== "" 
+          ? new Date(data.birthDate).toISOString() 
+          : null,
       };
       
       const response = await apiRequest("PUT", `/api/children/${id}`, formattedData);
