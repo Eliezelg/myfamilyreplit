@@ -15,7 +15,7 @@ declare global {
 
 const scryptAsync = promisify(scrypt);
 
-async function hashPassword(password: string) {
+export async function hashPassword(password: string) {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   const hashedPassword = `${buf.toString("hex")}.${salt}`;
@@ -23,7 +23,7 @@ async function hashPassword(password: string) {
   return hashedPassword;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
+export async function comparePasswords(supplied: string, stored: string) {
   console.log(`Comparaison de mot de passe: ${supplied} avec ${stored.substring(0, 10)}...`);
   const [hashed, salt] = stored.split(".");
   

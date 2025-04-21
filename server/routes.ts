@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
+import { setupAuth, hashPassword, comparePasswords } from "./auth";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
@@ -47,6 +47,162 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // API Routes
+  // User Profile
+  app.get("/api/profile", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const user = await storage.getUser(req.user.id);
+      res.json(user);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/profile", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const updatedUser = await storage.updateUserProfile(req.user.id, req.body);
+      res.json(updatedUser);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/profile/password", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const { currentPassword, newPassword } = req.body;
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).send("User not found");
+      }
+      
+      // Import comparePasswords from auth.ts
+      const { comparePasswords, hashPassword } = require("./auth");
+      
+      // Verify current password
+      const isPasswordValid = await comparePasswords(currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).send("Current password is incorrect");
+      }
+      
+      // Hash the new password
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Update password
+      const updatedUser = await storage.updateUserPassword(req.user.id, hashedPassword);
+      res.json(updatedUser);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/profile/picture", upload.single("profileImage"), async (req: MulterRequest, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      if (!req.file) {
+        return res.status(400).send("No image uploaded");
+      }
+      
+      const imagePath = `/uploads/${req.file.filename}`;
+      const updatedUser = await storage.updateUserProfile(req.user.id, {
+        profileImage: imagePath
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Children
+  app.get("/api/children", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const children = await storage.getUserChildren(req.user.id);
+      res.json(children);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/children", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const childData = {
+        ...req.body,
+        userId: req.user.id
+      };
+      const child = await storage.addChild(childData);
+      res.status(201).json(child);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.put("/api/children/:id", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const childId = parseInt(req.params.id);
+      
+      // Verify the child belongs to the user
+      const child = await storage.getChild(childId);
+      if (!child || child.userId !== req.user.id) {
+        return res.status(403).send("Forbidden");
+      }
+      
+      const updatedChild = await storage.updateChild(childId, req.body);
+      res.json(updatedChild);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.delete("/api/children/:id", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const childId = parseInt(req.params.id);
+      
+      // Verify the child belongs to the user
+      const child = await storage.getChild(childId);
+      if (!child || child.userId !== req.user.id) {
+        return res.status(403).send("Forbidden");
+      }
+      
+      await storage.deleteChild(childId);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/children/:id/picture", upload.single("profileImage"), async (req: MulterRequest, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const childId = parseInt(req.params.id);
+      
+      // Verify the child belongs to the user
+      const child = await storage.getChild(childId);
+      if (!child || child.userId !== req.user.id) {
+        return res.status(403).send("Forbidden");
+      }
+      
+      if (!req.file) {
+        return res.status(400).send("No image uploaded");
+      }
+      
+      const imagePath = `/uploads/${req.file.filename}`;
+      const updatedChild = await storage.updateChild(childId, {
+        profileImage: imagePath
+      });
+      
+      res.json(updatedChild);
+    } catch (error) {
+      next(error);
+    }
+  });
+
   // Families
   app.get("/api/families", async (req, res, next) => {
     try {
