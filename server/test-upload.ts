@@ -1,86 +1,82 @@
-import express from "express";
-import multer from "multer";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
+import express, { Express } from 'express';
+import multer from 'multer';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import fs from 'fs';
 
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadsDir);
-  },
-  filename: function (req, file, cb) {
-    // Generate unique filename
-    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  },
-});
-
-// Create multer instance
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: function (req, file, callback) {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    
-    if (mimetype && extname) {
-      return callback(null, true);
+export function setupTestUploadRoutes(app: Express) {
+  // Create test upload directory
+  const testUploadDir = path.join(process.cwd(), 'uploads/test');
+  if (!fs.existsSync(testUploadDir)) {
+    fs.mkdirSync(testUploadDir, { recursive: true });
+  }
+  
+  // Configure storage for test uploads
+  const testStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, testUploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
+      cb(null, uniqueFilename);
     }
-    
-    callback(
-      new Error("Only image files (jpeg, jpg, png, gif) are allowed")
-    );
-  },
-});
-
-export function setupTestUploadRoutes(app: express.Express) {
-  // Basic test upload route
-  app.post("/api/basic-test-upload", upload.single("file"), (req, res) => {
-    console.log("BASIC TEST UPLOAD - Auth status:", req.isAuthenticated ? req.isAuthenticated() : "No auth function");
-    console.log("BASIC TEST UPLOAD - Headers:", req.headers);
-    
+  });
+  
+  // Create upload middleware
+  const testUpload = multer({ 
+    storage: testStorage,
+    limits: {
+      fileSize: 10 * 1024 * 1024 // 10MB max file size
+    }
+  });
+  
+  // Add test routes
+  app.post('/api/basic-test-upload', testUpload.single('file'), (req, res) => {
     try {
-      // Check if file was uploaded
+      console.log('TEST UPLOAD received request', {
+        body: req.body,
+        hasFile: !!req.file
+      });
+      
       if (!req.file) {
-        console.log("BASIC TEST UPLOAD - No file received");
         return res.status(400).json({
           success: false,
-          message: "No file received"
+          message: 'No file was uploaded'
         });
       }
       
-      // Log details
-      console.log("BASIC TEST UPLOAD - File received:", {
+      // Log file details
+      console.log('TEST UPLOAD file details:', {
         filename: req.file.filename,
         originalname: req.file.originalname,
-        size: req.file.size,
         mimetype: req.file.mimetype,
+        size: req.file.size,
+        path: req.file.path
       });
       
-      console.log("BASIC TEST UPLOAD - Body:", req.body);
+      // Log form fields
+      console.log('TEST UPLOAD form fields:', req.body);
       
-      // Success response
       return res.status(200).json({
         success: true,
-        file: req.file.filename,
-        message: "File uploaded successfully"
+        filename: req.file.filename,
+        caption: req.body.caption || '',
+        message: 'File uploaded successfully'
       });
     } catch (error: any) {
-      console.error("BASIC TEST UPLOAD - Error:", error);
+      console.error('TEST UPLOAD error:', error);
       return res.status(500).json({
         success: false,
-        message: error.message || "An unknown error occurred"
+        message: error.message || 'An unknown error occurred'
       });
     }
+  });
+  
+  // Simple text-only route for testing connectivity
+  app.get('/api/test-upload-status', (req, res) => {
+    res.json({
+      status: 'ok',
+      message: 'Test upload endpoint is active'
+    });
   });
 }

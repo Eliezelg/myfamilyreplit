@@ -1,120 +1,178 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useState, useRef } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function TestUpload() {
   const [file, setFile] = useState<File | null>(null);
+  const [caption, setCaption] = useState("");
+  const [preview, setPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [response, setResponse] = useState<string | null>(null);
-  
+  const [uploadResult, setUploadResult] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null;
-    setFile(selectedFile);
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Create preview
+      const objectUrl = URL.createObjectURL(selectedFile);
+      setPreview(objectUrl);
+      
+      // Clean up previous preview
+      return () => URL.revokeObjectURL(objectUrl);
+    }
   };
-  
+
+  const handleCaptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCaption(e.target.value);
+  };
+
   const handleUpload = async () => {
     if (!file) {
       toast({
         title: "No file selected",
-        variant: "destructive"
+        description: "Please select a file to upload",
+        variant: "destructive",
       });
       return;
     }
-    
+
+    setIsUploading(true);
+    setUploadResult(null);
+
     try {
-      setIsUploading(true);
-      setResponse(null);
-      
-      // Create FormData
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("caption", caption);
       formData.append("familyId", "3"); // Hardcoded for testing
       
-      // Log the request details
-      console.log("TEST UPLOAD REQUEST:", {
+      console.log("Uploading file with FormData:", {
         file: file.name,
-        size: file.size,
-        type: file.type
+        caption,
+        familyId: 3
       });
-      
-      // Make request
-      const res = await fetch("/api/test-upload", {
+
+      const response = await fetch("/api/basic-test-upload", {
         method: "POST",
         body: formData,
         credentials: "include"
       });
-      
-      // Get response as text
-      const text = await res.text();
-      console.log("TEST UPLOAD RESPONSE:", {
-        status: res.status,
-        text
-      });
-      
-      setResponse(`Status: ${res.status}\nResponse: ${text}`);
-      
-      if (res.ok) {
+
+      const result = await response.json();
+      console.log("Upload result:", result);
+      setUploadResult(result);
+
+      if (result.success) {
         toast({
           title: "Upload successful",
-          description: "File has been uploaded"
+          description: "The file was uploaded successfully",
         });
       } else {
         toast({
           title: "Upload failed",
-          description: `Status: ${res.status}`,
-          variant: "destructive"
+          description: result.message || "Unknown error",
+          variant: "destructive",
         });
       }
-    } catch (error) {
-      console.error("Test upload error:", error);
-      setResponse(`Error: ${error.message}`);
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
       toast({
         title: "Upload error",
-        description: error.message,
-        variant: "destructive"
+        description: error.message || "Unknown error occurred",
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
     }
   };
-  
+
+  const handleReset = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    setFile(null);
+    setCaption("");
+    setPreview(null);
+    setUploadResult(null);
+  };
+
   return (
-    <div className="p-6 max-w-md mx-auto bg-white rounded-lg border">
-      <h2 className="text-xl font-bold mb-4">Test Photo Upload</h2>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Test Upload Component</CardTitle>
+        <CardDescription>
+          Use this component to test file uploads with captions
+        </CardDescription>
+      </CardHeader>
       
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-2">
-          Select File
-        </label>
-        <input 
-          type="file"
-          onChange={handleFileChange}
-          className="w-full border rounded p-2"
-          accept="image/*"
-        />
-      </div>
-      
-      {file && (
-        <div className="mb-4">
-          <p className="text-sm">
-            <strong>Selected file:</strong> {file.name} ({(file.size / 1024).toFixed(2)} KB)
-          </p>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Select file to upload
+            </label>
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className="block w-full text-sm border border-gray-300 rounded-md"
+              ref={fileInputRef}
+              accept="image/*"
+            />
+          </div>
+          
+          {preview && (
+            <div className="mt-4">
+              <label className="block text-sm font-medium mb-2">Preview</label>
+              <div className="border rounded-md overflow-hidden max-w-sm max-h-[300px]">
+                <img 
+                  src={preview} 
+                  alt="Preview" 
+                  className="object-contain w-full h-full"
+                />
+              </div>
+            </div>
+          )}
+          
+          <div className="mt-4">
+            <label className="block text-sm font-medium mb-2">
+              Caption
+            </label>
+            <Textarea
+              value={caption}
+              onChange={handleCaptionChange}
+              placeholder="Enter a caption for the image"
+              className="resize-none"
+              rows={3}
+            />
+          </div>
+          
+          {uploadResult && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-md">
+              <h4 className="font-medium mb-2">Upload Result:</h4>
+              <pre className="whitespace-pre-wrap text-sm bg-gray-100 p-2 rounded">
+                {JSON.stringify(uploadResult, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
-      )}
+      </CardContent>
       
-      <Button
-        onClick={handleUpload}
-        disabled={!file || isUploading}
-        className="w-full mb-4"
-      >
-        {isUploading ? "Uploading..." : "Upload File"}
-      </Button>
-      
-      {response && (
-        <div className="mt-4 p-3 bg-gray-100 rounded overflow-auto max-h-40">
-          <pre className="text-xs whitespace-pre-wrap">{response}</pre>
-        </div>
-      )}
-    </div>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={handleReset}>
+          Reset
+        </Button>
+        <Button 
+          onClick={handleUpload} 
+          disabled={!file || isUploading}
+        >
+          {isUploading ? "Uploading..." : "Upload File"}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
