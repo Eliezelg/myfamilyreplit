@@ -135,12 +135,12 @@ export class ZCreditAPI {
       
       // Ajouter les paramètres conditionnels uniquement lorsqu'ils sont nécessaires
       if (transaction.numOfPayments && transaction.numOfPayments > 1) {
-        payload["FirstPaymentSum"] = firstPaymentSum || "0";
-        payload["OtherPaymentsSum"] = otherPaymentsSum || "0";
+        (payload as Record<string, string>)["FirstPaymentSum"] = firstPaymentSum || "0";
+        (payload as Record<string, string>)["OtherPaymentsSum"] = otherPaymentsSum || "0";
       }
       
       if (creditCard.holderId) {
-        payload["HolderID"] = creditCard.holderId;
+        (payload as Record<string, string>)["HolderID"] = creditCard.holderId;
       }
 
       console.log('Envoi de requête à Z-Credit:', JSON.stringify({
@@ -232,18 +232,20 @@ export class ZCreditAPI {
   async createCardToken(creditCard: CreditCardDetails): Promise<string> {
     try {
       // Construction du payload pour la tokenisation
-      const payload = {
+      const payload: Record<string, any> = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
-        Track2: '',
         CardNumber: creditCard.cardNumber,
         ExpDate_MMYY: this.formatExpDate(creditCard.expDate),
         CVV: creditCard.cvv || '',
         TransactionSum: 0, // 0 pour juste créer un token
         J: 2, // 2 pour authentification uniquement
-        HolderID: creditCard.holderId || '',
         TransactionUniqueID: this.generateUniqueId()
       };
+      
+      if (creditCard.holderId) {
+        payload.HolderID = creditCard.holderId;
+      }
 
       // Effectuer la requête HTTP vers l'API Z-Credit
       const response = await axios.post(
@@ -322,8 +324,8 @@ export class ZCreditAPI {
       
       // Ajouter les paramètres conditionnels uniquement lorsqu'ils sont nécessaires
       if (transaction.numOfPayments && transaction.numOfPayments > 1) {
-        payload["FirstPaymentSum"] = firstPaymentSum || "0";
-        payload["OtherPaymentsSum"] = otherPaymentsSum || "0";
+        (payload as Record<string, string>)["FirstPaymentSum"] = firstPaymentSum || "0";
+        (payload as Record<string, string>)["OtherPaymentsSum"] = otherPaymentsSum || "0";
       }
 
       console.log('Envoi de requête token à Z-Credit:', JSON.stringify({
