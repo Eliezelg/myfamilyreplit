@@ -52,51 +52,39 @@ export default function MobileSidebar({ isOpen, onClose, user }: MobileSidebarPr
         <nav>
           <ul className="space-y-2">
             <li>
-              <Link href="/">
-                <a className="flex items-center gap-3 px-3 py-2 text-primary rounded-md bg-primary bg-opacity-10">
-                  <Home className="w-5 h-5" />
-                  בית
-                </a>
+              <Link href="/" className="flex items-center gap-3 px-3 py-2 text-primary rounded-md bg-primary bg-opacity-10">
+                <Home className="w-5 h-5" />
+                בית
               </Link>
             </li>
             <li>
-              <Link href="#">
-                <a className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
-                  <Newspaper className="w-5 h-5" />
-                  הגזטה שלי
-                </a>
+              <Link href="/gazette" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
+                <Newspaper className="w-5 h-5" />
+                הגזטה שלי
               </Link>
             </li>
             <li>
-              <Link href="#">
-                <a className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
-                  <Image className="w-5 h-5" />
-                  התמונות שלי
-                </a>
+              <Link href="/photos" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
+                <Image className="w-5 h-5" />
+                התמונות שלי
               </Link>
             </li>
             <li>
-              <Link href="#">
-                <a className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
-                  <Users className="w-5 h-5" />
-                  ניהול משפחה
-                </a>
+              <Link href="/family-management" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
+                <Users className="w-5 h-5" />
+                ניהול משפחה
               </Link>
             </li>
             <li>
-              <Link href="#">
-                <a className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
-                  <Bell className="w-5 h-5" />
-                  התראות
-                </a>
+              <Link href="/notifications" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
+                <Bell className="w-5 h-5" />
+                התראות
               </Link>
             </li>
             <li>
-              <Link href="#">
-                <a className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
-                  <Settings className="w-5 h-5" />
-                  הגדרות
-                </a>
+              <Link href="/settings" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md">
+                <Settings className="w-5 h-5" />
+                הגדרות
               </Link>
             </li>
             <li>
