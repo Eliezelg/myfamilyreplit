@@ -29,7 +29,7 @@ interface TransactionDetails {
 }
 
 // Type pour la réponse de Z-Credit
-interface ZCreditResponse {
+export interface ZCreditResponse {
   ReturnValue: number; // 0 pour succès
   ReferenceNumber?: string;
   Token?: string;

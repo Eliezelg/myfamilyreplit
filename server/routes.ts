@@ -9,6 +9,7 @@ import fs from "fs";
 import express from "express";
 import { registerGazetteRoutes } from "./gazette/routes";
 import { scheduleGazetteGeneration } from "./gazette/scheduler";
+import { registerPaymentRoutes } from "./payment/routes";
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -745,6 +746,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register gazette routes
   registerGazetteRoutes(app);
+  
+  // Register payment routes
+  registerPaymentRoutes(app);
   
   // Create HTTP server
   const httpServer = createServer(app);
