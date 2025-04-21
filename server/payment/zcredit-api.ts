@@ -553,11 +553,11 @@ export class ZCreditSimulationAPI extends ZCreditAPI {
 }
 
 // Singleton pour l'API Z-Credit
-export const zcreditAPI = new ZCreditSimulationAPI({
+export const zcreditAPI = new ZCreditAPI({
   terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
   password: process.env.ZCREDIT_PASSWORD || '',
   apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
-}, process.env.NODE_ENV === 'development'); // Mode simulation en développement
+}); // Mode réel sans simulation
 
 /*
 NOTE IMPORTANTE: 
