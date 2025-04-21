@@ -504,4 +504,4 @@ export const zcreditAPI = new ZCreditSimulationAPI({
   terminalNumber: process.env.ZCREDIT_TERMINAL_NUMBER || '',
   password: process.env.ZCREDIT_PASSWORD || '',
   apiUrl: process.env.ZCREDIT_API_URL || 'https://pci.zcredit.co.il/ZCreditWS/api'
-}, false); // Mode simulation désactivé pour utiliser l'API réelle
+}, process.env.NODE_ENV === 'development'); // Mode simulation activé en développement
