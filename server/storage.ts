@@ -359,7 +359,7 @@ export class DatabaseStorage implements IStorage {
           eq(photos.monthYear, monthYear)
         )
       )
-      .orderBy(photos.uploadedAt, "desc");
+      .orderBy(desc(photos.uploadedAt));
   }
   
   async addPhoto(photo: InsertPhoto): Promise<Photo> {
