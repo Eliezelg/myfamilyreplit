@@ -126,21 +126,15 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
     // Mettre à jour ou créer l'enregistrement de la gazette
     if (gazette) {
       gazette = await storage.updateGazette(gazette.id, {
-        filePath: result.pdfPath,
         pdfUrl: result.pdfPath,
-        status: "complete",
-        photoCount: result.photoCount,
-        birthdayCount: result.birthdayCount
+        status: "complete"
       });
     } else {
       gazette = await storage.createGazette({
         familyId,
         monthYear,
-        filePath: result.pdfPath,
         pdfUrl: result.pdfPath,
-        status: "complete",
-        photoCount: result.photoCount,
-        birthdayCount: result.birthdayCount
+        status: "complete"
       });
     }
     

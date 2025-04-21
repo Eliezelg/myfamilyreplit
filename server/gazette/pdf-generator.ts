@@ -196,21 +196,19 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
     
     if (gazette) {
       // Mettre à jour la gazette existante
+      // Adapter aux champs existants dans la base de données
       await storage.updateGazette(gazette.id, {
         pdfUrl: result.pdfPath,
-        status: 'complete',
-        photoCount: result.photoCount,
-        birthdayCount: result.birthdayCount
+        status: 'complete'
       });
     } else {
       // Créer une nouvelle gazette
+      // Créer une nouvelle gazette avec les champs existants
       gazette = await storage.createGazette({
         familyId,
         monthYear,
         pdfUrl: result.pdfPath,
-        status: 'complete',
-        photoCount: result.photoCount,
-        birthdayCount: result.birthdayCount
+        status: 'complete'
       });
     }
 
@@ -221,15 +219,13 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
     // En cas d'erreur, créer ou mettre à jour la gazette avec un statut d'erreur
     if (gazette) {
       await storage.updateGazette(gazette.id, {
-        status: 'error',
-        errorMessage: error.message
+        status: 'error'
       });
     } else {
       await storage.createGazette({
         familyId,
         monthYear,
-        status: 'error',
-        errorMessage: error.message
+        status: 'error'
       });
     }
     

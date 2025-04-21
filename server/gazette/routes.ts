@@ -138,7 +138,7 @@ export function registerGazetteRoutes(app: Express) {
       const existingGazette = await storage.getFamilyGazetteByMonthYear(familyId, monthYear);
       if (existingGazette) {
         // Si elle existe mais n'a pas de fichier PDF, on la régénère
-        if (existingGazette.filePath && fs.existsSync(path.join(process.cwd(), existingGazette.filePath))) {
+        if (existingGazette.pdfUrl && fs.existsSync(path.join(process.cwd(), existingGazette.pdfUrl))) {
           return res.status(400).send("Une gazette existe déjà pour ce mois");
         }
       }
