@@ -487,7 +487,7 @@ export class DatabaseStorage implements IStorage {
           gt(invitations.expiresAt, new Date())
         )
       )
-      .orderBy(invitations.createdAt)
+      .orderBy(desc(invitations.createdAt))
       .limit(1);
       
     return invitation || undefined;

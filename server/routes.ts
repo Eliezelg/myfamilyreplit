@@ -305,14 +305,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/photos/upload", upload.single("file"), async (req: MulterRequest & Request, res, next) => {
+  app.post("/api/photos/upload", upload.single("file"), async (req: MulterRequest, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       if (!req.file) {
         return res.status(400).send("No file uploaded");
       }
       
+      // Log what we received
+      console.log("Photo upload received:", { 
+        file: req.file.filename,
+        body: req.body,
+      });
+      
       const familyId = parseInt(req.body.familyId);
+      if (isNaN(familyId)) {
+        return res.status(400).send("Invalid family ID");
+      }
       
       // Check if user is a member of this family
       const isMember = await storage.userIsFamilyMember(req.user.id, familyId);
@@ -339,6 +348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(photo);
     } catch (error) {
+      console.error("Error uploading photo:", error);
       next(error);
     }
   });

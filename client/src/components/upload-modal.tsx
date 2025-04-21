@@ -83,13 +83,13 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
       const uploads = files.map(async (fileObj) => {
         try {
           const formData = new FormData();
+          // Noter que le nom du champ doit correspondre exactement à celui attendu par multer
           formData.append("file", fileObj.file);
           formData.append("caption", fileObj.caption);
           formData.append("familyId", familyId.toString());
           
           console.log("Uploading file:", fileObj.file.name, "Size:", fileObj.file.size, "Caption:", fileObj.caption);
           
-          // Utiliser fetch directement pour FormData
           const res = await fetch('/api/photos/upload', {
             method: 'POST',
             body: formData,
