@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // User model
 export const users = pgTable("users", {
@@ -155,6 +156,61 @@ export const insertEventSchema = createInsertSchema(events).omit({
   id: true,
   createdAt: true,
 });
+
+// Define relationships between models
+export const usersRelations = relations(users, ({ many }) => ({
+  familyMembers: many(familyMembers),
+  photos: many(photos),
+  fundTransactions: many(fundTransactions),
+  invitations: many(invitations),
+}));
+
+export const familiesRelations = relations(families, ({ many, one }) => ({
+  members: many(familyMembers),
+  photos: many(photos),
+  gazettes: many(gazettes),
+  fund: one(familyFunds, { fields: [families.id], references: [familyFunds.familyId] }),
+  recipients: many(recipients),
+  invitations: many(invitations),
+  events: many(events),
+}));
+
+export const familyMembersRelations = relations(familyMembers, ({ one }) => ({
+  user: one(users, { fields: [familyMembers.userId], references: [users.id] }),
+  family: one(families, { fields: [familyMembers.familyId], references: [families.id] }),
+}));
+
+export const photosRelations = relations(photos, ({ one }) => ({
+  user: one(users, { fields: [photos.userId], references: [users.id] }),
+  family: one(families, { fields: [photos.familyId], references: [families.id] }),
+}));
+
+export const gazettesRelations = relations(gazettes, ({ one }) => ({
+  family: one(families, { fields: [gazettes.familyId], references: [families.id] }),
+}));
+
+export const familyFundsRelations = relations(familyFunds, ({ one, many }) => ({
+  family: one(families, { fields: [familyFunds.familyId], references: [families.id] }),
+  transactions: many(fundTransactions),
+}));
+
+export const fundTransactionsRelations = relations(fundTransactions, ({ one }) => ({
+  fund: one(familyFunds, { fields: [fundTransactions.familyFundId], references: [familyFunds.id] }),
+  user: one(users, { fields: [fundTransactions.userId], references: [users.id] }),
+}));
+
+export const recipientsRelations = relations(recipients, ({ one }) => ({
+  family: one(families, { fields: [recipients.familyId], references: [families.id] }),
+}));
+
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  family: one(families, { fields: [invitations.familyId], references: [families.id] }),
+  invitedBy: one(users, { fields: [invitations.invitedByUserId], references: [users.id] }),
+}));
+
+export const eventsRelations = relations(events, ({ one }) => ({
+  family: one(families, { fields: [events.familyId], references: [families.id] }),
+}));
 
 // Export types
 export type User = typeof users.$inferSelect;
