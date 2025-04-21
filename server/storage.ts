@@ -55,7 +55,9 @@ export interface IStorage {
   // Gazette operations
   getGazette(id: number): Promise<Gazette | undefined>;
   getFamilyGazettes(familyId: number): Promise<Gazette[]>;
+  getFamilyGazetteByMonthYear(familyId: number, monthYear: string): Promise<Gazette | undefined>;
   createGazette(gazette: InsertGazette): Promise<Gazette>;
+  updateGazette(id: number, gazetteData: Partial<Gazette>): Promise<Gazette>;
   updateGazetteStatus(id: number, status: string): Promise<Gazette>;
   
   // Family fund operations
@@ -378,9 +380,34 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(gazettes.createdAt));
   }
   
+  async getFamilyGazetteByMonthYear(familyId: number, monthYear: string): Promise<Gazette | undefined> {
+    const [gazette] = await db.select()
+      .from(gazettes)
+      .where(
+        and(
+          eq(gazettes.familyId, familyId),
+          eq(gazettes.monthYear, monthYear)
+        )
+      );
+    
+    return gazette || undefined;
+  }
+  
   async createGazette(gazette: InsertGazette): Promise<Gazette> {
     const [newGazette] = await db.insert(gazettes).values(gazette).returning();
     return newGazette;
+  }
+  
+  async updateGazette(id: number, gazetteData: Partial<Gazette>): Promise<Gazette> {
+    // Prétraiter les données pour s'assurer que les dates sont correctement formatées
+    const sanitizedData = sanitizeData(gazetteData);
+    
+    const [updatedGazette] = await db.update(gazettes)
+      .set(sanitizedData)
+      .where(eq(gazettes.id, id))
+      .returning();
+    
+    return updatedGazette;
   }
   
   async updateGazetteStatus(id: number, status: string): Promise<Gazette> {
