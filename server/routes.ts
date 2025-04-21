@@ -147,7 +147,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/photos/upload", upload.single("file"), async (req, res, next) => {
+  app.post("/api/photos/upload", upload.single("file"), async (req: MulterRequest & Request, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       if (!req.file) {
