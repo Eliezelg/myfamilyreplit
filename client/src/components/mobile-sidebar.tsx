@@ -4,7 +4,7 @@ import { User, Family } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { X, Home, Newspaper, Image, Settings, Users, Bell, PlusCircle, UserPlus } from "lucide-react";
+import { X, Home, Newspaper, Image, Settings, Users, Bell, PlusCircle, UserPlus, User as UserIcon } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface MobileSidebarProps {
@@ -181,6 +181,16 @@ export default function MobileSidebar({
               >
                 <Bell className="w-5 h-5" />
                 התראות
+              </Link>
+            </li>
+            <li>
+              <Link 
+                href="/profile" 
+                onClick={() => onClose()}
+                className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md"
+              >
+                <UserIcon className="w-5 h-5" />
+                פרופיל
               </Link>
             </li>
             <li>
