@@ -19,7 +19,7 @@ const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any;
   
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -73,7 +73,7 @@ export interface IStorage {
 
 // Database implementation of the storage interface
 export class DatabaseStorage implements IStorage {
-  sessionStore: ReturnType<typeof createMemoryStore>;
+  sessionStore: any;
   
   constructor() {
     this.sessionStore = new MemoryStore({
