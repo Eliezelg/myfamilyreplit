@@ -487,6 +487,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Join family with invitation code (from request body)
+  app.post("/api/join-family", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).send("Invitation code is required");
+      }
+      
+      // Get invitation by token
+      const invitation = await storage.getInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).send("Invalid invitation code");
+      }
+      
+      // Check if invitation is expired
+      if (new Date(invitation.expiresAt) < new Date()) {
+        return res.status(400).send("Invitation code has expired");
+      }
+      
+      // Check if invitation is already used
+      if (invitation.status !== "pending") {
+        return res.status(400).send("Invitation code has already been used");
+      }
+      
+      // Check if user is already a member of this family
+      const isMember = await storage.userIsFamilyMember(req.user.id, invitation.familyId);
+      if (isMember) {
+        return res.status(400).send("You are already a member of this family");
+      }
+      
+      // Add user as member to the family
+      const familyMember = await storage.addFamilyMember(invitation.familyId, {
+        userId: req.user.id,
+        familyId: invitation.familyId,
+        role: "member",
+      });
+      
+      // Update invitation status
+      await storage.updateInvitationStatus(invitation.id, "accepted");
+      
+      // Get family name
+      const family = await storage.getFamily(invitation.familyId);
+      
+      res.status(201).json({
+        success: true,
+        familyId: invitation.familyId,
+        name: family?.name,
+        member: familyMember
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
   // Events
   app.get("/api/families/:id/events", async (req, res, next) => {
     try {

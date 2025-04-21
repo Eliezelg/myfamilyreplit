@@ -79,6 +79,14 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   
   return (
     <>
+      {/* Invite Family Modal */}
+      <InviteFamilyModal 
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        familyId={familyId}
+        familyName={familyName}
+      />
+      
       {/* Family Selector */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
