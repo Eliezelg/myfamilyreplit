@@ -398,10 +398,14 @@ function addBirthdaySection(doc: PDFKit.PDFDocument, birthdays: BirthdayEvent[],
  * Ajoute le pied de page au document PDF
  */
 function addFooter(doc: PDFKit.PDFDocument) {
-  const pageCount = doc.bufferedPageRange().count;
+  const range = doc.bufferedPageRange();
+  const pageCount = range.count;
+  const startPage = range.start;
   
+  // Ajouter le pied de page à chaque page
   for (let i = 0; i < pageCount; i++) {
-    doc.switchToPage(i);
+    const pageNumber = startPage + i;
+    doc.switchToPage(pageNumber);
     
     // Ligne de séparation
     doc.moveTo(50, doc.page.height - 50)
