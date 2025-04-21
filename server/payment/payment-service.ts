@@ -330,7 +330,8 @@ export class PaymentService {
       'תוקף הכרטיס פג': 'La carte a expiré',
       'מספר תשלומים לא חוקי': 'Nombre de paiements non valide',
       'שגיאת תקשורת': 'Erreur de communication',
-      'סכום העסקה חורג מהמותר': 'Le montant de la transaction dépasse la limite autorisée'
+      'סכום העסקה חורג מהמותר': 'Le montant de la transaction dépasse la limite autorisée',
+      'תאריך תוקף לא במבנה תקין': 'La date d\'expiration n\'est pas dans un format valide'
     };
 
     // Si le message existe dans notre mapping, retourner la traduction

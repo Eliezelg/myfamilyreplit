@@ -213,19 +213,17 @@ export class ZCreditAPI {
   
   /**
    * Formate la date d'expiration au format attendu par Z-Credit
-   * Si la date est au format MMYY, on l'adapte au format YY/MM car
-   * Z-Credit semble inverser le mois et l'année dans sa lecture
+   * Selon l'erreur reçue, Z-Credit veut MMYY sans séparateur
    */
   private formatExpDate(expDate: string): string {
-    // Si la date est au format MMYY
+    // Si la date est déjà au format MMYY (comme 0528)
     if (expDate.length === 4) {
-      const month = expDate.substring(0, 2);
-      const year = expDate.substring(2, 4);
-      // Inverser pour correspondre au format attendu par Z-Credit
-      return `${year}${month}`;
+      // Renvoyer tel quel (le format MMYY sans séparateur)
+      return expDate;
     }
-    // Si la date est déjà dans un autre format ou contient un séparateur, renvoyer tel quel
-    return expDate;
+    
+    // Si la date contient un séparateur, l'enlever
+    return expDate.replace(/[^0-9]/g, '');
   }
 
   /**
