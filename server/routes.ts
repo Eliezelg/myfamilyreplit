@@ -327,10 +327,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Route de débogage pour tester les uploads - version simplifiée
+  app.post("/api/test-upload", upload.single("file"), (req: MulterRequest, res) => {
+    try {
+      console.log("TEST Upload received:", {
+        authenticated: req.isAuthenticated(),
+        hasFile: !!req.file,
+        body: req.body,
+      });
+      
+      if (req.file) {
+        console.log("File details:", {
+          filename: req.file.filename,
+          size: req.file.size,
+          mimetype: req.file.mimetype,
+          path: req.file.path
+        });
+        
+        return res.status(200).json({
+          success: true,
+          file: req.file.filename,
+          message: "Test upload successful"
+        });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: "No file received"
+        });
+      }
+    } catch (error) {
+      console.error("TEST Upload error:", error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || "Unknown error occurred"
+      });
+    }
+  });
+
   app.post("/api/photos/upload", upload.single("file"), async (req: MulterRequest, res, next) => {
     try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      console.log("UPLOAD START - Auth:", req.isAuthenticated());
+      
+      if (!req.isAuthenticated()) {
+        console.log("UPLOAD AUTH FAIL");
+        return res.status(401).send("Unauthorized");
+      }
+      
+      console.log("UPLOAD FILE CHECK:", !!req.file);
       if (!req.file) {
+        console.log("UPLOAD NO FILE");
         return res.status(400).send("No file uploaded");
       }
       
@@ -338,27 +383,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Photo upload received:", { 
         file: req.file.filename,
         body: req.body,
+        user: req.user?.id
       });
       
       const familyId = parseInt(req.body.familyId);
+      console.log("UPLOAD FAMILY ID:", familyId);
       if (isNaN(familyId)) {
+        console.log("UPLOAD INVALID FAMILY ID");
         return res.status(400).send("Invalid family ID");
       }
       
       // Check if user is a member of this family
+      console.log("UPLOAD CHECKING MEMBERSHIP");
       const isMember = await storage.userIsFamilyMember(req.user.id, familyId);
+      console.log("UPLOAD IS MEMBER:", isMember);
       if (!isMember) {
+        console.log("UPLOAD NOT A MEMBER");
         return res.status(403).send("Not a member of this family");
       }
       
       // Check if number of photos doesn't exceed the monthly limit
+      console.log("UPLOAD CHECKING PHOTO LIMIT");
       const monthYear = new Date().toISOString().substring(0, 7); // YYYY-MM format
       const photos = await storage.getFamilyPhotos(familyId, monthYear);
+      console.log("UPLOAD CURRENT PHOTOS:", photos.length);
       if (photos.length >= 28) {
+        console.log("UPLOAD LIMIT REACHED");
         return res.status(400).send("Monthly photo limit reached (28 photos)");
       }
       
       // Save photo info to database
+      console.log("UPLOAD SAVING TO DB");
       const photo = await storage.addPhoto({
         familyId,
         userId: req.user.id,
@@ -368,6 +423,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fileSize: req.file.size,
       });
       
+      console.log("UPLOAD SUCCESS:", photo.id);
       res.status(201).json(photo);
     } catch (error) {
       console.error("Error uploading photo:", error);

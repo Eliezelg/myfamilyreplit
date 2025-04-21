@@ -79,39 +79,55 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
   
   const uploadMutation = useMutation({
     mutationFn: async () => {
-      // Create FormData for each file
-      const uploads = files.map(async (fileObj) => {
+      // Upload one file at a time instead of in parallel
+      const results = [];
+      for (const fileObj of files) {
         try {
+          console.log("Processing file:", fileObj.file.name);
+          
+          // Create a new FormData for each file
           const formData = new FormData();
-          // Noter que le nom du champ doit correspondre exactement à celui attendu par multer
           formData.append("file", fileObj.file);
-          formData.append("caption", fileObj.caption);
+          formData.append("caption", fileObj.caption || "");
           formData.append("familyId", familyId.toString());
           
-          console.log("Uploading file:", fileObj.file.name, "Size:", fileObj.file.size, "Caption:", fileObj.caption);
+          console.log("Uploading file:", fileObj.file.name, "Size:", fileObj.file.size);
           
-          const res = await fetch('/api/photos/upload', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include'
+          // Pour le débogage, utilisons notre endpoint de test
+          const result = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            
+            xhr.onreadystatechange = function() {
+              if (xhr.readyState === 4) {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  try {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log("Upload successful response:", response);
+                    resolve(response);
+                  } catch (e) {
+                    console.log("Parse error but successful status", e);
+                    resolve({ success: true });
+                  }
+                } else {
+                  console.error("Upload failed:", xhr.status, xhr.statusText, xhr.responseText);
+                  reject(new Error(xhr.responseText || `Upload failed with status ${xhr.status}`));
+                }
+              }
+            };
+            
+            xhr.open("POST", "/api/test-upload", true);
+            xhr.withCredentials = true;
+            xhr.send(formData);
           });
           
-          // Ajouter un log détaillé de l'erreur si la réponse n'est pas ok
-          if (!res.ok) {
-            const errorText = await res.text();
-            console.error(`Upload failed with status ${res.status}: ${errorText}`);
-            throw new Error(errorText || `Upload failed with status ${res.status}`);
-          }
-          
-          return res.json();
+          results.push(result);
         } catch (error) {
           console.error("Error uploading file:", error);
           throw error;
         }
-      });
+      }
       
-      // Upload all files
-      return Promise.all(uploads);
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/families/${familyId}/photos`] });
