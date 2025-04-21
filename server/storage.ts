@@ -92,11 +92,23 @@ export class DatabaseStorage implements IStorage {
   
   async getUserByUsername(username: string): Promise<User | undefined> {
     // Recherche insensible à la casse en utilisant SQL ILIKE
-    const lowercaseUsername = username.toLowerCase();
+    const input = username.toLowerCase().trim();
     const allUsers = await db.select().from(users);
     
-    // Comparer manuellement sans tenir compte de la casse
-    const user = allUsers.find(u => u.username.toLowerCase() === lowercaseUsername);
+    // Comparer manuellement sans tenir compte de la casse (username ou email)
+    const user = allUsers.find(u => 
+      u.username.toLowerCase() === input || 
+      u.email.toLowerCase() === input
+    );
+    return user || undefined;
+  }
+  
+  // Fonction pour vérifier si un email existe déjà
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const allUsers = await db.select().from(users);
+    
+    const user = allUsers.find(u => u.email.toLowerCase() === normalizedEmail);
     return user || undefined;
   }
   
