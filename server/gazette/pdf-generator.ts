@@ -10,7 +10,7 @@ import { Family, Photo, User, Child } from "@shared/schema";
 interface BirthdayEvent {
   name: string;
   date: Date;
-  profileImage?: string;
+  profileImage?: string | null;
   type: 'user' | 'child';
 }
 
@@ -120,7 +120,7 @@ export async function getUpcomingBirthdays(familyId: number, monthYear: string):
         events.push({
           name: user.fullName,
           date: birthDate,
-          profileImage: user.profileImage,
+          profileImage: user.profileImage || undefined,
           type: 'user'
         });
       }
@@ -139,7 +139,7 @@ export async function getUpcomingBirthdays(familyId: number, monthYear: string):
           events.push({
             name: child.name,
             date: childBirthDate,
-            profileImage: child.profileImage,
+            profileImage: child.profileImage || undefined,
             type: 'child'
           });
         }

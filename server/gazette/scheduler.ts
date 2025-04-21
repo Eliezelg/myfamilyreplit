@@ -149,8 +149,7 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
       await storage.createGazette({
         familyId,
         monthYear,
-        status: "error",
-        errorMessage: error.message
+        status: "error"
       });
     } else {
       await storage.updateGazette(existingGazette.id, {
