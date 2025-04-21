@@ -88,7 +88,10 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
           // Create a new FormData for each file
           const formData = new FormData();
           formData.append("file", fileObj.file);
-          formData.append("caption", fileObj.caption || "");
+          // Assurons-nous que la légende est bien encodée et gérée
+          console.log("Caption before append:", fileObj.caption || "");
+          const safeCaption = fileObj.caption || "";
+          formData.append("caption", safeCaption);
           formData.append("familyId", familyId.toString());
           
           console.log("Uploading file:", fileObj.file.name, "Size:", fileObj.file.size);

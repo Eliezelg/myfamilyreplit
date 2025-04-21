@@ -435,13 +435,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }));
       }
       
+      // Log la caption reçue pour le débogage
+      console.log("CAPTION RECEIVED:", {
+        caption: req.body.caption,
+        type: typeof req.body.caption,
+        length: req.body.caption ? req.body.caption.length : 0
+      });
+      
       // Save photo info to database
       console.log("UPLOAD SAVING TO DB");
       const photo = await storage.addPhoto({
         familyId,
         userId: req.user.id,
         imageUrl: `/uploads/${req.file.filename}`,
-        caption: req.body.caption || "",
+        caption: (req.body.caption || "").toString().substring(0, 500), // Limite à 500 caractères pour sécurité
         monthYear,
         fileSize: req.file.size,
       });
