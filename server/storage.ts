@@ -11,15 +11,17 @@ import {
   events, type Event, type InsertEvent
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gt } from "drizzle-orm";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+
+type SessionStore = ReturnType<typeof createMemoryStore>;
 
 const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: ReturnType<typeof createMemoryStore>;
   
   // User operations
   getUser(id: number): Promise<User | undefined>;
@@ -73,7 +75,7 @@ export interface IStorage {
 
 // Database implementation of the storage interface
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: ReturnType<typeof createMemoryStore>;
   
   constructor() {
     this.sessionStore = new MemoryStore({

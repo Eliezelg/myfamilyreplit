@@ -466,6 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add user as member to the family
       const familyMember = await storage.addFamilyMember(invitation.familyId, {
         userId: req.user.id,
+        familyId: invitation.familyId,
         role: "member",
       });
       
