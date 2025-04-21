@@ -122,7 +122,7 @@ export async function getUpcomingBirthdays(familyId: number, monthYear: string):
       // Si le mois de naissance correspond au mois de la gazette
       if (birthDate.getMonth() + 1 === month) {
         events.push({
-          name: `${user.firstName} ${user.lastName}`,
+          name: user.fullName,
           date: birthDate,
           profileImage: user.profileImage,
           type: 'user'
@@ -325,7 +325,7 @@ function addPhotoSection(doc: PDFKit.PDFDocument, photos: (Photo & { user?: User
       // Ajouter le nom de l'utilisateur
       doc.fontSize(8)
          .font('Helvetica-Oblique')
-         .text(`Par: ${photo.user?.firstName || 'Membre'} ${photo.user?.lastName || ''}`, 
+         .text(`Par: ${photo.user?.fullName || 'Membre'}`, 
                x, y + photoWidth + 25,
                { width: photoWidth, align: 'center' });
       

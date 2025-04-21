@@ -108,12 +108,17 @@ export function registerGazetteRoutes(app: Express) {
       }
       
       // Vérifier si le fichier PDF existe
-      if (!gazette.filePath || !fs.existsSync(path.join(process.cwd(), gazette.filePath))) {
+      if (!gazette.filePath && !gazette.pdfUrl) {
+        return res.status(404).send("Le fichier PDF de la gazette n'existe pas");
+      }
+      
+      const filePath = gazette.filePath || gazette.pdfUrl;
+      if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
         return res.status(404).send("Le fichier PDF de la gazette n'existe pas");
       }
       
       // Envoyer le fichier au client
-      res.download(path.join(process.cwd(), gazette.filePath));
+      res.download(path.join(process.cwd(), filePath));
     } catch (error) {
       next(error);
     }

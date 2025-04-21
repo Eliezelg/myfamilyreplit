@@ -51,11 +51,22 @@ export function scheduleGazetteGeneration() {
  */
 async function getAllFamilies(): Promise<Family[]> {
   try {
-    // Récupérer toutes les familles depuis la base de données
-    // Cette fonction n'existe pas encore dans notre interface IStorage, il faudra la créer si nécessaire
-    // Pour l'instant, nous allons utiliser une requête directe à la base de données
-    const families = await storage.db.query.families.findMany();
-    return families;
+    // Cette approche simplifiée récupère toutes les familles
+    // En production, on pourrait vouloir paginer ou optimiser cette requête
+    const allFamilies: Family[] = [];
+    let familyId = 1;
+    let family: Family | undefined;
+    
+    // Essayons de récupérer des familles avec des IDs séquentiels
+    while (familyId < 100) { // Limite raisonnable pour éviter une boucle infinie
+      family = await storage.getFamily(familyId);
+      if (family) {
+        allFamilies.push(family);
+      }
+      familyId++;
+    }
+    
+    return allFamilies;
   } catch (error) {
     console.error("[Gazette] Erreur lors de la récupération des familles:", error);
     return [];
@@ -116,6 +127,7 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
     if (gazette) {
       gazette = await storage.updateGazette(gazette.id, {
         filePath: result.pdfPath,
+        pdfUrl: result.pdfPath,
         status: "complete",
         photoCount: result.photoCount,
         birthdayCount: result.birthdayCount
@@ -125,6 +137,7 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
         familyId,
         monthYear,
         filePath: result.pdfPath,
+        pdfUrl: result.pdfPath,
         status: "complete",
         photoCount: result.photoCount,
         birthdayCount: result.birthdayCount

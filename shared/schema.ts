@@ -70,8 +70,12 @@ export const gazettes = pgTable("gazettes", {
   id: serial("id").primaryKey(),
   familyId: integer("family_id").notNull().references(() => families.id),
   monthYear: text("month_year").notNull(), // Format: "YYYY-MM"
-  status: text("status").notNull(), // draft, finalized, printed, sent
-  pdfUrl: text("pdf_url"),
+  status: text("status").notNull(), // pending, complete, error, printed, sent
+  filePath: text("file_path"), // Chemin du fichier PDF généré
+  pdfUrl: text("pdf_url"), // URL publique du PDF
+  photoCount: integer("photo_count").default(0), // Nombre de photos dans la gazette
+  birthdayCount: integer("birthday_count").default(0), // Nombre d'anniversaires dans la gazette
+  errorMessage: text("error_message"), // Message d'erreur éventuel
   createdAt: timestamp("created_at").defaultNow().notNull(),
   closingDate: timestamp("closing_date"),
 });
