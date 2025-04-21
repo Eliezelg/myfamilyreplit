@@ -238,9 +238,13 @@ export class ZCreditAPI {
         CardNumber: creditCard.cardNumber,
         ExpDate_MMYY: this.formatExpDate(creditCard.expDate),
         CVV: creditCard.cvv || '',
-        TransactionSum: 0, // 0 pour juste créer un token
-        J: 2, // 2 pour authentification uniquement
-        TransactionUniqueID: this.generateUniqueId()
+        TransactionSum: 1, // 1 NIS pour autorisation minimum (au lieu de 0)
+        J: 5, // 5 pour autorisation uniquement (au lieu de 2 pour authentification)
+        TransactionUniqueID: this.generateUniqueId(),
+        // Ajouter les paramètres obligatoires pour l'autorisation
+        Currency: "ILS", // Shekel israélien
+        CreditType: 1,   // Transaction régulière
+        Description: "Tokenisation carte"
       };
       
       if (creditCard.holderId) {
