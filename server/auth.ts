@@ -43,6 +43,9 @@ export async function comparePasswords(supplied: string, stored: string) {
   return result;
 }
 
+// Alias pour compatibilité
+export const verifyPassword = comparePasswords;
+
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "myfamily-session-secret",
