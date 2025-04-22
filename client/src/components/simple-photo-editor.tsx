@@ -45,7 +45,13 @@ export default function SimplePhotoEditor({
       return;
     }
     
-    console.log("Chargement de l'image dans l'éditeur simple:", imageUrl);
+    // Assurons-nous que l'URL est complète
+    // Si l'URL commence par /uploads, nous devons l'ajuster pour qu'elle soit accessible
+    const fullImageUrl = imageUrl.startsWith('/uploads/') 
+      ? `${window.location.origin}${imageUrl}`
+      : imageUrl;
+    
+    console.log("Chargement de l'image dans l'éditeur simple:", fullImageUrl);
     
     // Réinitialiser l'état
     setImageError(false);
@@ -87,7 +93,7 @@ export default function SimplePhotoEditor({
     };
     
     img.onerror = (err) => {
-      console.error("Erreur lors du chargement de l'image:", err);
+      console.error("Erreur lors du chargement de l'image:", err, "URL:", fullImageUrl);
       setImageError(true);
       toast({
         title: "Erreur",
@@ -96,7 +102,8 @@ export default function SimplePhotoEditor({
       });
     };
     
-    img.src = imageUrl;
+    // Définir la source de l'image APRÈS avoir configuré les gestionnaires d'événements
+    img.src = fullImageUrl;
     
     return () => {
       // Annuler le chargement de l'image si le composant est démonté
