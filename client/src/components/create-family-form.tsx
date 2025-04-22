@@ -304,7 +304,13 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                     <FormItem>
                       <FormLabel>עיר</FormLabel>
                       <FormControl>
-                        <Input placeholder="עיר" {...field} />
+                        <Input 
+                          placeholder="עיר" 
+                          value={field.value || ""} 
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -317,7 +323,13 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                     <FormItem>
                       <FormLabel>מיקוד</FormLabel>
                       <FormControl>
-                        <Input placeholder="מיקוד" {...field} />
+                        <Input 
+                          placeholder="מיקוד" 
+                          value={field.value || ""} 
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -331,7 +343,13 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                   <FormItem>
                     <FormLabel>מדינה</FormLabel>
                     <FormControl>
-                      <Input placeholder="מדינה" {...field} />
+                      <Input 
+                        placeholder="מדינה" 
+                        value={field.value || ""} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
