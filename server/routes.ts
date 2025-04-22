@@ -13,6 +13,7 @@ import { registerPaymentRoutes } from "./payment/routes";
 import { ZCreditAPI } from "./payment/zcredit-api";
 import { PaymentService } from "./payment/payment-service";
 import { registerUserRoutes } from "./routes/user-routes";
+import { registerChildRoutes } from "./routes/child-routes";
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -74,95 +75,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-  // Enregistrer les routes utilisateur (nouvelle architecture MVC)
+  // Enregistrer les routes avec la nouvelle architecture MVC
   registerUserRoutes(app);
-
-  // Children
-  app.get("/api/children", async (req, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const children = await storage.getUserChildren(req.user.id);
-      res.json(children);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.post("/api/children", async (req, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const childData = {
-        ...req.body,
-        userId: req.user.id
-      };
-      const child = await storage.addChild(childData);
-      res.status(201).json(child);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.put("/api/children/:id", async (req, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const childId = parseInt(req.params.id);
-      
-      // Verify the child belongs to the user
-      const child = await storage.getChild(childId);
-      if (!child || child.userId !== req.user.id) {
-        return res.status(403).send("Forbidden");
-      }
-      
-      const updatedChild = await storage.updateChild(childId, req.body);
-      res.json(updatedChild);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.delete("/api/children/:id", async (req, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const childId = parseInt(req.params.id);
-      
-      // Verify the child belongs to the user
-      const child = await storage.getChild(childId);
-      if (!child || child.userId !== req.user.id) {
-        return res.status(403).send("Forbidden");
-      }
-      
-      await storage.deleteChild(childId);
-      res.status(204).send();
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.post("/api/children/:id/picture", upload.single("profileImage"), async (req: MulterRequest, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const childId = parseInt(req.params.id);
-      
-      // Verify the child belongs to the user
-      const child = await storage.getChild(childId);
-      if (!child || child.userId !== req.user.id) {
-        return res.status(403).send("Forbidden");
-      }
-      
-      if (!req.file) {
-        return res.status(400).send("No image uploaded");
-      }
-      
-      const imagePath = `/uploads/${req.file.filename}`;
-      const updatedChild = await storage.updateChild(childId, {
-        profileImage: imagePath
-      });
-      
-      res.json(updatedChild);
-    } catch (error) {
-      next(error);
-    }
-  });
+  registerChildRoutes(app);
 
   // Families
   app.get("/api/families", async (req, res, next) => {

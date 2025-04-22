@@ -192,48 +192,28 @@ export class DatabaseStorage implements IStorage {
     return userService.updateUserPassword(id, newPassword);
   }
   
-  // Children operations
+  // Import du service enfant
+  import { childService } from "./services/child-service";
+  
+  // Children operations - Délégués au service
   async getUserChildren(userId: number): Promise<Child[]> {
-    return db.select()
-      .from(children)
-      .where(eq(children.userId, userId))
-      .orderBy(children.name);
+    return childService.getUserChildren(userId);
   }
   
   async getChild(id: number): Promise<Child | undefined> {
-    const [child] = await db.select()
-      .from(children)
-      .where(eq(children.id, id));
-    
-    return child || undefined;
+    return childService.getChild(id);
   }
   
   async addChild(child: InsertChild): Promise<Child> {
-    // Prétraiter les données pour s'assurer que les dates sont correctement formatées
-    const sanitizedData = sanitizeData(child);
-    
-    const [newChild] = await db.insert(children)
-      .values(sanitizedData)
-      .returning();
-    
-    return newChild;
+    return childService.addChild(child);
   }
   
   async updateChild(id: number, childData: Partial<Child>): Promise<Child> {
-    // Prétraiter les données pour s'assurer que les dates sont correctement formatées
-    const sanitizedData = sanitizeData(childData);
-    
-    const [updatedChild] = await db.update(children)
-      .set(sanitizedData)
-      .where(eq(children.id, id))
-      .returning();
-    
-    return updatedChild;
+    return childService.updateChild(id, childData);
   }
   
   async deleteChild(id: number): Promise<void> {
-    await db.delete(children)
-      .where(eq(children.id, id));
+    return childService.deleteChild(id);
   }
   
   // Family operations
