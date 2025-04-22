@@ -1,4 +1,3 @@
-
 import { db } from "../db";
 import { families, familyMembers, type Family, type FamilyMember, type InsertFamily, type InsertFamilyMember } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
@@ -14,10 +13,10 @@ class FamilyService {
     const [newFamily] = await db.insert(families)
       .values(family)
       .returning();
-    
+
     return newFamily;
   }
-  
+
   /**
    * Ajoute un membre à une famille
    */
@@ -25,10 +24,10 @@ class FamilyService {
     const [newMember] = await db.insert(familyMembers)
       .values(member)
       .returning();
-    
+
     return newMember;
   }
-  
+
   /**
    * Récupère une famille par son ID
    */
@@ -36,10 +35,10 @@ class FamilyService {
     const [family] = await db.select()
       .from(families)
       .where(eq(families.id, id));
-    
+
     return family || undefined;
   }
-  
+
   /**
    * Récupère une famille par son code d'invitation
    */
@@ -47,10 +46,10 @@ class FamilyService {
     const [family] = await db.select()
       .from(families)
       .where(eq(families.inviteCode, inviteCode));
-    
+
     return family || undefined;
   }
-  
+
   /**
    * Met à jour les informations d'une famille
    */
@@ -59,10 +58,10 @@ class FamilyService {
       .set(familyData)
       .where(eq(families.id, id))
       .returning();
-    
+
     return updatedFamily;
   }
-  
+
   /**
    * Supprime une famille
    */
@@ -70,12 +69,12 @@ class FamilyService {
     // Supprime d'abord tous les membres de la famille
     await db.delete(familyMembers)
       .where(eq(familyMembers.familyId, id));
-    
+
     // Puis supprime la famille elle-même
     await db.delete(families)
       .where(eq(families.id, id));
   }
-  
+
   /**
    * Récupère toutes les familles d'un utilisateur
    */
@@ -87,10 +86,10 @@ class FamilyService {
     .from(familyMembers)
     .innerJoin(families, eq(familyMembers.familyId, families.id))
     .where(eq(familyMembers.userId, userId));
-    
+
     return result.map(r => r.family);
   }
-  
+
   /**
    * Récupère le rôle d'un utilisateur dans une famille
    */
@@ -103,10 +102,10 @@ class FamilyService {
           eq(familyMembers.familyId, familyId)
         )
       );
-    
+
     return member?.role || null;
   }
-  
+
   /**
    * Vérifie si un utilisateur est membre d'une famille
    */
@@ -119,10 +118,10 @@ class FamilyService {
           eq(familyMembers.familyId, familyId)
         )
       );
-    
+
     return !!member;
   }
-  
+
   /**
    * Récupère tous les membres d'une famille
    */
@@ -131,7 +130,7 @@ class FamilyService {
       .from(familyMembers)
       .where(eq(familyMembers.familyId, familyId));
   }
-  
+
   /**
    * Met à jour le rôle d'un membre dans une famille
    */
@@ -145,10 +144,10 @@ class FamilyService {
         )
       )
       .returning();
-    
+
     return updatedMember;
   }
-  
+
   /**
    * Supprime un membre d'une famille
    */
