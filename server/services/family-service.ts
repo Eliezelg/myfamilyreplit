@@ -160,6 +160,27 @@ class FamilyService {
         )
       );
   }
+
+  /**
+   * Récupère le fond d'une famille
+   */
+  async getFamilyFund(familyId: number): Promise<any | undefined> {
+    // Implémenter selon votre schéma de base de données
+    // Exemple:
+    // const [fund] = await db.select()
+    //   .from(familyFunds)
+    //   .where(eq(familyFunds.familyId, familyId));
+    
+    // return fund || undefined;
+    
+    // Pour le moment, renvoyer un objet fictif pour éviter les erreurs
+    return {
+      id: familyId,
+      balance: 0,
+      currency: "ILS",
+      familyId: familyId
+    };
+  }
 }
 
 export const familyService = new FamilyService();
