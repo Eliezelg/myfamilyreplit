@@ -365,16 +365,18 @@ export class ZCreditAPI {
       const transactionSum = (amount / 100).toFixed(2);
       
       // Construction du payload pour le paiement par token selon la documentation
+      // Adaptée spécifiquement selon les exigences de Z-Credit
       const payload: Record<string, string> = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
-        Token: token, // Utiliser le token dans le champ Token, pas CardNumber
+        CardToken: token, // Utiliser le token dans le champ CardToken comme requis par Z-Credit
+        TokenUse: "1", // Indiquer d'utiliser le token pour la transaction
         TransactionSum: transactionSum,
         NumberOfPayments: "1",
         CreditType: "1",
         CurrencyType: "1", // ILS (shekels)
         TransactionType: "01", // Transaction standard
-        J: "2", // 2 pour transaction avec token au lieu de 0
+        J: "1", // 1 pour transaction avec token
         ItemDescription: description,
         TransactionUniqueID: this.generateUniqueId()
       };
