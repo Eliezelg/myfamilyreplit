@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Edit2 } from "lucide-react";
+import PhotoEditor from "./photo-editor";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -26,6 +27,8 @@ interface FileWithPreview {
   id: string;
   preview: string;
   caption: string;
+  edited?: boolean;
+  editedPreview?: string;
 }
 
 export default function UploadModal({ isOpen, onClose, familyId }: UploadModalProps) {

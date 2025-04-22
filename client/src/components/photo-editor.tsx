@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { fabric } from "fabric";
+import fabric from "fabric";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import { useToast } from "@/hooks/use-toast";
@@ -35,6 +35,15 @@ import {
   AlignCenter,
   AlignRight,
   MessageSquare,
+  RotateCcw,
+  RotateCw,
+  Crop,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
+  Minimize,
+  MoveHorizontal,
+  Filter,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -72,6 +81,15 @@ const FONT_FAMILIES = [
   { name: "Impact", value: "Impact" },
 ];
 
+// Options pour les filtres
+const FILTERS = [
+  { name: "Normal", value: "normal" },
+  { name: "Noir et Blanc", value: "grayscale" },
+  { name: "Sépia", value: "sepia" },
+  { name: "Inversion", value: "invert" },
+  { name: "Vintage", value: "vintage" },
+];
+
 export default function PhotoEditor({
   isOpen,
   onClose,
@@ -81,8 +99,9 @@ export default function PhotoEditor({
 }: PhotoEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
+  const originalImageRef = useRef<fabric.Image | null>(null);
   const [caption, setCaption] = useState(initialCaption);
-  const [activeTab, setActiveTab] = useState("text");
+  const [activeTab, setActiveTab] = useState("edit");
   const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
   const [textOptions, setTextOptions] = useState({
     fontFamily: "Arial",
@@ -93,8 +112,17 @@ export default function PhotoEditor({
     textAlign: "left",
     fill: "#000000",
   });
+  const [imageOptions, setImageOptions] = useState({
+    angle: 0,
+    zoom: 1,
+    brightness: 0,
+    contrast: 0,
+    filter: "normal",
+  });
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isCropping, setIsCropping] = useState(false);
+  const [cropRect, setCropRect] = useState<fabric.Rect | null>(null);
   const { toast } = useToast();
 
   // Initialiser le canvas Fabric.js quand le modal s'ouvre
@@ -108,7 +136,10 @@ export default function PhotoEditor({
       });
 
       // Charger l'image
-      fabric.Image.fromURL(imageUrl, (img) => {
+      fabric.Image.fromURL(imageUrl, (img: any) => {
+        // Sauvegarde l'image originale pour les manipulations
+        originalImageRef.current = img;
+        
         // Redimensionner l'image pour qu'elle tienne dans le canvas
         const canvasWidth = fabricCanvasRef.current?.getWidth() || 800;
         const canvasHeight = fabricCanvasRef.current?.getHeight() || 600;
@@ -122,10 +153,12 @@ export default function PhotoEditor({
         img.set({
           left: (canvasWidth - img.width! * scale) / 2,
           top: (canvasHeight - img.height! * scale) / 2,
-          selectable: false, // L'image de fond n'est pas sélectionnable
+          selectable: true, // L'image est maintenant sélectionnable pour pouvoir la retoucher
+          name: 'mainImage'
         });
         
         fabricCanvasRef.current?.add(img);
+        fabricCanvasRef.current?.setActiveObject(img);
         fabricCanvasRef.current?.renderAll();
         
         // Initialiser l'historique
@@ -153,7 +186,7 @@ export default function PhotoEditor({
   }, [isOpen, imageUrl]);
 
   // Gérer la sélection d'objets
-  const handleSelectionChange = (e: fabric.IEvent) => {
+  const handleSelectionChange = (e: any) => {
     const selectedObj = fabricCanvasRef.current?.getActiveObject();
     setSelectedObject(selectedObj || null);
 
@@ -168,6 +201,17 @@ export default function PhotoEditor({
         textDecoration: textbox.textDecoration || "none",
         textAlign: textbox.textAlign || "left",
         fill: textbox.fill as string || "#000000",
+      });
+    }
+
+    // Mettre à jour les options d'image si c'est l'image principale
+    if (selectedObj && selectedObj.type === "image" && selectedObj.name === "mainImage") {
+      setImageOptions({
+        angle: selectedObj.angle || 0,
+        zoom: selectedObj.scaleX || 1,
+        brightness: 0, // À calculer si nécessaire
+        contrast: 0,   // À calculer si nécessaire
+        filter: "normal",
       });
     }
   };
@@ -381,6 +425,10 @@ export default function PhotoEditor({
           <div className="lg:col-span-1 border rounded-md p-4 overflow-y-auto max-h-[60vh]">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full">
+                <TabsTrigger value="edit" className="flex-1">
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Retouche
+                </TabsTrigger>
                 <TabsTrigger value="text" className="flex-1">
                   <Type className="h-4 w-4 mr-2" />
                   Texte
