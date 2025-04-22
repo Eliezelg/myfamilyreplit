@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, hashPassword, comparePasswords } from "./auth";
+import { setupAuth } from "./auth";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
@@ -12,6 +12,7 @@ import { scheduleGazetteGeneration } from "./gazette/scheduler";
 import { registerPaymentRoutes } from "./payment/routes";
 import { ZCreditAPI } from "./payment/zcredit-api";
 import { PaymentService } from "./payment/payment-service";
+import { registerUserRoutes } from "./routes/user-routes";
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -67,83 +68,14 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Ajout des routes de test pour upload
-  // Commenté pour l'instant car déjà ajouté dans test-upload.ts
-  // setupTestUploadRoutes(app);
   // Setup authentication
   setupAuth(app);
   
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-  // API Routes
-  // User Profile
-  app.get("/api/profile", async (req, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const user = await storage.getUser(req.user.id);
-      res.json(user);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.put("/api/profile", async (req, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const updatedUser = await storage.updateUserProfile(req.user.id, req.body);
-      res.json(updatedUser);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.post("/api/profile/password", async (req, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const { currentPassword, newPassword } = req.body;
-      const user = await storage.getUser(req.user.id);
-      
-      if (!user) {
-        return res.status(404).send("User not found");
-      }
-      
-      // Use imported comparePasswords and hashPassword
-      
-      // Verify current password
-      const isPasswordValid = await comparePasswords(currentPassword, user.password);
-      if (!isPasswordValid) {
-        return res.status(400).send("Current password is incorrect");
-      }
-      
-      // Hash the new password
-      const hashedPassword = await hashPassword(newPassword);
-      
-      // Update password
-      const updatedUser = await storage.updateUserPassword(req.user.id, hashedPassword);
-      res.json(updatedUser);
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  app.post("/api/profile/picture", upload.single("profileImage"), async (req: MulterRequest, res, next) => {
-    try {
-      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      if (!req.file) {
-        return res.status(400).send("No image uploaded");
-      }
-      
-      const imagePath = `/uploads/${req.file.filename}`;
-      const updatedUser = await storage.updateUserProfile(req.user.id, {
-        profileImage: imagePath
-      });
-      
-      res.json(updatedUser);
-    } catch (error) {
-      next(error);
-    }
-  });
+  // Enregistrer les routes utilisateur (nouvelle architecture MVC)
+  registerUserRoutes(app);
 
   // Children
   app.get("/api/children", async (req, res, next) => {

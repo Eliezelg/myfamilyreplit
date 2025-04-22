@@ -19,11 +19,14 @@ import { pool } from "./db";
 
 const PgSession = connectPgSimple(session);
 
+// Import du service utilisateur
+import { userService } from "./services/user-service";
+
 export interface IStorage {
   // Session store
   sessionStore: any;
   
-  // User operations
+  // User operations (maintenu pour compatibilité mais délégué au service)
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
@@ -163,58 +166,30 @@ export class DatabaseStorage implements IStorage {
     });
   }
   
-  // User operations
+  // User operations - Délégation au service
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+    return userService.getUser(id);
   }
   
   async getUserByUsername(username: string): Promise<User | undefined> {
-    // Recherche insensible à la casse en utilisant SQL ILIKE
-    const input = username.toLowerCase().trim();
-    const allUsers = await db.select().from(users);
-    
-    // Comparer manuellement sans tenir compte de la casse (username ou email)
-    const user = allUsers.find(u => 
-      u.username.toLowerCase() === input || 
-      u.email.toLowerCase() === input
-    );
-    return user || undefined;
+    return userService.getUserByUsername(username);
   }
   
   // Fonction pour vérifier si un email existe déjà
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const normalizedEmail = email.toLowerCase().trim();
-    const allUsers = await db.select().from(users);
-    
-    const user = allUsers.find(u => u.email.toLowerCase() === normalizedEmail);
-    return user || undefined;
+    return userService.getUserByEmail(email);
   }
   
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
+    return userService.createUser(insertUser);
   }
   
   async updateUserProfile(id: number, profileData: Partial<User>): Promise<User> {
-    // Prétraiter les données pour s'assurer que les dates sont correctement formatées
-    const sanitizedData = sanitizeData(profileData);
-    
-    const [updatedUser] = await db.update(users)
-      .set(sanitizedData)
-      .where(eq(users.id, id))
-      .returning();
-    
-    return updatedUser;
+    return userService.updateUserProfile(id, profileData);
   }
   
   async updateUserPassword(id: number, newPassword: string): Promise<User> {
-    const [updatedUser] = await db.update(users)
-      .set({ password: newPassword })
-      .where(eq(users.id, id))
-      .returning();
-    
-    return updatedUser;
+    return userService.updateUserPassword(id, newPassword);
   }
   
   // Children operations
