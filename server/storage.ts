@@ -22,40 +22,41 @@ const PgSession = connectPgSimple(session);
 // Import des services
 import { userService } from "./services/user-service";
 import { childService } from "./services/child-service";
+import { familyService } from "./services/family-service"; // Import du nouveau service
 
 export interface IStorage {
   // Session store
   sessionStore: any;
-  
+
   // User operations (maintenu pour compatibilité mais délégué au service)
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserProfile(id: number, profileData: Partial<User>): Promise<User>;
   updateUserPassword(id: number, newPassword: string): Promise<User>;
-  
+
   // Children operations
   getUserChildren(userId: number): Promise<Child[]>;
   getChild(id: number): Promise<Child | undefined>;
   addChild(child: InsertChild): Promise<Child>;
   updateChild(id: number, childData: Partial<Child>): Promise<Child>;
   deleteChild(id: number): Promise<void>;
-  
+
   // Family operations
   getFamily(id: number): Promise<Family | undefined>;
   getFamiliesForUser(userId: number): Promise<Family[]>;
   createFamily(family: InsertFamily, userId: number): Promise<Family>;
-  
+
   // Family member operations
-  getFamilyMembers(familyId: number): Promise<FamilyMember[]>;
+  getFamilyMembers(familyId: number): Promise<(FamilyMember & { user?: User })[]>;
   addFamilyMember(familyId: number, member: InsertFamilyMember): Promise<FamilyMember>;
   userIsFamilyMember(userId: number, familyId: number): Promise<boolean>;
   userIsFamilyAdmin(userId: number, familyId: number): Promise<boolean>;
-  
+
   // Photo operations
   getFamilyPhotos(familyId: number, monthYear: string): Promise<Photo[]>;
   addPhoto(photo: InsertPhoto): Promise<Photo>;
-  
+
   // Gazette operations
   getGazette(id: number): Promise<Gazette | undefined>;
   getFamilyGazettes(familyId: number): Promise<Gazette[]>;
@@ -63,27 +64,27 @@ export interface IStorage {
   createGazette(gazette: InsertGazette): Promise<Gazette>;
   updateGazette(id: number, gazetteData: Partial<Gazette>): Promise<Gazette>;
   updateGazetteStatus(id: number, status: string): Promise<Gazette>;
-  
+
   // Family fund operations
   getFamilyFund(familyId: number): Promise<FamilyFund | undefined>;
   createFamilyFund(fund: InsertFamilyFund): Promise<FamilyFund>;
   updateFundBalance(id: number, newBalance: number): Promise<FamilyFund>;
-  
+
   // Fund transaction operations
   getFundTransactions(fundId: number): Promise<FundTransaction[]>;
   addFundTransaction(transaction: InsertFundTransaction): Promise<FundTransaction>;
-  
+
   // Recipient operations
   getFamilyRecipients(familyId: number): Promise<Recipient[]>;
   addRecipient(recipient: InsertRecipient): Promise<Recipient>;
   updateRecipient(id: number, recipientData: Partial<Recipient>): Promise<Recipient>;
-  
+
   // Invitation operations
   getFamilyInvitation(familyId: number): Promise<Invitation | undefined>;
   createInvitation(invitation: InsertInvitation): Promise<Invitation>;
   getInvitationByToken(token: string): Promise<Invitation | undefined>;
   updateInvitationStatus(id: number, status: string): Promise<Invitation>;
-  
+
   // Event operations
   getFamilyEvents(familyId: number): Promise<Event[]>;
   addEvent(event: InsertEvent): Promise<Event>;
@@ -93,15 +94,15 @@ export interface IStorage {
 function sanitizeData(data: any): any {
   // Si le champ est null ou undefined, on renvoie une copie simple
   if (!data) return data;
-  
+
   const result: any = {};
-  
+
   for (const key in data) {
     // On saute les clés inexistantes
     if (!(key in data)) continue;
-    
+
     const value = data[key];
-    
+
     // Traitement spécial pour les champs de date
     if (key.toLowerCase().includes('date') && key !== 'createdAt' && key !== 'updatedAt') {
       // Si la valeur est vide, explicitement à null
@@ -151,14 +152,14 @@ function sanitizeData(data: any): any {
       result[key] = value;
     }
   }
-  
+
   return result;
 }
 
 // Database implementation of the storage interface
 export class DatabaseStorage implements IStorage {
   sessionStore: any;
-  
+
   constructor() {
     this.sessionStore = new PgSession({
       pool,
@@ -166,116 +167,105 @@ export class DatabaseStorage implements IStorage {
       tableName: 'session' // Nom de la table pour les sessions
     });
   }
-  
+
   // User operations - Délégation au service
   async getUser(id: number): Promise<User | undefined> {
     return userService.getUser(id);
   }
-  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     return userService.getUserByUsername(username);
   }
-  
+
   // Fonction pour vérifier si un email existe déjà
   async getUserByEmail(email: string): Promise<User | undefined> {
     return userService.getUserByEmail(email);
   }
-  
+
   async createUser(insertUser: InsertUser): Promise<User> {
     return userService.createUser(insertUser);
   }
-  
+
   async updateUserProfile(id: number, profileData: Partial<User>): Promise<User> {
     return userService.updateUserProfile(id, profileData);
   }
-  
+
   async updateUserPassword(id: number, newPassword: string): Promise<User> {
     return userService.updateUserPassword(id, newPassword);
   }
-  
+
   // Children operations - Délégués au service
   async getUserChildren(userId: number): Promise<Child[]> {
     return childService.getUserChildren(userId);
   }
-  
+
   async getChild(id: number): Promise<Child | undefined> {
     return childService.getChild(id);
   }
-  
+
   async addChild(child: InsertChild): Promise<Child> {
     return childService.addChild(child);
   }
-  
+
   async updateChild(id: number, childData: Partial<Child>): Promise<Child> {
     return childService.updateChild(id, childData);
   }
-  
+
   async deleteChild(id: number): Promise<void> {
     return childService.deleteChild(id);
   }
-  
+
   // Family operations
   async getFamily(id: number): Promise<Family | undefined> {
     const [family] = await db.select().from(families).where(eq(families.id, id));
     return family || undefined;
   }
-  
+
   async getFamiliesForUser(userId: number): Promise<Family[]> {
     const result = await db
       .select({ family: families })
       .from(familyMembers)
       .innerJoin(families, eq(familyMembers.familyId, families.id))
       .where(eq(familyMembers.userId, userId));
-    
+
     return result.map(r => r.family);
   }
-  
+
   async createFamily(family: InsertFamily, userId: number): Promise<Family> {
     // Create family
     const [newFamily] = await db.insert(families).values(family).returning();
-    
+
     // Add creator as admin
     await db.insert(familyMembers).values({
       familyId: newFamily.id,
       userId,
       role: "admin",
     });
-    
+
     // Create family fund
     await db.insert(familyFunds).values({
       familyId: newFamily.id,
       balance: 0,
       currency: "ILS",
     });
-    
+
     return newFamily;
   }
-  
-  // Family member operations
+
+  // Family member operations - Délégués au service
   async getFamilyMembers(familyId: number): Promise<(FamilyMember & { user?: User })[]> {
-    const members = await db.select({
-      member: familyMembers,
-      user: users
-    })
-    .from(familyMembers)
-    .leftJoin(users, eq(familyMembers.userId, users.id))
-    .where(eq(familyMembers.familyId, familyId));
-    
-    return members.map(m => ({
-      ...m.member,
-      user: m.user || undefined
-    }));
+    return familyService.getFamilyMembers(familyId);
   }
-  
+
   async addFamilyMember(familyId: number, member: InsertFamilyMember): Promise<FamilyMember> {
     const [newMember] = await db.insert(familyMembers).values({
       ...member,
       familyId,
     }).returning();
-    
+
     return newMember;
   }
-  
+
   async userIsFamilyMember(userId: number, familyId: number): Promise<boolean> {
     const [member] = await db.select()
       .from(familyMembers)
@@ -285,10 +275,10 @@ export class DatabaseStorage implements IStorage {
           eq(familyMembers.familyId, familyId)
         )
       );
-    
+
     return !!member;
   }
-  
+
   async userIsFamilyAdmin(userId: number, familyId: number): Promise<boolean> {
     const [member] = await db.select()
       .from(familyMembers)
@@ -299,10 +289,10 @@ export class DatabaseStorage implements IStorage {
           eq(familyMembers.role, "admin")
         )
       );
-    
+
     return !!member;
   }
-  
+
   // Photo operations
   async getFamilyPhotos(familyId: number, monthYear: string): Promise<Photo[]> {
     return db.select()
@@ -315,25 +305,25 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(photos.uploadedAt));
   }
-  
+
   async addPhoto(photo: InsertPhoto): Promise<Photo> {
     const [newPhoto] = await db.insert(photos).values(photo).returning();
     return newPhoto;
   }
-  
+
   // Gazette operations
   async getGazette(id: number): Promise<Gazette | undefined> {
     const [gazette] = await db.select().from(gazettes).where(eq(gazettes.id, id));
     return gazette || undefined;
   }
-  
+
   async getFamilyGazettes(familyId: number): Promise<Gazette[]> {
     return db.select()
       .from(gazettes)
       .where(eq(gazettes.familyId, familyId))
       .orderBy(gazettes.createdAt);
   }
-  
+
   async getFamilyGazetteByMonthYear(familyId: number, monthYear: string): Promise<Gazette | undefined> {
     const [gazette] = await db.select()
       .from(gazettes)
@@ -343,59 +333,59 @@ export class DatabaseStorage implements IStorage {
           eq(gazettes.monthYear, monthYear)
         )
       );
-    
+
     return gazette || undefined;
   }
-  
+
   async createGazette(gazette: InsertGazette): Promise<Gazette> {
     const [newGazette] = await db.insert(gazettes).values(gazette).returning();
     return newGazette;
   }
-  
+
   async updateGazette(id: number, gazetteData: Partial<Gazette>): Promise<Gazette> {
     // Prétraiter les données pour s'assurer que les dates sont correctement formatées
     const sanitizedData = sanitizeData(gazetteData);
-    
+
     const [updatedGazette] = await db.update(gazettes)
       .set(sanitizedData)
       .where(eq(gazettes.id, id))
       .returning();
-    
+
     return updatedGazette;
   }
-  
+
   async updateGazetteStatus(id: number, status: string): Promise<Gazette> {
     const [updatedGazette] = await db.update(gazettes)
       .set({ status })
       .where(eq(gazettes.id, id))
       .returning();
-    
+
     return updatedGazette;
   }
-  
+
   // Family fund operations
   async getFamilyFund(familyId: number): Promise<FamilyFund | undefined> {
     const [fund] = await db.select()
       .from(familyFunds)
       .where(eq(familyFunds.familyId, familyId));
-    
+
     return fund || undefined;
   }
-  
+
   async createFamilyFund(fund: InsertFamilyFund): Promise<FamilyFund> {
     const [newFund] = await db.insert(familyFunds).values(fund).returning();
     return newFund;
   }
-  
+
   async updateFundBalance(id: number, newBalance: number): Promise<FamilyFund> {
     const [updatedFund] = await db.update(familyFunds)
       .set({ balance: newBalance })
       .where(eq(familyFunds.id, id))
       .returning();
-    
+
     return updatedFund;
   }
-  
+
   // Fund transaction operations
   async getFundTransactions(fundId: number): Promise<FundTransaction[]> {
     return db.select()
@@ -403,42 +393,42 @@ export class DatabaseStorage implements IStorage {
       .where(eq(fundTransactions.familyFundId, fundId))
       .orderBy(fundTransactions.createdAt);
   }
-  
+
   async addFundTransaction(transaction: InsertFundTransaction): Promise<FundTransaction> {
     const [newTransaction] = await db.insert(fundTransactions)
       .values(transaction)
       .returning();
-    
+
     return newTransaction;
   }
-  
+
   // Recipient operations
   async getFamilyRecipients(familyId: number): Promise<Recipient[]> {
     return db.select()
       .from(recipients)
       .where(eq(recipients.familyId, familyId));
   }
-  
+
   async addRecipient(recipient: InsertRecipient): Promise<Recipient> {
     const [newRecipient] = await db.insert(recipients)
       .values(recipient)
       .returning();
-    
+
     return newRecipient;
   }
-  
+
   async updateRecipient(id: number, recipientData: Partial<Recipient>): Promise<Recipient> {
     // Prétraiter les données pour s'assurer que les données sont correctement formatées
     const sanitizedData = sanitizeData(recipientData);
-    
+
     const [updatedRecipient] = await db.update(recipients)
       .set(sanitizedData)
       .where(eq(recipients.id, id))
       .returning();
-    
+
     return updatedRecipient;
   }
-  
+
   // Invitation operations
   async getFamilyInvitation(familyId: number): Promise<Invitation | undefined> {
     // Get the most recent active invitation (code type) for this family
@@ -455,35 +445,35 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(invitations.createdAt))
       .limit(1);
-      
+
     return invitation || undefined;
   }
-  
+
   async createInvitation(invitation: InsertInvitation): Promise<Invitation> {
     const [newInvitation] = await db.insert(invitations)
       .values(invitation)
       .returning();
-    
+
     return newInvitation;
   }
-  
+
   async getInvitationByToken(token: string): Promise<Invitation | undefined> {
     const [invitation] = await db.select()
       .from(invitations)
       .where(eq(invitations.token, token));
-    
+
     return invitation || undefined;
   }
-  
+
   async updateInvitationStatus(id: number, status: string): Promise<Invitation> {
     const [updatedInvitation] = await db.update(invitations)
       .set({ status })
       .where(eq(invitations.id, id))
       .returning();
-    
+
     return updatedInvitation;
   }
-  
+
   // Event operations
   async getFamilyEvents(familyId: number): Promise<Event[]> {
     return db.select()
@@ -491,12 +481,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(events.familyId, familyId))
       .orderBy(events.date);
   }
-  
+
   async addEvent(event: InsertEvent): Promise<Event> {
     const [newEvent] = await db.insert(events)
       .values(event)
       .returning();
-    
+
     return newEvent;
   }
 }
