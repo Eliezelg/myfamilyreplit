@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient, User, Gazette } from "@shared/schema";
-import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus, Download, RefreshCw, FileDown, Newspaper } from "lucide-react";
+import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus, Download, RefreshCw, FileDown, Newspaper, Settings } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import InviteFamilyModal from "./invite-family-modal";
 import { format, parse } from "date-fns";
@@ -30,6 +31,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   });
   const [isGeneratingGazette, setIsGeneratingGazette] = useState(false);
   const { toast } = useToast();
+  const [_, navigate] = useLocation();
   
   // Mutation pour générer une gazette
   const generateGazetteMutation = useMutation({
@@ -497,7 +499,18 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">גזטות זמינות</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-bold">גזטות זמינות</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="h-8 w-8"
+                    title="הגדרות הגזטה"
+                    onClick={() => navigate(`/families/${familyId}/gazette-settings`)}
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </div>
                 <Button variant="link" className="gap-1 p-0">
                   הצג הכל
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
