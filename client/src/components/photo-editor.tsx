@@ -505,66 +505,62 @@ export default function PhotoEditor({
                   <div>
                     <h3 className="text-sm font-medium mb-2">Rotation</h3>
                     <div className="flex space-x-2">
-                      <Button 
-                        onClick={() => {
-                          if (!fabricCanvasRef.current) return;
-                          const img = findMainImage();
-                          if (img) {
-                            const prevAngle = img.angle || 0;
-                            img.rotate((prevAngle - 90) % 360);
-                            fabricCanvasRef.current.renderAll();
-                            saveToHistory();
-                            setImageOptions(prev => ({ ...prev, angle: (prevAngle - 90) % 360 }));
-                          }
-                        }} 
-                        className="flex-1"
-                        title="Rotation à gauche"
-                      >
-                        <RotateCcw className="h-4 w-4 mr-2" />
-                        <span>Gauche</span>
+                      <div className="flex space-x-2 flex-1">
+                        <Button 
+                          onClick={() => {
+                            if (!fabricCanvasRef.current) return;
+                            const img = findMainImage();
+                            if (img) {
+                              const prevAngle = img.angle || 0;
+                              img.rotate((prevAngle - 90) % 360);
+                              fabricCanvasRef.current.renderAll();
+                              saveToHistory();
+                              setImageOptions(prev => ({ ...prev, angle: (prevAngle - 90) % 360 }));
+                            }
+                          }} 
+                          className="flex-1"
+                          title="Rotation à gauche"
+                        >
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          <span>Gauche</span>
+                        </Button>
                         <Button 
                           variant="outline" 
                           size="sm"
-                          className="ml-2" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            undo();
-                          }}
+                          onClick={undo}
                           title="Annuler"
                         >
                           <Undo className="h-3 w-3" />
                         </Button>
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          if (!fabricCanvasRef.current) return;
-                          const img = findMainImage();
-                          if (img) {
-                            const prevAngle = img.angle || 0;
-                            img.rotate((prevAngle + 90) % 360);
-                            fabricCanvasRef.current.renderAll();
-                            saveToHistory();
-                            setImageOptions(prev => ({ ...prev, angle: (prevAngle + 90) % 360 }));
-                          }
-                        }} 
-                        className="flex-1"
-                        title="Rotation à droite"
-                      >
-                        <RotateCw className="h-4 w-4 mr-2" />
-                        <span>Droite</span>
+                      </div>
+                      <div className="flex space-x-2 flex-1">
+                        <Button 
+                          onClick={() => {
+                            if (!fabricCanvasRef.current) return;
+                            const img = findMainImage();
+                            if (img) {
+                              const prevAngle = img.angle || 0;
+                              img.rotate((prevAngle + 90) % 360);
+                              fabricCanvasRef.current.renderAll();
+                              saveToHistory();
+                              setImageOptions(prev => ({ ...prev, angle: (prevAngle + 90) % 360 }));
+                            }
+                          }} 
+                          className="flex-1"
+                          title="Rotation à droite"
+                        >
+                          <RotateCw className="h-4 w-4 mr-2" />
+                          <span>Droite</span>
+                        </Button>
                         <Button 
                           variant="outline" 
                           size="sm"
-                          className="ml-2" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            undo();
-                          }}
+                          onClick={undo}
                           title="Annuler"
                         >
                           <Undo className="h-3 w-3" />
                         </Button>
-                      </Button>
+                      </div>
                     </div>
                   </div>
 
