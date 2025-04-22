@@ -22,8 +22,8 @@ const recipientSchema = insertRecipientSchema.extend({
   streetAddress: z.string().min(3, "כתובת חייבת להכיל לפחות 3 תווים"),
   city: z.string().min(2, "עיר חייבת להכיל לפחות 2 תווים"),
   postalCode: z.string().min(1, "מיקוד חייב להכיל ערך"),
-  country: z.string().min(2, "מדינה חייבת להכיל לפחות 2 תווים"),
-}).omit({ familyId: true, id: true });
+  country: z.string().min(2, "מדינה חייבת להכיל לפחות 2 תווים")
+});
 
 type RecipientFormValues = z.infer<typeof recipientSchema>;
 
@@ -301,7 +301,7 @@ export default function GazetteSettingsPage() {
             <div className="mt-8">
               <h3 className="text-xl font-semibold mb-4">גזטות קודמות</h3>
               <div className="grid gap-4">
-                {gazettes.map((gazette) => (
+                {gazettes.map((gazette: typeof gazettes[0]) => (
                   <Card key={gazette.id}>
                     <CardHeader className="py-4">
                       <CardTitle className="text-lg">{formatMonthYear(gazette.monthYear)}</CardTitle>

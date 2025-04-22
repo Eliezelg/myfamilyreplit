@@ -474,6 +474,18 @@ export class DatabaseStorage implements IStorage {
     return newRecipient;
   }
   
+  async updateRecipient(id: number, recipientData: Partial<Recipient>): Promise<Recipient> {
+    // Prétraiter les données pour s'assurer que les données sont correctement formatées
+    const sanitizedData = sanitizeData(recipientData);
+    
+    const [updatedRecipient] = await db.update(recipients)
+      .set(sanitizedData)
+      .where(eq(recipients.id, id))
+      .returning();
+    
+    return updatedRecipient;
+  }
+  
   // Invitation operations
   async getFamilyInvitation(familyId: number): Promise<Invitation | undefined> {
     // Get the most recent active invitation (code type) for this family
