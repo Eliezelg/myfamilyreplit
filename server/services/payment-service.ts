@@ -10,11 +10,17 @@ export interface PaymentDetails {
   amount: number; // En centimes (aggorot)
   description: string;
   token?: string;
+  cardToken?: string; // Alias pour compatibilité
   cardDetails?: {
     cardNumber: string;
     expDate: string;
     cvv?: string;
     holderId?: string;
+  };
+  installments?: {
+    numOfPayments: number;
+    firstPayment?: number;
+    otherPayments?: number;
   };
 }
 
@@ -73,8 +79,14 @@ export class PaymentService {
     familyId: number;
     amount: number;
     description: string;
-    token: string;
+    token?: string;
+    cardToken?: string;
   }): Promise<PaymentResult> {
+    // Pour compatibilité avec les deux formes d'appel
+    const token = paymentDetails.token || paymentDetails.cardToken;
+    if (!token) {
+      throw new Error("Aucun token de carte fourni");
+    }
     try {
       // Initialiser le résultat
       const result: PaymentResult = {
@@ -122,7 +134,7 @@ export class PaymentService {
       if (amountFromCard > 0) {
         // Effectuer le paiement par carte
         const creditResponse = await this.zcreditAPI.chargeWithToken(
-          paymentDetails.token,
+          token, // Utiliser le token récupéré plus haut
           amountFromCard,
           `${paymentDetails.description} (portion carte de crédit)`
         );
