@@ -10,6 +10,8 @@ import express from "express";
 import { registerGazetteRoutes } from "./gazette/routes";
 import { scheduleGazetteGeneration } from "./gazette/scheduler";
 import { registerPaymentRoutes } from "./payment/routes";
+import { ZCreditAPI } from "./payment/zcredit-api";
+import { PaymentService } from "./payment/payment-service";
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -247,6 +249,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const family = await storage.createFamily(req.body, req.user.id);
       res.status(201).json(family);
     } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Route pour créer une famille avec paiement (La famille est créée seulement si le paiement réussit)
+  app.post("/api/families/create-with-payment", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ success: false, message: "Unauthorized" });
+      
+      const { familyData, paymentToken, recipientData, addRecipientLater } = req.body;
+      
+      if (!familyData || !paymentToken) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid request. Required: familyData, paymentToken" 
+        });
+      }
+      
+      // Traitement du paiement en premier
+      const paymentService = new PaymentService(new ZCreditAPI(), storage);
+      const SUBSCRIPTION_PRICE = 7000; // 70 shekels
+      
+      const paymentResult = await paymentService.processPaymentWithToken({
+        userId: req.user.id,
+        familyId: -1, // Pas encore de famille créée
+        amount: SUBSCRIPTION_PRICE,
+        description: "דמי מנוי שנתי למשפחה",
+        token: paymentToken
+      });
+      
+      // Si le paiement a échoué, on arrête là
+      if (!paymentResult.success) {
+        return res.status(400).json({
+          success: false,
+          message: paymentResult.message || "Le paiement a échoué",
+          paymentError: true
+        });
+      }
+      
+      // Le paiement a réussi, on crée la famille
+      const family = await storage.createFamily(familyData, req.user.id);
+      
+      // Création du fonds familial
+      const familyFund = await storage.createFamilyFund({
+        familyId: family.id,
+        balance: 0,
+        currency: "ILS"
+      });
+      
+      // Si l'utilisateur a fourni des informations de destinataire et n'a pas choisi "ajouter plus tard"
+      if (recipientData && !addRecipientLater) {
+        try {
+          // On s'assure que les données du destinataire sont complètes
+          if (recipientData.name && recipientData.streetAddress && recipientData.city && recipientData.postalCode && recipientData.country) {
+            await storage.addRecipient({
+              ...recipientData,
+              familyId: family.id
+            });
+          }
+        } catch (recipientError) {
+          console.error("Erreur lors de la création du destinataire:", recipientError);
+          // On ne bloque pas le processus si l'ajout du destinataire échoue
+        }
+      }
+      
+      // On enregistre la transaction du paiement
+      await storage.addFundTransaction({
+        familyFundId: familyFund.id,
+        amount: -SUBSCRIPTION_PRICE, // Négatif car c'est une dépense
+        userId: req.user.id,
+        description: "תשלום דמי מנוי שנתי",
+        type: "subscription_payment",
+        referenceNumber: paymentResult.referenceNumber || ""
+      });
+      
+      res.status(201).json({
+        success: true,
+        family,
+        payment: {
+          amount: SUBSCRIPTION_PRICE,
+          referenceNumber: paymentResult.referenceNumber
+        }
+      });
+    } catch (error) {
+      console.error("Error in create-with-payment:", error);
       next(error);
     }
   });

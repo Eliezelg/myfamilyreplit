@@ -3,24 +3,37 @@ import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertFamilySchema, Family } from "@shared/schema";
+import { insertFamilySchema, Family, insertRecipientSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CreditCard, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CreditCard, CheckCircle2, MapPin, ArrowRight } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { CreditCardForm } from "./credit-card-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 
+// Schema pour les informations de la famille
 const createFamilySchema = insertFamilySchema.extend({
   name: z.string().min(2, "שם המשפחה חייב להכיל לפחות 2 תווים"),
 });
 
+// Schema pour les informations du destinataire
+const createRecipientSchema = insertRecipientSchema.extend({
+  name: z.string().min(2, "שם המקבל חייב להכיל לפחות 2 תווים"),
+  streetAddress: z.string().min(3, "כתובת חייבת להכיל לפחות 3 תווים"),
+  city: z.string().min(2, "עיר חייבת להכיל לפחות 2 תווים"),
+  postalCode: z.string().min(1, "מיקוד חייב להכיל ערך"),
+  country: z.string().min(2, "מדינה חייבת להכיל לפחות 2 תווים"),
+}).omit({ familyId: true });
+
+// Types pour les formulaires
 type CreateFamilyFormValues = z.infer<typeof createFamilySchema>;
+type CreateRecipientFormValues = z.infer<typeof createRecipientSchema>;
 
 interface CreateFamilyFormProps {
   onSuccess?: () => void;
@@ -31,13 +44,15 @@ const SUBSCRIPTION_PRICE = 7000; // 70 shekels
 
 export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
   const { toast } = useToast();
-  const [step, setStep] = useState<'info' | 'payment' | 'processing' | 'success'>('info');
+  const [step, setStep] = useState<'info' | 'recipient' | 'payment' | 'processing' | 'success'>('info');
   const [cardToken, setCardToken] = useState<string | null>(null);
   const [familyData, setFamilyData] = useState<CreateFamilyFormValues | null>(null);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [recipientData, setRecipientData] = useState<CreateRecipientFormValues | null>(null);
+  const [addRecipientLater, setAddRecipientLater] = useState(false);
   const [newFamily, setNewFamily] = useState<Family | null>(null);
   
-  const form = useForm<CreateFamilyFormValues>({
+  // Formulaire pour les informations de la famille
+  const familyForm = useForm<CreateFamilyFormValues>({
     resolver: zodResolver(createFamilySchema),
     defaultValues: {
       name: "",
@@ -45,86 +60,94 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     },
   });
 
-  // Mutation pour traiter le paiement
-  const processPaymentMutation = useMutation({
-    mutationFn: async ({ familyId, token }: { familyId: number, token: string }) => {
-      const response = await apiRequest("POST", "/api/payments/process-with-token", {
-        familyId,
-        amount: SUBSCRIPTION_PRICE,
-        description: "דמי מנוי שנתי למשפחה",
-        token
+  // Formulaire pour les informations du destinataire
+  const recipientForm = useForm<CreateRecipientFormValues>({
+    resolver: zodResolver(createRecipientSchema),
+    defaultValues: {
+      name: "",
+      streetAddress: "",
+      city: "",
+      postalCode: "",
+      country: "ישראל", // Valeur par défaut pour le pays
+      imageUrl: "",
+    },
+  });
+
+  // Mutation pour créer une famille avec paiement intégré (nouveau processus)
+  const createFamilyWithPaymentMutation = useMutation({
+    mutationFn: async ({ 
+      familyData, 
+      paymentToken, 
+      recipientData,
+      addRecipientLater
+    }: { 
+      familyData: CreateFamilyFormValues, 
+      paymentToken: string,
+      recipientData?: CreateRecipientFormValues,
+      addRecipientLater: boolean 
+    }) => {
+      const response = await apiRequest("POST", "/api/families/create-with-payment", {
+        familyData,
+        paymentToken,
+        recipientData,
+        addRecipientLater
       });
       return await response.json();
     },
     onSuccess: (data) => {
       if (data.success) {
-        setPaymentSuccess(true);
+        setNewFamily(data.family);
         setStep('success');
         toast({
-          title: "התשלום בוצע בהצלחה",
-          description: "המנוי למשפחה הופעל בהצלחה",
+          title: "המשפחה נוצרה בהצלחה",
+          description: "התשלום בוצע והמשפחה נוצרה",
         });
         // Invalider les requêtes pour recharger les données des familles
         queryClient.invalidateQueries({ queryKey: ["/api/families"] });
         if (onSuccess) setTimeout(onSuccess, 1500);
       } else {
-        toast({
-          title: "שגיאה בתשלום",
-          description: data.message || "לא ניתן לעבד את התשלום",
-          variant: "destructive",
-        });
-        setStep('payment');
+        if (data.paymentError) {
+          toast({
+            title: "שגיאה בתשלום",
+            description: data.message || "לא ניתן לעבד את התשלום",
+            variant: "destructive",
+          });
+          setStep('payment');
+        } else {
+          toast({
+            title: "שגיאה ביצירת משפחה",
+            description: data.message || "אירעה שגיאה בעת יצירת המשפחה",
+            variant: "destructive",
+          });
+          setStep('info');
+        }
       }
     },
     onError: (error: Error) => {
       toast({
-        title: "שגיאה בתשלום",
-        description: error.message,
-        variant: "destructive",
-      });
-      setStep('payment');
-    }
-  });
-
-  // Mutation pour créer une famille
-  const createFamilyMutation = useMutation<Family, Error, CreateFamilyFormValues>({
-    mutationFn: async (data: CreateFamilyFormValues) => {
-      const res = await apiRequest("POST", "/api/families", data);
-      return await res.json();
-    },
-    onSuccess: (family) => {
-      setNewFamily(family);
-      
-      // Si nous avons un token de carte, procéder au paiement
-      if (cardToken) {
-        setStep('processing');
-        processPaymentMutation.mutate({ 
-          familyId: family.id, 
-          token: cardToken 
-        });
-      } else {
-        // Pas de token de carte (ne devrait pas arriver dans ce flux)
-        toast({
-          title: "משפחה נוצרה אך לא הושלם תשלום",
-          description: "נא להזין פרטי תשלום",
-          variant: "destructive",
-        });
-        setStep('payment');
-      }
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "שגיאה ביצירת משפחה",
+        title: "שגיאה במערכת",
         description: error.message,
         variant: "destructive",
       });
       setStep('info');
-    },
+    }
   });
 
   // Gérer la soumission du formulaire d'informations de la famille
   const onInfoSubmit = (data: CreateFamilyFormValues) => {
     setFamilyData(data);
+    setStep('recipient');
+  };
+
+  // Gérer la soumission du formulaire d'informations du destinataire
+  const onRecipientSubmit = (data: CreateRecipientFormValues) => {
+    setRecipientData(data);
+    setStep('payment');
+  };
+
+  // Gérer le choix d'ajouter le destinataire plus tard
+  const handleSkipRecipient = () => {
+    setAddRecipientLater(true);
     setStep('payment');
   };
 
@@ -143,7 +166,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     });
   };
 
-  // Gérer la création de la famille avec paiement
+  // Gérer la création de la famille avec paiement (nouveau processus)
   const handleCreateWithPayment = () => {
     if (!familyData || !cardToken) {
       toast({
@@ -154,8 +177,15 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
       return;
     }
     
-    // Créer la famille, puis le paiement sera traité dans onSuccess
-    createFamilyMutation.mutate(familyData);
+    setStep('processing');
+    
+    // Créer la famille avec le nouveau processus intégré (paiement d'abord, puis création)
+    createFamilyWithPaymentMutation.mutate({
+      familyData,
+      paymentToken: cardToken,
+      recipientData: addRecipientLater ? undefined : recipientData,
+      addRecipientLater
+    });
   };
 
   // Afficher le formulaire d'informations sur la famille
