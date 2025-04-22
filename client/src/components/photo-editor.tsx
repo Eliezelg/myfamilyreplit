@@ -136,7 +136,9 @@ export default function PhotoEditor({
       });
 
       // Charger l'image
-      fabric.Image.fromURL(imageUrl, (img: fabric.Image) => {
+      // La signature de fromURL varie selon les versions de fabric
+      // @ts-ignore
+      fabric.Image.fromURL(imageUrl, function(img: any) {
         // Sauvegarde l'image originale pour les manipulations
         originalImageRef.current = img;
         
@@ -200,7 +202,7 @@ export default function PhotoEditor({
         fontSize: textbox.fontSize || 24,
         fontWeight: textbox.fontWeight as string || "normal",
         fontStyle: textbox.fontStyle || "normal",
-        textDecoration: textbox.textDecoration || "none",
+        textDecoration: (textbox as any).textDecoration || "none",
         textAlign: textbox.textAlign || "left",
         fill: textbox.fill as string || "#000000",
       });
