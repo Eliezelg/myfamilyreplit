@@ -1,4 +1,3 @@
-
 import { Request, Response, NextFunction } from "express";
 import { childService } from "../services/child-service";
 
@@ -43,13 +42,13 @@ class ChildController {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       const childId = parseInt(req.params.id);
-      
+
       // Vérifier que l'enfant appartient à l'utilisateur
       const child = await childService.getChild(childId);
       if (!child || child.userId !== req.user.id) {
         return res.status(403).send("Forbidden");
       }
-      
+
       const updatedChild = await childService.updateChild(childId, req.body);
       res.json(updatedChild);
     } catch (error) {
@@ -64,13 +63,13 @@ class ChildController {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       const childId = parseInt(req.params.id);
-      
+
       // Vérifier que l'enfant appartient à l'utilisateur
       const child = await childService.getChild(childId);
       if (!child || child.userId !== req.user.id) {
         return res.status(403).send("Forbidden");
       }
-      
+
       await childService.deleteChild(childId);
       res.status(204).send();
     } catch (error) {
@@ -85,22 +84,22 @@ class ChildController {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       const childId = parseInt(req.params.id);
-      
+
       // Vérifier que l'enfant appartient à l'utilisateur
       const child = await childService.getChild(childId);
       if (!child || child.userId !== req.user.id) {
         return res.status(403).send("Forbidden");
       }
-      
+
       if (!req.file) {
         return res.status(400).send("No image uploaded");
       }
-      
+
       const imagePath = `/uploads/${req.file.filename}`;
       const updatedChild = await childService.updateChild(childId, {
         profileImage: imagePath
       });
-      
+
       res.json(updatedChild);
     } catch (error) {
       next(error);
