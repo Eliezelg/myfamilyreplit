@@ -28,103 +28,70 @@ export default function SimplePhotoEditor({
   initialCaption = "",
 }: PhotoEditorProps) {
   const [caption, setCaption] = useState(initialCaption);
+  const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const { toast } = useToast();
 
-  // Charger l'image directement dans un canvas HTML standard
+  // Construire l'URL complète de l'image
+  const fullImageUrl = imageUrl.startsWith('/uploads/') 
+    ? `${window.location.origin}${imageUrl}`
+    : imageUrl;
+
   useEffect(() => {
-    if (!isOpen || !canvasRef.current) return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) {
-      console.error("Impossible d'obtenir le contexte 2D du canvas");
-      return;
+    // Réinitialiser l'état lorsque le dialogue s'ouvre
+    if (isOpen) {
+      setImageError(false);
+      setImageLoaded(false);
+      console.log("URL complète de l'image:", fullImageUrl);
     }
-    
-    // Assurons-nous que l'URL est complète
-    // Si l'URL commence par /uploads, nous devons l'ajuster pour qu'elle soit accessible
-    const fullImageUrl = imageUrl.startsWith('/uploads/') 
-      ? `${window.location.origin}${imageUrl}`
-      : imageUrl;
-    
-    console.log("Chargement de l'image dans l'éditeur simple:", fullImageUrl);
-    
-    // Réinitialiser l'état
-    setImageError(false);
-    setImageLoaded(false);
-    
-    // Créer un élément image HTML pour charger l'image
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      console.log("Image chargée avec succès:", img.width, "x", img.height);
-      
-      // Définir les dimensions du canvas en fonction de l'image
-      const maxWidth = 800;
-      const maxHeight = 600;
-      
-      let drawWidth = img.width;
-      let drawHeight = img.height;
-      
-      // Redimensionner si l'image est trop grande
-      if (img.width > maxWidth || img.height > maxHeight) {
-        const ratio = Math.min(
-          maxWidth / img.width,
-          maxHeight / img.height
-        );
-        drawWidth = img.width * ratio;
-        drawHeight = img.height * ratio;
-      }
-      
-      // Mettre à jour les dimensions du canvas
-      canvas.width = drawWidth;
-      canvas.height = drawHeight;
-      
-      // Dessiner l'image sur le canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, drawWidth, drawHeight);
-      
-      setImageLoaded(true);
-    };
-    
-    img.onerror = (err) => {
-      console.error("Erreur lors du chargement de l'image:", err, "URL:", fullImageUrl);
-      setImageError(true);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger l'image.",
-        variant: "destructive",
-      });
-    };
-    
-    // Définir la source de l'image APRÈS avoir configuré les gestionnaires d'événements
-    img.src = fullImageUrl;
-    
-    return () => {
-      // Annuler le chargement de l'image si le composant est démonté
-      img.onload = null;
-      img.onerror = null;
-    };
-  }, [isOpen, imageUrl, toast]);
+  }, [isOpen, fullImageUrl]);
+
+  const handleImageLoad = () => {
+    console.log("Image chargée avec succès");
+    setImageLoaded(true);
+  };
+
+  const handleImageError = (err: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    console.error("Erreur lors du chargement de l'image:", err);
+    setImageError(true);
+    toast({
+      title: "Erreur",
+      description: "Impossible de charger l'image.",
+      variant: "destructive",
+    });
+  };
 
   const handleSave = () => {
-    if (!canvasRef.current) {
+    if (!imgRef.current || !canvasRef.current) {
       toast({
         title: "Erreur",
-        description: "Erreur lors de la sauvegarde.",
+        description: "Erreur lors de la sauvegarde: aucune image chargée.",
         variant: "destructive",
       });
       return;
     }
     
     try {
-      // Simplement obtenir l'image du canvas
-      const dataURL = canvasRef.current.toDataURL('image/jpeg', 0.9);
+      // Créer un canvas temporaire pour la conversion
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error("Impossible d'obtenir le contexte 2D du canvas");
+      }
+      
+      // Définir les dimensions du canvas en fonction de l'image
+      const img = imgRef.current;
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      
+      // Dessiner l'image sur le canvas
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Convertir en data URL
+      const dataURL = canvas.toDataURL('image/jpeg', 0.9);
       
       onSave(dataURL, caption);
       toast({
@@ -160,18 +127,28 @@ export default function SimplePhotoEditor({
             {imageError ? (
               <div className="flex flex-col items-center justify-center p-8 text-red-500">
                 <p>Impossible de charger l'image</p>
-                <p className="text-sm text-gray-500 mt-2">{imageUrl}</p>
-              </div>
-            ) : !imageLoaded ? (
-              <div className="flex flex-col items-center justify-center p-8">
-                <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
-                <p className="mt-4 text-sm text-gray-500">Chargement de l'image...</p>
+                <p className="text-sm text-gray-500 mt-2">{fullImageUrl}</p>
               </div>
             ) : (
-              <canvas 
-                ref={canvasRef} 
-                className="max-w-full border border-gray-300 shadow-sm"
-              />
+              <>
+                {!imageLoaded && (
+                  <div className="absolute flex flex-col items-center justify-center p-8">
+                    <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
+                    <p className="mt-4 text-sm text-gray-500">Chargement de l'image...</p>
+                  </div>
+                )}
+                <img 
+                  ref={imgRef}
+                  src={fullImageUrl}
+                  alt="Image à éditer"
+                  className={`max-w-full border border-gray-300 shadow-sm ${!imageLoaded ? 'opacity-0' : 'opacity-100'}`}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                  crossOrigin="anonymous"
+                />
+                {/* Canvas invisible utilisé uniquement pour la sauvegarde */}
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+              </>
             )}
           </div>
           
