@@ -134,4 +134,4 @@ class ChildService {
   }
 }
 
-export const childService = new ChildService();
+export const childService = new ChildService();vice = new ChildService();

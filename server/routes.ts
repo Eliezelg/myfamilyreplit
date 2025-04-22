@@ -84,4 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerGazetteRoutes(app);
   //registerBasicTestRoutes(app);
   //registerTestUploadRoutes(app);
+
+  const server = createServer(app);
+  return server;
 }
