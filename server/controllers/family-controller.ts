@@ -1,4 +1,3 @@
-
 import { Request, Response, NextFunction } from "express";
 import { familyService } from "../services/family-service";
 
@@ -12,7 +11,7 @@ class FamilyController {
   async getUserFamilies(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const families = await familyService.getFamiliesForUser(req.user.id);
+      const families = await familyService.getUserFamilies(req.user.id);
       res.json(families);
     } catch (error) {
       next(error);
@@ -26,18 +25,18 @@ class FamilyController {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       const familyId = parseInt(req.params.id);
-      
+
       // Vérifier que l'utilisateur est membre de la famille
-      const isMember = await familyService.isUserMemberOfFamily(req.user.id, familyId);
+      const isMember = await familyService.isUserFamilyMember(req.user.id, familyId);
       if (!isMember) {
         return res.status(403).send("Forbidden");
       }
-      
+
       const family = await familyService.getFamily(familyId);
       if (!family) {
         return res.status(404).send("Family not found");
       }
-      
+
       res.json(family);
     } catch (error) {
       next(error);
@@ -64,13 +63,13 @@ class FamilyController {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       const familyId = parseInt(req.params.id);
-      
+
       // Vérifier que l'utilisateur est membre de la famille
-      const isMember = await familyService.isUserMemberOfFamily(req.user.id, familyId);
+      const isMember = await familyService.isUserFamilyMember(req.user.id, familyId);
       if (!isMember) {
         return res.status(403).send("Forbidden");
       }
-      
+
       const members = await familyService.getFamilyMembers(familyId);
       res.json(members);
     } catch (error) {
@@ -85,18 +84,18 @@ class FamilyController {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       const familyId = parseInt(req.params.id);
-      
+
       // Vérifier que l'utilisateur est membre de la famille
-      const isMember = await familyService.isUserMemberOfFamily(req.user.id, familyId);
+      const isMember = await familyService.isUserFamilyMember(req.user.id, familyId);
       if (!isMember) {
         return res.status(403).send("Forbidden");
       }
-      
+
       const fund = await familyService.getFamilyFund(familyId);
       if (!fund) {
         return res.status(404).send("Family fund not found");
       }
-      
+
       res.json(fund);
     } catch (error) {
       next(error);
