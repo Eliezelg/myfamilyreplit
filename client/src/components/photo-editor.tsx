@@ -136,7 +136,7 @@ export default function PhotoEditor({
       });
 
       // Charger l'image
-      fabric.Image.fromURL(imageUrl, function(img) {
+      fabric.Image.fromURL(imageUrl, (img: fabric.Image) => {
         // Sauvegarde l'image originale pour les manipulations
         originalImageRef.current = img;
         
@@ -375,7 +375,7 @@ export default function PhotoEditor({
     if (!object || (object.type !== "textbox" && object.type !== "text")) return;
     
     if (property !== "textAlign") {
-      object.set({ [property]: value } as fabric.IObjectOptions);
+      object.set({ [property]: value } as any);
     } else {
       (object as fabric.Textbox).set({ textAlign: value });
     }
