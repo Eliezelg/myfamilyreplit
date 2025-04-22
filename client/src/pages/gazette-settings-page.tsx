@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { insertRecipientSchema, Recipient } from "@shared/schema";
+import { insertRecipientSchema, Recipient, Gazette } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,12 +17,15 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 // Schema pour les informations du destinataire
-const recipientSchema = insertRecipientSchema.extend({
+const recipientSchema = z.object({
+  familyId: z.number().optional(),
   name: z.string().min(2, "שם המקבל חייב להכיל לפחות 2 תווים"),
   streetAddress: z.string().min(3, "כתובת חייבת להכיל לפחות 3 תווים"),
   city: z.string().min(2, "עיר חייבת להכיל לפחות 2 תווים"),
   postalCode: z.string().min(1, "מיקוד חייב להכיל ערך"),
-  country: z.string().min(2, "מדינה חייבת להכיל לפחות 2 תווים")
+  country: z.string().min(2, "מדינה חייבת להכיל לפחות 2 תווים"),
+  imageUrl: z.string().optional(),
+  active: z.boolean().default(true)
 });
 
 type RecipientFormValues = z.infer<typeof recipientSchema>;
@@ -301,7 +304,7 @@ export default function GazetteSettingsPage() {
             <div className="mt-8">
               <h3 className="text-xl font-semibold mb-4">גזטות קודמות</h3>
               <div className="grid gap-4">
-                {gazettes.map((gazette: typeof gazettes[0]) => (
+                {gazettes.map((gazette: Gazette) => (
                   <Card key={gazette.id}>
                     <CardHeader className="py-4">
                       <CardTitle className="text-lg">{formatMonthYear(gazette.monthYear)}</CardTitle>
