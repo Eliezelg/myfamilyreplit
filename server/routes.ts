@@ -15,6 +15,7 @@ import { registerUserRoutes } from "./routes/user-routes";
 import { registerChildRoutes } from "./routes/child-routes";
 import { registerFamilyRoutes } from "./routes/family-routes"; // Import des routes famille
 import { registerInvitationRoutes } from "./routes/invitation-routes"; // Import des routes d'invitation
+import { registerPhotoRoutes } from "./routes/photo-routes"; // Import des routes photo
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -83,6 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerPaymentRoutes(app); //Registering Payment routes here
   registerGazetteRoutes(app);
   registerInvitationRoutes(app); // Enregistrement des routes d'invitation
+  registerPhotoRoutes(app); // Enregistrement des routes photo
   //registerBasicTestRoutes(app);
   //registerTestUploadRoutes(app);
 
