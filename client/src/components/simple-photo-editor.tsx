@@ -35,9 +35,22 @@ export default function SimplePhotoEditor({
   const { toast } = useToast();
 
   // Construire l'URL complète de l'image
-  const fullImageUrl = imageUrl.startsWith('/uploads/') 
-    ? `${window.location.origin}${imageUrl}`
-    : imageUrl;
+  // En gérant à la fois les URL normales et les URL de type blob
+  const fullImageUrl = (() => {
+    // Si c'est déjà une URL blob, ne pas la modifier
+    if (imageUrl.startsWith('blob:')) {
+      console.log('URL Blob détectée, utilisation directe');
+      return imageUrl;
+    }
+    // Si c'est un chemin relatif vers uploads, construire l'URL complète
+    else if (imageUrl.startsWith('/uploads/')) {
+      const completeUrl = `${window.location.origin}${imageUrl}`;
+      console.log('Chemin relatif détecté, URL complète:', completeUrl);
+      return completeUrl;
+    }
+    // Sinon, utiliser l'URL telle quelle
+    return imageUrl;
+  })();
 
   useEffect(() => {
     // Réinitialiser l'état lorsque le dialogue s'ouvre
@@ -74,6 +87,7 @@ export default function SimplePhotoEditor({
     }
     
     try {
+      console.log("Démarrage du processus de sauvegarde");
       // Créer un canvas temporaire pour la conversion
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
@@ -84,6 +98,14 @@ export default function SimplePhotoEditor({
       
       // Définir les dimensions du canvas en fonction de l'image
       const img = imgRef.current;
+      
+      console.log("Dimensions de l'image:", img.naturalWidth, "x", img.naturalHeight);
+      
+      // S'assurer que les dimensions sont valides
+      if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+        throw new Error("L'image n'a pas de dimensions valides");
+      }
+      
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
       
@@ -92,8 +114,17 @@ export default function SimplePhotoEditor({
       
       // Convertir en data URL
       const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+      console.log("DataURL généré avec succès", dataURL.substring(0, 50) + "...");
       
-      onSave(dataURL, caption);
+      // Si nous avons un URL blob, nous utilisons l'URL d'origine pour l'édition
+      // car nous voulons continuer à utiliser le fichier côté serveur
+      const urlToSave = imageUrl.startsWith('blob:') 
+        ? imageUrl  // Utiliser l'URL originale pour les blobs
+        : dataURL;  // Sinon utiliser la version modifiée
+      
+      console.log("Appel de onSave avec", urlToSave.substring(0, 30) + "...");
+      onSave(urlToSave, caption);
+      
       toast({
         title: "Image sauvegardée",
         description: "La légende a été mise à jour avec succès.",
@@ -102,7 +133,7 @@ export default function SimplePhotoEditor({
       console.error("Erreur lors de la sauvegarde:", error);
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder l'image.",
+        description: "Impossible de sauvegarder l'image: " + (error instanceof Error ? error.message : "Erreur inconnue"),
         variant: "destructive",
       });
     }
