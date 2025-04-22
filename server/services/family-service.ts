@@ -9,10 +9,19 @@ class FamilyService {
   /**
    * Crée une nouvelle famille
    */
-  async createFamily(family: InsertFamily): Promise<Family> {
+  async createFamily(family: InsertFamily, userId?: number): Promise<Family> {
     const [newFamily] = await db.insert(families)
       .values(family)
       .returning();
+
+    // Si un userId est fourni, ajouter également l'utilisateur comme admin
+    if (userId) {
+      await this.addFamilyMember({
+        familyId: newFamily.id,
+        userId: userId,
+        role: "admin"
+      });
+    }
 
     return newFamily;
   }
@@ -40,14 +49,14 @@ class FamilyService {
   }
 
   /**
-   * Récupère une famille par son code d'invitation
+   * Récupère une famille par son code d'invitation (si implémenté)
+   * Note: cette méthode est conservée pour la compatibilité, 
+   * car le schéma actuel ne contient pas de champ inviteCode
    */
   async getFamilyByInviteCode(inviteCode: string): Promise<Family | undefined> {
-    const [family] = await db.select()
-      .from(families)
-      .where(eq(families.inviteCode, inviteCode));
-
-    return family || undefined;
+    // Cette méthode sera implémentée quand le champ inviteCode sera ajouté
+    console.warn("getFamilyByInviteCode appelé mais le champ inviteCode n'existe pas dans le modèle");
+    return undefined;
   }
 
   /**

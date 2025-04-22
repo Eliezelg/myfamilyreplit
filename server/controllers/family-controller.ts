@@ -51,8 +51,8 @@ class FamilyController {
   async createFamily(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      // Utiliser le storage service qui ajoute aussi l'utilisateur comme admin
-      const family = await storage.createFamily(req.body, req.user.id);
+      // Utiliser le family service avec l'ID utilisateur
+      const family = await familyService.createFamily(req.body, req.user.id);
       res.status(201).json(family);
     } catch (error) {
       next(error);
@@ -96,8 +96,8 @@ class FamilyController {
           });
         }
 
-        // 2. Créer la famille (via storage pour gérer l'utilisateur membre)
-        const family = await storage.createFamily(familyData, req.user.id);
+        // 2. Créer la famille (via family service pour gérer l'utilisateur membre)
+        const family = await familyService.createFamily(familyData, req.user.id);
         
         // 3. Créer le pot de la famille
         const familyFund = await storage.createFamilyFund({

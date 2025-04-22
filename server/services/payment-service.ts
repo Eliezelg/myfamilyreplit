@@ -148,7 +148,6 @@ export class PaymentService {
               amount: amountFromCard,
               type: "payment",
               description: `${paymentDetails.description} (carte)`,
-              createdAt: new Date(),
               referenceNumber: creditResponse.ReferenceNumber || creditResponse.VoucherNumber,
               userId: paymentDetails.userId
             });
@@ -276,7 +275,6 @@ export class PaymentService {
       amount: amount,
       type: "payment",
       description,
-      createdAt: new Date(),
       userId
     });
   }
