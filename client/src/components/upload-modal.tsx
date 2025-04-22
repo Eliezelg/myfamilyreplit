@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { X, Upload, Edit2 } from "lucide-react";
-import PhotoEditor from "./photo-editor";
+import SimplePhotoEditor from "./simple-photo-editor";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -253,7 +253,7 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
     <>
       {/* Éditeur de photos modal */}
       {isPhotoEditorOpen && currentEditFileId && (
-        <PhotoEditor
+        <SimplePhotoEditor
           isOpen={isPhotoEditorOpen}
           onClose={handlePhotoEditorClose}
           imageUrl={
