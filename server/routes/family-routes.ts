@@ -9,6 +9,9 @@ export function registerFamilyRoutes(app: Express) {
   // Créer une nouvelle famille
   app.post("/api/families", familyController.createFamily.bind(familyController));
   
+  // Créer une nouvelle famille avec paiement intégré
+  app.post("/api/families/create-with-payment", familyController.createFamilyWithPayment.bind(familyController));
+  
   // Récupérer les détails d'une famille
   app.get("/api/families/:id", familyController.getFamily.bind(familyController));
   

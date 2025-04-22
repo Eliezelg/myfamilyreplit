@@ -368,13 +368,13 @@ export class ZCreditAPI {
       const payload: Record<string, string> = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
-        CardNumber: token, // Utiliser le token au lieu du numéro de carte
+        Token: token, // Utiliser le token dans le champ Token, pas CardNumber
         TransactionSum: transactionSum,
         NumberOfPayments: "1",
         CreditType: "1",
         CurrencyType: "1", // ILS (shekels)
         TransactionType: "01", // Transaction standard
-        J: "0", // Transaction standard
+        J: "2", // 2 pour transaction avec token au lieu de 0
         ItemDescription: description,
         TransactionUniqueID: this.generateUniqueId()
       };

@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { familyService } from "../services/family-service";
+import { paymentService } from "../services/payment-service";
+import { storage } from "../storage";
 
 /**
  * Contrôleur pour gérer les requêtes liées aux familles
@@ -52,6 +54,87 @@ class FamilyController {
       const family = await familyService.createFamily(req.body, req.user.id);
       res.status(201).json(family);
     } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Crée une nouvelle famille avec paiement intégré
+   */
+  async createFamilyWithPayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+      const { familyData, paymentToken, recipientData, addRecipientLater } = req.body;
+
+      if (!familyData || !paymentToken) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Données manquantes: familyData et paymentToken sont requis" 
+        });
+      }
+
+      // Prix de l'abonnement en shekels (en agorot)
+      const SUBSCRIPTION_PRICE = 7000; // 70 shekels
+
+      try {
+        // 1. Traiter le paiement d'abord
+        const paymentResult = await paymentService.processPaymentWithToken({
+          userId: req.user.id,
+          familyId: 0, // temporaire, sera mis à jour après création
+          amount: SUBSCRIPTION_PRICE,
+          description: "Abonnement annuel à une famille",
+          token: paymentToken
+        });
+
+        if (!paymentResult.success) {
+          return res.status(400).json({ 
+            success: false, 
+            paymentError: true,
+            message: paymentResult.message || "Échec du paiement" 
+          });
+        }
+
+        // 2. Créer la famille
+        const family = await familyService.createFamily(familyData, req.user.id);
+        
+        // 3. Créer le pot de la famille
+        const familyFund = await storage.createFamilyFund({
+          familyId: family.id,
+          balance: 0,
+          currency: "ILS"
+        });
+
+        // 4. Si des détails de destinataire sont fournis, les ajouter
+        if (recipientData && !addRecipientLater) {
+          const recipient = await storage.addRecipient({
+            ...recipientData,
+            familyId: family.id,
+            active: true
+          });
+        }
+
+        // Retourner la réponse combinée
+        return res.status(201).json({
+          success: true,
+          family,
+          payment: {
+            success: true,
+            amount: SUBSCRIPTION_PRICE / 100,
+            referenceNumber: paymentResult.referenceNumber
+          }
+        });
+
+      } catch (paymentError) {
+        console.error("Erreur de paiement lors de la création de famille:", paymentError);
+        return res.status(400).json({
+          success: false,
+          paymentError: true,
+          message: paymentError instanceof Error ? paymentError.message : "Échec lors du traitement du paiement"
+        });
+      }
+    } catch (error) {
+      console.error("Erreur générale lors de la création de famille avec paiement:", error);
       next(error);
     }
   }

@@ -68,9 +68,10 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
       streetAddress: "",
       city: "",
       postalCode: "",
-      country: "", // Valeur par défaut pour le pays
+      country: "ישראל", // Valeur par défaut pour le pays (Israël)
       imageUrl: "",
     },
+    mode: "onBlur", // Valider au blur pour une meilleure expérience utilisateur
   });
 
   // Mutation pour créer une famille avec paiement intégré (nouveau processus)
