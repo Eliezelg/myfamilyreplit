@@ -209,7 +209,13 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                   <FormItem>
                     <FormLabel>שם המשפחה</FormLabel>
                     <FormControl>
-                      <Input placeholder="לדוגמה: משפחת לוי" {...field} />
+                      <Input 
+                        placeholder="לדוגמה: משפחת לוי" 
+                        value={field.value || ""} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -277,7 +283,13 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                   <FormItem>
                     <FormLabel>שם המקבל</FormLabel>
                     <FormControl>
-                      <Input placeholder="שם מלא של מקבל הגזטה" {...field} />
+                      <Input 
+                        placeholder="שם מלא של מקבל הגזטה" 
+                        value={field.value || ""} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -290,7 +302,13 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                   <FormItem>
                     <FormLabel>כתובת</FormLabel>
                     <FormControl>
-                      <Input placeholder="רחוב ומספר בית" {...field} />
+                      <Input 
+                        placeholder="רחוב ומספר בית" 
+                        value={field.value || ""} 
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
