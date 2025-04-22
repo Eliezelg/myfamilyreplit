@@ -19,8 +19,9 @@ import { pool } from "./db";
 
 const PgSession = connectPgSimple(session);
 
-// Import du service utilisateur
+// Import des services
 import { userService } from "./services/user-service";
+import { childService } from "./services/child-service";
 
 export interface IStorage {
   // Session store
@@ -191,9 +192,6 @@ export class DatabaseStorage implements IStorage {
   async updateUserPassword(id: number, newPassword: string): Promise<User> {
     return userService.updateUserPassword(id, newPassword);
   }
-  
-  // Import du service enfant
-  import { childService } from "./services/child-service";
   
   // Children operations - Délégués au service
   async getUserChildren(userId: number): Promise<Child[]> {
