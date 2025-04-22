@@ -1,107 +1,166 @@
 
 import { db } from "../db";
-import { 
-  families, 
-  type Family, 
-  type InsertFamily,
-  familyMembers,
-  familyFunds,
-  type FamilyMember,
-  type FamilyFund,
-  users,
-  type User
-} from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { families, familyMembers, type Family, type FamilyMember, type InsertFamily, type InsertFamilyMember } from "@shared/schema";
+import { eq, and, sql } from "drizzle-orm";
 
 /**
  * Service pour gérer les opérations liées aux familles
  */
 class FamilyService {
   /**
-   * Récupère une famille par son ID
+   * Crée une nouvelle famille
    */
-  async getFamily(id: number): Promise<Family | undefined> {
-    const [family] = await db.select().from(families).where(eq(families.id, id));
-    return family || undefined;
-  }
-  
-  /**
-   * Récupère toutes les familles d'un utilisateur
-   */
-  async getFamiliesForUser(userId: number): Promise<Family[]> {
-    const result = await db
-      .select({ family: families })
-      .from(familyMembers)
-      .innerJoin(families, eq(familyMembers.familyId, families.id))
-      .where(eq(familyMembers.userId, userId));
-    
-    return result.map(r => r.family);
-  }
-  
-  /**
-   * Crée une nouvelle famille et ajoute le créateur comme administrateur
-   */
-  async createFamily(family: InsertFamily, userId: number): Promise<Family> {
-    // Create family
-    const [newFamily] = await db.insert(families).values(family).returning();
-    
-    // Add creator as admin
-    await db.insert(familyMembers).values({
-      familyId: newFamily.id,
-      userId,
-      role: "admin",
-    });
-    
-    // Create family fund
-    await db.insert(familyFunds).values({
-      familyId: newFamily.id,
-      balance: 0,
-      currency: "ILS",
-    });
+  async createFamily(family: InsertFamily): Promise<Family> {
+    const [newFamily] = await db.insert(families)
+      .values(family)
+      .returning();
     
     return newFamily;
   }
   
   /**
-   * Récupère les membres d'une famille
+   * Ajoute un membre à une famille
    */
-  async getFamilyMembers(familyId: number): Promise<(FamilyMember & { user?: User })[]> {
-    const members = await db.select({
-      member: familyMembers,
-      user: users
-    })
-    .from(familyMembers)
-    .leftJoin(users, eq(familyMembers.userId, users.id))
-    .where(eq(familyMembers.familyId, familyId));
+  async addFamilyMember(member: InsertFamilyMember): Promise<FamilyMember> {
+    const [newMember] = await db.insert(familyMembers)
+      .values(member)
+      .returning();
     
-    return members.map(({ member, user }) => ({
-      ...member,
-      user
-    }));
+    return newMember;
   }
   
   /**
-   * Récupère le fond familial
+   * Récupère une famille par son ID
    */
-  async getFamilyFund(familyId: number): Promise<FamilyFund | undefined> {
-    const [fund] = await db.select()
-      .from(familyFunds)
-      .where(eq(familyFunds.familyId, familyId));
+  async getFamily(id: number): Promise<Family | undefined> {
+    const [family] = await db.select()
+      .from(families)
+      .where(eq(families.id, id));
     
-    return fund || undefined;
+    return family || undefined;
+  }
+  
+  /**
+   * Récupère une famille par son code d'invitation
+   */
+  async getFamilyByInviteCode(inviteCode: string): Promise<Family | undefined> {
+    const [family] = await db.select()
+      .from(families)
+      .where(eq(families.inviteCode, inviteCode));
+    
+    return family || undefined;
+  }
+  
+  /**
+   * Met à jour les informations d'une famille
+   */
+  async updateFamily(id: number, familyData: Partial<Family>): Promise<Family> {
+    const [updatedFamily] = await db.update(families)
+      .set(familyData)
+      .where(eq(families.id, id))
+      .returning();
+    
+    return updatedFamily;
+  }
+  
+  /**
+   * Supprime une famille
+   */
+  async deleteFamily(id: number): Promise<void> {
+    // Supprime d'abord tous les membres de la famille
+    await db.delete(familyMembers)
+      .where(eq(familyMembers.familyId, id));
+    
+    // Puis supprime la famille elle-même
+    await db.delete(families)
+      .where(eq(families.id, id));
+  }
+  
+  /**
+   * Récupère toutes les familles d'un utilisateur
+   */
+  async getUserFamilies(userId: number): Promise<Family[]> {
+    // Récupérer les familles où l'utilisateur est membre
+    const result = await db.select({
+      family: families
+    })
+    .from(familyMembers)
+    .innerJoin(families, eq(familyMembers.familyId, families.id))
+    .where(eq(familyMembers.userId, userId));
+    
+    return result.map(r => r.family);
+  }
+  
+  /**
+   * Récupère le rôle d'un utilisateur dans une famille
+   */
+  async getUserFamilyRole(userId: number, familyId: number): Promise<string | null> {
+    const [member] = await db.select()
+      .from(familyMembers)
+      .where(
+        and(
+          eq(familyMembers.userId, userId),
+          eq(familyMembers.familyId, familyId)
+        )
+      );
+    
+    return member?.role || null;
   }
   
   /**
    * Vérifie si un utilisateur est membre d'une famille
    */
-  async isUserMemberOfFamily(userId: number, familyId: number): Promise<boolean> {
+  async isUserFamilyMember(userId: number, familyId: number): Promise<boolean> {
     const [member] = await db.select()
       .from(familyMembers)
-      .where(eq(familyMembers.userId, userId))
-      .where(eq(familyMembers.familyId, familyId));
+      .where(
+        and(
+          eq(familyMembers.userId, userId),
+          eq(familyMembers.familyId, familyId)
+        )
+      );
     
     return !!member;
   }
+  
+  /**
+   * Récupère tous les membres d'une famille
+   */
+  async getFamilyMembers(familyId: number): Promise<FamilyMember[]> {
+    return db.select()
+      .from(familyMembers)
+      .where(eq(familyMembers.familyId, familyId));
+  }
+  
+  /**
+   * Met à jour le rôle d'un membre dans une famille
+   */
+  async updateMemberRole(userId: number, familyId: number, role: string): Promise<FamilyMember> {
+    const [updatedMember] = await db.update(familyMembers)
+      .set({ role })
+      .where(
+        and(
+          eq(familyMembers.userId, userId),
+          eq(familyMembers.familyId, familyId)
+        )
+      )
+      .returning();
+    
+    return updatedMember;
+  }
+  
+  /**
+   * Supprime un membre d'une famille
+   */
+  async removeFamilyMember(userId: number, familyId: number): Promise<void> {
+    await db.delete(familyMembers)
+      .where(
+        and(
+          eq(familyMembers.userId, userId),
+          eq(familyMembers.familyId, familyId)
+        )
+      );
+  }
 }
 
-export const familyService = new FamilyService();milyService();
+export const familyService = new FamilyService();

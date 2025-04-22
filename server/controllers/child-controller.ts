@@ -108,4 +108,4 @@ class ChildController {
   }
 }
 
-export const childController = new ChildController();
+export const childController = new ChildController();ldController();
