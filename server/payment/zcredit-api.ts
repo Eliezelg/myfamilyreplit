@@ -141,7 +141,7 @@ export class ZCreditAPI {
         CreditType: transaction.creditType ? transaction.creditType.toString() : "1",
         CurrencyType: "1", // ILS (shekels)
         TransactionType: "01", // Transaction standard
-        J: "0", // Transaction standard
+        J: "0", // Transaction standard pour les paiements directs
         ItemDescription: transaction.description || "Paiement MyFamily",
         TransactionUniqueID: transaction.uniqueId || this.generateUniqueId()
       };
@@ -244,20 +244,21 @@ export class ZCreditAPI {
    */
   async tokenizeCard(creditCard: CreditCardDetails): Promise<TokenizeResult> {
     try {
-      // Construction du payload pour la tokenisation
+      // Construction du payload pour la tokenisation selon la documentation Z-Credit
       const payload: Record<string, any> = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
         CardNumber: creditCard.cardNumber,
         ExpDate_MMYY: this.formatExpDate(creditCard.expDate),
         CVV: creditCard.cvv || '',
-        TransactionSum: 1, // 1 NIS pour autorisation minimum (au lieu de 0)
-        J: 5, // 5 pour autorisation uniquement (au lieu de 2 pour authentification)
+        TransactionSum: 1, // 1 NIS pour autorisation minimum
+        J: 5, // 5 pour autorisation uniquement comme spécifié dans la doc
         TransactionUniqueID: this.generateUniqueId(),
-        // Ajouter les paramètres obligatoires pour l'autorisation
-        Currency: "ILS", // Shekel israélien
-        CreditType: 1,   // Transaction régulière
-        Description: "Tokenisation carte"
+        // Paramètres obligatoires pour l'autorisation selon la documentation
+        CurrencyType: "1", // 1 pour ILS (shekels)
+        CreditType: "1",   // 1 pour transaction régulière
+        ItemDescription: "Tokenisation carte", // Utiliser ItemDescription au lieu de Description
+        TransactionType: "01" // Transaction standard
       };
       
       if (creditCard.holderId) {
@@ -363,7 +364,7 @@ export class ZCreditAPI {
       // Conversion de l'amount de aggorot (centimes) à NIS avec 2 décimales
       const transactionSum = (amount / 100).toFixed(2);
       
-      // Construction du payload pour le paiement par token
+      // Construction du payload pour le paiement par token selon la documentation
       const payload: Record<string, string> = {
         TerminalNumber: this.config.terminalNumber,
         Password: this.config.password,
