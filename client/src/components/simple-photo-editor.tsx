@@ -32,34 +32,82 @@ export default function SimplePhotoEditor({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [directImageUrl, setDirectImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Construire l'URL complète de l'image
-  // En gérant à la fois les URL normales et les URL de type blob
-  const fullImageUrl = (() => {
-    // Si c'est déjà une URL blob, ne pas la modifier
-    if (imageUrl.startsWith('blob:')) {
-      console.log('URL Blob détectée, utilisation directe');
-      return imageUrl;
-    }
-    // Si c'est un chemin relatif vers uploads, construire l'URL complète
-    else if (imageUrl.startsWith('/uploads/')) {
-      const completeUrl = `${window.location.origin}${imageUrl}`;
-      console.log('Chemin relatif détecté, URL complète:', completeUrl);
-      return completeUrl;
-    }
-    // Sinon, utiliser l'URL telle quelle
-    return imageUrl;
-  })();
+  // Utiliser useEffect pour gérer les différents types d'URL
+  useEffect(() => {
+    // Nettoyer les anciens ObjectURL pour éviter les fuites de mémoire
+    return () => {
+      if (directImageUrl && directImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(directImageUrl);
+        console.log('ObjectURL révoqué:', directImageUrl);
+      }
+    };
+  }, [directImageUrl]);
 
+  // Effet pour traiter l'URL de l'image lorsque le dialogue s'ouvre
   useEffect(() => {
     // Réinitialiser l'état lorsque le dialogue s'ouvre
     if (isOpen) {
       setImageError(false);
       setImageLoaded(false);
-      console.log("URL complète de l'image:", fullImageUrl);
+      setDirectImageUrl(null);
+      
+      // Logique pour gérer les différents types d'URL
+      const processImageUrl = async () => {
+        try {
+          // Si c'est une URL blob
+          if (imageUrl.startsWith('blob:')) {
+            console.log('URL Blob détectée, tentative de conversion');
+            
+            try {
+              // Tentative de créer une URL directe à partir du blob
+              const response = await fetch(imageUrl);
+              if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+              }
+              
+              const blob = await response.blob();
+              const objectURL = URL.createObjectURL(blob);
+              
+              console.log('Blob converti en objectURL:', objectURL);
+              setDirectImageUrl(objectURL);
+            } catch (error) {
+              console.error('Erreur lors de la conversion du blob:', error);
+              setImageError(true);
+              toast({
+                title: "Erreur",
+                description: "Impossible d'accéder à l'image temporaire. Veuillez réessayer.",
+                variant: "destructive",
+              });
+            }
+          } 
+          // Si c'est un chemin relatif vers uploads
+          else if (imageUrl.startsWith('/uploads/')) {
+            const completeUrl = `${window.location.origin}${imageUrl}`;
+            console.log('Chemin relatif détecté, URL complète:', completeUrl);
+            setDirectImageUrl(completeUrl);
+          } 
+          // Sinon, utiliser l'URL telle quelle
+          else {
+            console.log('URL standard détectée:', imageUrl);
+            setDirectImageUrl(imageUrl);
+          }
+        } catch (error) {
+          console.error('Erreur lors du traitement de l\'URL:', error);
+          setImageError(true);
+          toast({
+            title: "Erreur",
+            description: "Impossible de traiter l'image.",
+            variant: "destructive",
+          });
+        }
+      };
+
+      processImageUrl();
     }
-  }, [isOpen, fullImageUrl]);
+  }, [isOpen, imageUrl, toast]);
 
   const handleImageLoad = () => {
     console.log("Image chargée avec succès");
@@ -158,7 +206,12 @@ export default function SimplePhotoEditor({
             {imageError ? (
               <div className="flex flex-col items-center justify-center p-8 text-red-500">
                 <p>Impossible de charger l'image</p>
-                <p className="text-sm text-gray-500 mt-2">{fullImageUrl}</p>
+                <p className="text-sm text-gray-500 mt-2">{imageUrl}</p>
+              </div>
+            ) : !directImageUrl ? (
+              <div className="flex flex-col items-center justify-center p-8">
+                <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full"></div>
+                <p className="mt-4 text-sm text-gray-500">Préparation de l'image...</p>
               </div>
             ) : (
               <>
@@ -170,7 +223,7 @@ export default function SimplePhotoEditor({
                 )}
                 <img 
                   ref={imgRef}
-                  src={fullImageUrl}
+                  src={directImageUrl}
                   alt="Image à éditer"
                   className={`max-w-full border border-gray-300 shadow-sm ${!imageLoaded ? 'opacity-0' : 'opacity-100'}`}
                   onLoad={handleImageLoad}
