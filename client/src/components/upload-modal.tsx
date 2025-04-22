@@ -208,11 +208,19 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
     );
 
     // Convertir l'image éditée en Blob et mise à jour du fichier pour l'upload
+    console.log("Conversion de l'image éditée pour le nouveau système de fichiers");
     fetch(editedImageUrl)
       .then(res => res.blob())
       .then(blob => {
-        const file = new File([blob], `edited_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        // Créer un nouveau File avec le contenu édité
+        const filename = `edited_${Date.now()}.jpg`;
+        console.log("Création du nouveau fichier:", filename);
+        const file = new File([blob], filename, { 
+          type: 'image/jpeg',
+          lastModified: Date.now()
+        });
         
+        // Mettre à jour la collection de fichiers
         setFiles(prevFiles => 
           prevFiles.map(fileObj => 
             fileObj.id === currentEditFileId

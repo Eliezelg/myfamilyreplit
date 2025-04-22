@@ -404,12 +404,17 @@ export default function PhotoEditor({
     if (!fabricCanvasRef.current) return;
     
     try {
-      // FYI: Fabric.js toDataURL API a changé, mais nous utilisons "any" pour simplifier
+      // Utilisation de toDataURL pour générer l'image modifiée
       const dataURL = fabricCanvasRef.current.toDataURL({
         format: "jpeg",
         quality: 0.8,
         multiplier: 1,
       } as any);
+
+      // Optimisation pour le nouveau système de fichiers 
+      // Nous transmettons directement l'image en base64 au composant parent
+      // qui la convertira en fichier pour l'upload
+      console.log("Image éditée prête pour le transfert");
       
       onSave(dataURL, caption);
       toast({
