@@ -9,9 +9,8 @@ import fs from "fs";
 import express from "express";
 import { registerGazetteRoutes } from "./gazette/routes";
 import { scheduleGazetteGeneration } from "./gazette/scheduler";
-import { registerPaymentRoutes } from "./payment/routes";
+import { registerPaymentRoutes } from "./routes/payment-routes";
 import { ZCreditAPI } from "./payment/zcredit-api";
-import { PaymentService } from "./payment/payment-service";
 import { registerUserRoutes } from "./routes/user-routes";
 import { registerChildRoutes } from "./routes/child-routes";
 import { registerFamilyRoutes } from "./routes/family-routes"; // Import des routes famille
