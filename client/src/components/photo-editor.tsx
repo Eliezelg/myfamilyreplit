@@ -135,39 +135,71 @@ export default function PhotoEditor({
         backgroundColor: "#f0f0f0",
       });
 
-      // Charger l'image
-      // La signature de fromURL varie selon les versions de fabric
-      // @ts-ignore
-      fabric.Image.fromURL(imageUrl, function(img: any) {
-        // Sauvegarde l'image originale pour les manipulations
-        originalImageRef.current = img;
+      // Charger l'image avec plus de debug
+      console.log("Chargement de l'image:", imageUrl);
+      
+      // Vérifier l'existence de l'URL de l'image
+      if (!imageUrl) {
+        console.error("URL de l'image invalide ou manquante");
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger l'image (URL invalide).",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Créer une image HTML d'abord pour tester le chargement
+      const imgEl = new Image();
+      imgEl.crossOrigin = 'anonymous';  // Important pour CORS
+      
+      imgEl.onload = function() {
+        console.log("Image HTML chargée avec succès", imgEl.width, imgEl.height);
+        
+        // Une fois que l'image HTML est chargée, créer l'objet fabric.Image
+        const fabricImg = new fabric.Image(imgEl);
+        originalImageRef.current = fabricImg;
         
         // Redimensionner l'image pour qu'elle tienne dans le canvas
         const canvasWidth = fabricCanvasRef.current?.getWidth() || 800;
         const canvasHeight = fabricCanvasRef.current?.getHeight() || 600;
         
         const scale = Math.min(
-          canvasWidth / img.width!,
-          canvasHeight / img.height!
+          canvasWidth / fabricImg.width!,
+          canvasHeight / fabricImg.height!
         );
         
-        img.scale(scale);
-        img.set({
-          left: (canvasWidth - img.width! * scale) / 2,
-          top: (canvasHeight - img.height! * scale) / 2,
+        fabricImg.scale(scale);
+        fabricImg.set({
+          left: (canvasWidth - fabricImg.width! * scale) / 2,
+          top: (canvasHeight - fabricImg.height! * scale) / 2,
           selectable: true, // L'image est maintenant sélectionnable pour pouvoir la retoucher
         });
         
         // Attribuer un nom ou une propriété personnalisée
-        (img as any)._mainImage = true;
+        (fabricImg as any)._mainImage = true;
         
-        fabricCanvasRef.current?.add(img);
-        fabricCanvasRef.current?.setActiveObject(img);
-        fabricCanvasRef.current?.renderAll();
-        
-        // Initialiser l'historique
-        saveToHistory();
-      });
+        if (fabricCanvasRef.current) {
+          fabricCanvasRef.current.add(fabricImg);
+          fabricCanvasRef.current.setActiveObject(fabricImg);
+          fabricCanvasRef.current.renderAll();
+          
+          // Initialiser l'historique
+          saveToHistory();
+        }
+      };
+      
+      imgEl.onerror = function(err) {
+        console.error("Erreur lors du chargement de l'image HTML:", err);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger l'image. Veuillez réessayer.",
+          variant: "destructive",
+        });
+      };
+      
+      // Démarrer le chargement
+      imgEl.src = imageUrl;
 
       // Gérer la sélection d'objets
       fabricCanvasRef.current.on("selection:created", handleSelectionChange);
