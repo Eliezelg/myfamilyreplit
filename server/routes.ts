@@ -14,6 +14,7 @@ import { ZCreditAPI } from "./payment/zcredit-api";
 import { registerUserRoutes } from "./routes/user-routes";
 import { registerChildRoutes } from "./routes/child-routes";
 import { registerFamilyRoutes } from "./routes/family-routes"; // Import des routes famille
+import { registerInvitationRoutes } from "./routes/invitation-routes"; // Import des routes d'invitation
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -81,6 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerFamilyRoutes(app);
   registerPaymentRoutes(app); //Registering Payment routes here
   registerGazetteRoutes(app);
+  registerInvitationRoutes(app); // Enregistrement des routes d'invitation
   //registerBasicTestRoutes(app);
   //registerTestUploadRoutes(app);
 

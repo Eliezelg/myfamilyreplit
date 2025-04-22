@@ -1,7 +1,6 @@
 import { storage } from "../storage";
 import { Invitation, InsertInvitation } from "../../shared/schema";
 import { v4 as uuidv4 } from "uuid";
-import { SendEmailOptions } from "../types";
 
 /**
  * Service pour gérer les invitations aux familles
@@ -121,8 +120,7 @@ export class InvitationService {
     // Ajouter l'utilisateur comme membre de la famille
     await storage.addFamilyMember(family.id, {
       userId,
-      role: "member",
-      status: "active"
+      role: "member"
     });
     
     // Marquer l'invitation comme acceptée
