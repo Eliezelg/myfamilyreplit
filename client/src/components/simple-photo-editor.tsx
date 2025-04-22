@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { X, Save } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -138,6 +139,9 @@ export default function SimplePhotoEditor({
       <DialogContent className="max-w-4xl w-full max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-xl">Modifier la photo</DialogTitle>
+          <DialogDescription>
+            Modifiez la légende de la photo ou sauvegardez directement l'image.
+          </DialogDescription>
           <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 right-4">
             <X className="h-6 w-6" />
           </Button>

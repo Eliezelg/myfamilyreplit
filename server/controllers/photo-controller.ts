@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { storage } from "../storage";
-import path from "path";
-import { InsertPhoto } from "../../shared/schema";
+import { photoService } from "../services/photo-service";
 
 /**
  * Contrôleur pour gérer les requêtes liées aux photos
@@ -24,7 +22,7 @@ class PhotoController {
       }
       
       // Vérifier que l'utilisateur est membre de la famille
-      const isMember = await storage.userIsFamilyMember(userId, parseInt(familyId));
+      const isMember = await photoService.checkUserIsFamilyMember(userId, parseInt(familyId));
       
       if (!isMember) {
         return res.status(403).json({ message: "Vous n'êtes pas membre de cette famille" });
@@ -34,25 +32,17 @@ class PhotoController {
         return res.status(400).json({ message: "Aucun fichier n'a été téléchargé" });
       }
       
-      // Date actuelle formatée comme YYYY-MM
-      const now = new Date();
-      const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
-      // Chemin relatif de l'image
-      const imageUrl = `/uploads/${req.file.filename}`;
-      
-      // Préparer les données pour l'insertion
-      const photoData: InsertPhoto = {
-        familyId: parseInt(familyId),
+      // Créer les données de la photo via le service
+      const photoData = photoService.createPhotoData(
         userId,
-        caption: caption || "",
-        imageUrl,
-        monthYear,
-        fileSize: req.file.size
-      };
+        parseInt(familyId),
+        req.file.filename,
+        caption || "",
+        req.file.size
+      );
       
-      // Ajouter la photo à la base de données
-      const photo = await storage.addPhoto(photoData);
+      // Ajouter la photo à la base de données via le service
+      const photo = await photoService.addPhoto(photoData);
       
       return res.json(photo);
     } catch (error: any) {
@@ -74,31 +64,20 @@ class PhotoController {
         return res.status(401).json({ message: "Non autorisé" });
       }
       
-      // Vérifier que l'utilisateur est membre de la famille
-      const isMember = await storage.userIsFamilyMember(userId, familyId);
+      // Vérifier que l'utilisateur est membre de la famille via le service
+      const isMember = await photoService.checkUserIsFamilyMember(userId, familyId);
       
       if (!isMember) {
         return res.status(403).json({ message: "Vous n'êtes pas membre de cette famille" });
       }
       
-      // Récupérer les photos de la famille
-      const photos = await storage.getFamilyPhotos(
-        familyId, 
-        monthYear as string || this.getCurrentMonthYear()
-      );
+      // Récupérer les photos de la famille via le service
+      const photos = await photoService.getFamilyPhotos(familyId, monthYear as string);
       
       return res.json(photos);
     } catch (error: any) {
       next(error);
     }
-  }
-  
-  /**
-   * Obtient le mois-année courant au format YYYY-MM
-   */
-  private getCurrentMonthYear(): string {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   }
 }
 
