@@ -145,4 +145,4 @@ export class UserService {
 }
 
 // Exporter une instance par défaut
-export const userService = new UserService();ervice = new UserService();
+export const userService = new UserService();

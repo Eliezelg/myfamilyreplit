@@ -1,15 +1,14 @@
-
 import { Request, Response, NextFunction } from "express";
 import { userService } from "../services/user-service";
-import { comparePasswords } from "../auth";
+import { hashPassword, verifyPassword } from "../auth";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
 import fs from "fs";
 
-// Interface étendue pour req.file avec multer
+// Interface pour les requêtes avec fichier uploadé par Multer
 interface MulterRequest extends Request {
-  file?: Express.Multer.File;
+  file: Express.Multer.File;
 }
 
 // S'assurer que le dossier d'uploads existe
@@ -42,52 +41,68 @@ const upload = multer({
   }
 });
 
-export class UserController {
-  // Middleware d'upload de photo de profil
+
+/**
+ * Contrôleur pour la gestion des utilisateurs
+ */
+class UserController {
+  /**
+   * Middleware d'upload de photo de profil
+   */
   profileUpload = upload.single("profileImage");
-  
-  // Récupérer le profil de l'utilisateur actuel
+
+  /**
+   * Récupère le profil de l'utilisateur authentifié
+   */
   async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
-      const user = await userService.getUser(req.user.id);
-      res.json(user);
+
+      // Renvoyer les informations de l'utilisateur sans le mot de passe
+      const { password, ...userWithoutPassword } = req.user;
+      res.json(userWithoutPassword);
     } catch (error) {
       next(error);
     }
   }
 
-  // Mettre à jour le profil de l'utilisateur
+  /**
+   * Met à jour le profil de l'utilisateur
+   */
   async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+
+      // Mettre à jour le profil sans modifier le mot de passe
       const updatedUser = await userService.updateUserProfile(req.user.id, req.body);
-      res.json(updatedUser);
+
+      // Renvoyer les informations mises à jour sans le mot de passe
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
     } catch (error) {
       next(error);
     }
   }
 
-  // Changer le mot de passe de l'utilisateur
-  async updatePassword(req: Request, res: Response, next: NextFunction) {
+  /**
+   * Change le mot de passe de l'utilisateur
+   */
+  async changePassword(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+
       const { currentPassword, newPassword } = req.body;
-      const user = await userService.getUser(req.user.id);
-      
-      if (!user) {
-        return res.status(404).send("User not found");
-      }
-      
-      // Vérifier l'ancien mot de passe
-      const isPasswordValid = await comparePasswords(currentPassword, user.password);
-      if (!isPasswordValid) {
+
+      // Vérifier que le mot de passe actuel est correct
+      const isValid = await verifyPassword(currentPassword, req.user.password);
+      if (!isValid) {
         return res.status(400).send("Current password is incorrect");
       }
-      
+
       // Mettre à jour le mot de passe
       const updatedUser = await userService.updateUserPassword(req.user.id, newPassword);
-      res.json(updatedUser);
+
+      res.json({ success: true, message: "Password updated successfully" });
     } catch (error) {
       next(error);
     }
@@ -100,12 +115,12 @@ export class UserController {
       if (!req.file) {
         return res.status(400).send("No image uploaded");
       }
-      
+
       const imagePath = `/uploads/${req.file.filename}`;
       const updatedUser = await userService.updateUserProfile(req.user.id, {
         profileImage: imagePath
       });
-      
+
       res.json(updatedUser);
     } catch (error) {
       next(error);
