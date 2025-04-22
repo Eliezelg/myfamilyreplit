@@ -33,6 +33,8 @@ interface FileWithPreview {
 
 export default function UploadModal({ isOpen, onClose, familyId }: UploadModalProps) {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
+  const [currentEditFileId, setCurrentEditFileId] = useState<string | null>(null);
+  const [isPhotoEditorOpen, setIsPhotoEditorOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -180,16 +182,90 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + "KB";
     return (bytes / (1024 * 1024)).toFixed(1) + "MB";
   };
+
+  // Fonction pour ouvrir l'éditeur de photo
+  const openPhotoEditor = (fileId: string) => {
+    setCurrentEditFileId(fileId);
+    setIsPhotoEditorOpen(true);
+  };
+
+  // Fonction pour gérer la sauvegarde de l'image éditée
+  const handlePhotoSave = (editedImageUrl: string, caption: string) => {
+    if (!currentEditFileId) return;
+
+    // Mettre à jour le fichier avec l'image éditée
+    setFiles(prevFiles => 
+      prevFiles.map(fileObj => 
+        fileObj.id === currentEditFileId
+          ? { 
+              ...fileObj, 
+              caption, 
+              editedPreview: editedImageUrl,
+              edited: true
+            } 
+          : fileObj
+      )
+    );
+
+    // Convertir l'image éditée en Blob et mise à jour du fichier pour l'upload
+    fetch(editedImageUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], `edited_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        
+        setFiles(prevFiles => 
+          prevFiles.map(fileObj => 
+            fileObj.id === currentEditFileId
+              ? { ...fileObj, file } 
+              : fileObj
+          )
+        );
+      })
+      .catch(err => {
+        console.error("Erreur lors de la conversion de l'image éditée:", err);
+        toast({
+          title: "Erreur",
+          description: "Impossible de sauvegarder l'image éditée.",
+          variant: "destructive",
+        });
+      });
+
+    // Fermer l'éditeur de photo
+    setIsPhotoEditorOpen(false);
+    setCurrentEditFileId(null);
+  };
+
+  // Fonction pour fermer l'éditeur de photo
+  const handlePhotoEditorClose = () => {
+    setIsPhotoEditorOpen(false);
+    setCurrentEditFileId(null);
+  };
   
   return (
-    <Dialog open={isOpen} onOpenChange={cleanUp}>
-      <DialogContent className="max-w-3xl w-full max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="text-xl">העלאת תמונות לגזטה</DialogTitle>
-          <Button variant="ghost" size="icon" onClick={cleanUp} className="absolute top-4 right-4">
-            <X className="h-6 w-6" />
-          </Button>
-        </DialogHeader>
+    <>
+      {/* Éditeur de photos modal */}
+      {isPhotoEditorOpen && currentEditFileId && (
+        <PhotoEditor
+          isOpen={isPhotoEditorOpen}
+          onClose={handlePhotoEditorClose}
+          imageUrl={
+            files.find(f => f.id === currentEditFileId)?.editedPreview || 
+            files.find(f => f.id === currentEditFileId)?.preview || ""
+          }
+          initialCaption={files.find(f => f.id === currentEditFileId)?.caption || ""}
+          onSave={handlePhotoSave}
+        />
+      )}
+      
+      {/* Modal principal d'upload */}
+      <Dialog open={isOpen} onOpenChange={cleanUp}>
+        <DialogContent className="max-w-3xl w-full max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-xl">העלאת תמונות לגזטה</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={cleanUp} className="absolute top-4 right-4">
+              <X className="h-6 w-6" />
+            </Button>
+          </DialogHeader>
         
         <div className="overflow-y-auto max-h-[70vh] p-4">
           {/* Upload Zone */}
@@ -216,13 +292,31 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {files.map((file) => (
                   <div key={file.id} className="border border-neutral-200 rounded-lg p-2 bg-gray-50">
-                    <div className="aspect-square mb-2 bg-neutral-200 rounded overflow-hidden">
+                    <div className="aspect-square mb-2 bg-neutral-200 rounded overflow-hidden relative group">
                       <img 
-                        src={file.preview} 
+                        src={file.editedPreview || file.preview} 
                         alt="תמונה שהועלתה" 
                         className="w-full h-full object-cover"
-                        onLoad={() => URL.revokeObjectURL(file.preview)}
+                        onLoad={() => {
+                          if (!file.editedPreview) {
+                            URL.revokeObjectURL(file.preview);
+                          }
+                        }}
                       />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80"
+                        onClick={() => openPhotoEditor(file.id)}
+                      >
+                        <Edit2 className="h-4 w-4 mr-2" />
+                        Modifier
+                      </Button>
+                      {file.edited && (
+                        <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                          Modifiée
+                        </div>
+                      )}
                     </div>
                     <Textarea
                       className="w-full p-2 text-sm"
@@ -268,5 +362,6 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
