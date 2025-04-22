@@ -57,10 +57,10 @@ export default function SimplePhotoEditor({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-lg max-h-[90vh]">
+      <DialogContent className="w-full max-w-lg max-h-[90vh]" aria-describedby="photo-caption-editor-description">
         <DialogHeader>
           <DialogTitle className="text-xl">Modifier la légende</DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="photo-caption-editor-description">
             Modifiez la légende de cette photo.
           </DialogDescription>
           <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 right-4">
