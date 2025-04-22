@@ -50,7 +50,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
   const [recipientData, setRecipientData] = useState<CreateRecipientFormValues | null>(null);
   const [addRecipientLater, setAddRecipientLater] = useState(false);
   const [newFamily, setNewFamily] = useState<Family | null>(null);
-  
+
   // Formulaire pour les informations de la famille
   const familyForm = useForm<CreateFamilyFormValues>({
     resolver: zodResolver(createFamilySchema),
@@ -68,7 +68,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
       streetAddress: "",
       city: "",
       postalCode: "",
-      country: "ישראל", // Valeur par défaut pour le pays
+      country: "", // Valeur par défaut pour le pays
       imageUrl: "",
     },
   });
@@ -158,7 +158,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     token: string 
   }) => {
     setCardToken(cardData.token);
-    
+
     // Afficher un message de confirmation
     toast({
       title: "כרטיס נשמר בהצלחה",
@@ -176,9 +176,9 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
       });
       return;
     }
-    
+
     setStep('processing');
-    
+
     // Créer la famille avec le nouveau processus intégré (paiement d'abord, puis création)
     createFamilyWithPaymentMutation.mutate({
       familyData,
@@ -234,7 +234,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                   </FormItem>
                 )}
               />
-              
+
               <Alert variant="default" className="bg-muted/50 border-muted">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>שימו לב</AlertTitle>
@@ -242,7 +242,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                   יצירת משפחה חדשה כרוכה בתשלום דמי מנוי שנתי של 70 ש״ח.
                 </AlertDescription>
               </Alert>
-              
+
               <Button 
                 type="submit" 
                 className="w-full"
@@ -255,7 +255,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
       </Card>
     );
   }
-  
+
   // Afficher le formulaire des informations du destinataire
   if (step === 'recipient') {
     return (
@@ -336,7 +336,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex flex-col space-y-2 mt-4">
                 <Button 
                   type="submit" 
@@ -391,13 +391,13 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
               </p>
             )}
           </div>
-          
+
           <CreditCardForm 
             onCardSaved={handleCardSaved}
             buttonText="שמור כרטיס"
             title="פרטי תשלום"
           />
-          
+
           <div className="pt-4">
             <Button 
               onClick={handleCreateWithPayment}
