@@ -72,6 +72,7 @@ export interface IStorage {
   // Recipient operations
   getFamilyRecipients(familyId: number): Promise<Recipient[]>;
   addRecipient(recipient: InsertRecipient): Promise<Recipient>;
+  updateRecipient(id: number, recipientData: Partial<Recipient>): Promise<Recipient>;
   
   // Invitation operations
   getFamilyInvitation(familyId: number): Promise<Invitation | undefined>;

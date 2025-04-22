@@ -651,21 +651,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
-
+  
   app.post("/api/families/:id/recipients", async (req, res, next) => {
     try {
       if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
       const familyId = parseInt(req.params.id);
       
-      // Check if user is an admin of this family
-      const isAdmin = await storage.userIsFamilyAdmin(req.user.id, familyId);
-      if (!isAdmin) {
-        return res.status(403).send("Only family admins can add recipients");
+      // Check if user is a member of this family
+      const isMember = await storage.userIsFamilyMember(req.user.id, familyId);
+      if (!isMember) {
+        return res.status(403).send("Not a member of this family");
       }
       
       const recipient = await storage.addRecipient({
         ...req.body,
-        familyId,
+        familyId
       });
       
       res.status(201).json(recipient);
@@ -673,6 +673,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       next(error);
     }
   });
+  
+  app.put("/api/families/:id/recipients/:recipientId", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) return res.status(401).send("Unauthorized");
+      const familyId = parseInt(req.params.id);
+      const recipientId = parseInt(req.params.recipientId);
+      
+      // Check if user is a member of this family
+      const isMember = await storage.userIsFamilyMember(req.user.id, familyId);
+      if (!isMember) {
+        return res.status(403).send("Not a member of this family");
+      }
+      
+      // Vérifier si le destinataire appartient à cette famille
+      const recipients = await storage.getFamilyRecipients(familyId);
+      const recipient = recipients.find(r => r.id === recipientId);
+      
+      if (!recipient) {
+        return res.status(404).send("Recipient not found");
+      }
+      
+      // Mettre à jour les informations tout en maintenant familyId
+      const updatedRecipient = await storage.updateRecipient(recipientId, {
+        ...req.body,
+        familyId
+      });
+      
+      res.json(updatedRecipient);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+
 
   // Invitations
   app.get("/api/families/:id/invitation", async (req, res, next) => {

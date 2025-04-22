@@ -183,7 +183,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     createFamilyWithPaymentMutation.mutate({
       familyData,
       paymentToken: cardToken,
-      recipientData: addRecipientLater ? undefined : recipientData,
+      recipientData: addRecipientLater ? undefined : recipientData || undefined,
       addRecipientLater
     });
   };
@@ -199,10 +199,10 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onInfoSubmit)} className="space-y-4">
+          <Form {...familyForm}>
+            <form onSubmit={familyForm.handleSubmit(onInfoSubmit)} className="space-y-4">
               <FormField
-                control={form.control}
+                control={familyForm.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
@@ -215,7 +215,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                 )}
               />
               <FormField
-                control={form.control}
+                control={familyForm.control}
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
@@ -247,8 +247,113 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                 type="submit" 
                 className="w-full"
               >
-                המשך לתשלום
+                המשך
               </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Afficher le formulaire des informations du destinataire
+  if (step === 'recipient') {
+    return (
+      <Card className="w-full max-w-lg mx-auto">
+        <CardHeader>
+          <CardTitle className="text-center">פרטי משלוח הגזטה</CardTitle>
+          <CardDescription className="text-center">
+            הזן את פרטי המקבל עבור משלוח הגזטה המודפסת
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...recipientForm}>
+            <form onSubmit={recipientForm.handleSubmit(onRecipientSubmit)} className="space-y-4">
+              <FormField
+                control={recipientForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>שם המקבל</FormLabel>
+                    <FormControl>
+                      <Input placeholder="שם מלא של מקבל הגזטה" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={recipientForm.control}
+                name="streetAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>כתובת</FormLabel>
+                    <FormControl>
+                      <Input placeholder="רחוב ומספר בית" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={recipientForm.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>עיר</FormLabel>
+                      <FormControl>
+                        <Input placeholder="עיר" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={recipientForm.control}
+                  name="postalCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>מיקוד</FormLabel>
+                      <FormControl>
+                        <Input placeholder="מיקוד" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={recipientForm.control}
+                name="country"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>מדינה</FormLabel>
+                    <FormControl>
+                      <Input placeholder="מדינה" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex flex-col space-y-2 mt-4">
+                <Button 
+                  type="submit" 
+                  className="w-full"
+                >
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                  המשך לתשלום
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleSkipRecipient}
+                >
+                  אוסיף את הפרטים מאוחר יותר
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>
@@ -271,6 +376,20 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
           <div className="bg-muted/30 p-4 rounded-md">
             <h3 className="font-medium mb-2">פרטי המשפחה</h3>
             <p>שם: {familyData?.name}</p>
+            {recipientData && !addRecipientLater && (
+              <div className="mt-2">
+                <p className="font-medium mt-2">פרטי משלוח הגזטה:</p>
+                <p>{recipientData.name}</p>
+                <p>{recipientData.streetAddress}</p>
+                <p>{recipientData.city}, {recipientData.postalCode}</p>
+                <p>{recipientData.country}</p>
+              </div>
+            )}
+            {addRecipientLater && (
+              <p className="mt-2 text-muted-foreground italic">
+                * פרטי משלוח הגזטה יתווספו מאוחר יותר
+              </p>
+            )}
           </div>
           
           <CreditCardForm 
@@ -283,9 +402,9 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
             <Button 
               onClick={handleCreateWithPayment}
               className="w-full"
-              disabled={!cardToken || createFamilyMutation.isPending || processPaymentMutation.isPending}
+              disabled={!cardToken || createFamilyWithPaymentMutation.isPending}
             >
-              {(createFamilyMutation.isPending || processPaymentMutation.isPending) ? (
+              {createFamilyWithPaymentMutation.isPending ? (
                 <Loader2 className="ml-2 h-4 w-4 animate-spin" />
               ) : (
                 <>
