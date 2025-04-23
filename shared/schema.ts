@@ -13,7 +13,9 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   profileImage: text("profile_image"),
   birthDate: timestamp("birth_date"),
+  role: text("role").default("user").notNull(),  // "user", "admin", "superadmin"
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastLoginAt: timestamp("last_login_at"),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -238,6 +240,22 @@ export const childrenRelations = relations(children, ({ one }) => ({
   parent: one(users, { fields: [children.userId], references: [users.id] }),
 }));
 
+// Admin logs model
+export const adminLogs = pgTable("admin_logs", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").notNull().references(() => users.id),
+  action: text("action").notNull(),  // "create", "update", "delete", "view", etc.
+  entityType: text("entity_type").notNull(), // "user", "family", "photo", etc.
+  entityId: integer("entity_id"), // ID of the affected entity
+  details: json("details"), // Additional details about the action
+  ipAddress: text("ip_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const adminLogsRelations = relations(adminLogs, ({ one }) => ({
+  admin: one(users, { fields: [adminLogs.adminId], references: [users.id] }),
+}));
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -271,3 +289,10 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 
 export type Child = typeof children.$inferSelect;
 export type InsertChild = z.infer<typeof insertChildSchema>;
+
+export type AdminLog = typeof adminLogs.$inferSelect;
+export const insertAdminLogSchema = createInsertSchema(adminLogs).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertAdminLog = z.infer<typeof insertAdminLogSchema>;
