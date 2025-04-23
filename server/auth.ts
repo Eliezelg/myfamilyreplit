@@ -24,23 +24,34 @@ export async function hashPassword(password: string) {
 }
 
 export async function comparePasswords(supplied: string, stored: string) {
-  console.log(`Comparaison de mot de passe: ${supplied} avec ${stored.substring(0, 10)}...`);
+  // Ne pas logger les mots de passe ou leurs parties pour des raisons de sécurité
+  console.log(`Tentative de vérification de mot de passe`);
+  
   const [hashed, salt] = stored.split(".");
   
   if (!hashed || !salt) {
-    console.error(`Format de mot de passe invalide: ${stored}`);
+    console.error(`Format de mot de passe invalide`);
+    // Simuler un délai constant pour éviter les attaques temporelles
+    await new Promise(resolve => setTimeout(resolve, 1000));
     return false;
   }
   
-  console.log(`Sel extrait: ${salt.substring(0, 5)}...`);
-  
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  
-  const result = timingSafeEqual(hashedBuf, suppliedBuf);
-  console.log(`Résultat de la comparaison: ${result}`);
-  
-  return result;
+  try {
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    
+    const result = timingSafeEqual(hashedBuf, suppliedBuf);
+    
+    // Pas de détails sur le résultat dans les logs
+    console.log(`Vérification de mot de passe terminée`);
+    
+    return result;
+  } catch (error) {
+    console.error(`Erreur lors de la vérification du mot de passe:`, error);
+    // Simuler un délai constant pour éviter les attaques temporelles
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return false;
+  }
 }
 
 // Alias pour compatibilité
@@ -54,9 +65,11 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     cookie: {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Secure en production uniquement
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    }
+    },
+    name: "myfamily_sid", // Nom de cookie personnalisé
   };
 
   app.set("trust proxy", 1);

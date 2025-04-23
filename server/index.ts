@@ -3,10 +3,29 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import 'dotenv/config';
 import { setupTestUploadRoutes } from "./test-upload";
+import { setupSecurityMiddleware } from "./middleware/security";
+import { securityLogger } from "./middleware/security-logger";
+import { csrfProtection, setupCSRF } from "./middleware/csrf-protection";
+import { setupAuth } from "./auth"; // Added for authentication setup
+
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+
+// Configurer les middlewares
+app.use(express.json({ limit: '1mb' })); // Limite la taille du JSON
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Appliquer les middleware de sécurité
+setupSecurityMiddleware(app);
+app.use(securityLogger);
+
+// Configurer l'authentification
+setupAuth(app);
+
+// Appliquer la protection CSRF après l'authentification
+app.use('/api', csrfProtection);
+app.use(setupCSRF);
+
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -41,7 +60,7 @@ app.use((req, res, next) => {
 (async () => {
   // Add test upload routes before other routes
   setupTestUploadRoutes(app);
-  
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
