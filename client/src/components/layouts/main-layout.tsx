@@ -275,23 +275,23 @@ function FooterSection() {
             <ul className="space-y-2">
               <li>
                 <Link href="/features">
-                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                     {t('navigation.features')}
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/about">
-                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                     {t('navigation.about')}
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/contact">
-                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                     {t('navigation.contact')}
-                  </a>
+                  </span>
                 </Link>
               </li>
             </ul>
@@ -303,16 +303,16 @@ function FooterSection() {
             <ul className="space-y-2">
               <li>
                 <Link href="/privacy">
-                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                     {t('common.privacyPolicy')}
-                  </a>
+                  </span>
                 </Link>
               </li>
               <li>
                 <Link href="/terms">
-                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
                     {t('common.termsOfService')}
-                  </a>
+                  </span>
                 </Link>
               </li>
             </ul>

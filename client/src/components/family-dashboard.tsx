@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
@@ -46,6 +46,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   const { toast } = useToast();
   const [_, navigate] = useLocation();
   const queryClientHook = useQueryClient();
+  const [isPending, startTransition] = useTransition();
   
   // Fonction pour rafraîchir les données du fonds
   const refreshFundData = useCallback(() => {
@@ -189,7 +190,9 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
           isOpen={isPhotoModalOpen}
           onClose={() => {
             setIsPhotoModalOpen(false);
-            setTimeout(() => setSelectedPhoto(null), 300);
+            startTransition(() => {
+              setTimeout(() => setSelectedPhoto(null), 300);
+            });
           }}
         />
       )}
@@ -408,8 +411,10 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                       key={photo.id} 
                       className="relative group aspect-square rounded-lg overflow-hidden bg-neutral-200 cursor-pointer"
                       onClick={() => {
-                        setSelectedPhoto(photo);
-                        setIsPhotoModalOpen(true);
+                        startTransition(() => {
+                          setSelectedPhoto(photo);
+                          setIsPhotoModalOpen(true);
+                        });
                       }}
                     >
                       <img 
