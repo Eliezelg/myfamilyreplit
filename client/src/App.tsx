@@ -10,7 +10,9 @@ import JoinFamilyPage from "@/pages/join-family-page";
 import ProfilePage from "@/pages/profile-page";
 import TestUploadPage from "@/pages/test-upload-page";
 import GazetteSettingsPage from "@/pages/gazette-settings-page";
+import AdminDashboard from "@/pages/admin-dashboard";
 import { ProtectedRoute } from "./lib/protected-route";
+import { AdminRoute } from "./lib/admin-route";
 import { LocaleProvider } from "./components/ui/locale-provider";
 import { AuthProvider } from "./hooks/use-auth";
 
@@ -20,6 +22,7 @@ function Router() {
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/families/:id/gazette-settings" component={GazetteSettingsPage} />
+      <AdminRoute path="/admin" component={AdminDashboard} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/join-family" component={JoinFamilyPage} />
       <Route path="/test-upload" component={TestUploadPage} />

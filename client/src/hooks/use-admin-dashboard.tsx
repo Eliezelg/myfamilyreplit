@@ -39,7 +39,7 @@ export function useAdminDashboard() {
     error: statsError,
   } = useQuery<DashboardStats, Error>({
     queryKey: ["/api/admin/stats"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({}),
   });
 
   // Liste des utilisateurs
@@ -49,7 +49,7 @@ export function useAdminDashboard() {
     error: usersError,
   } = useQuery<User[], Error>({
     queryKey: ["/api/admin/users"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({}),
   });
 
   // Liste des familles
@@ -59,7 +59,7 @@ export function useAdminDashboard() {
     error: familiesError,
   } = useQuery<Family[], Error>({
     queryKey: ["/api/admin/families"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({}),
   });
 
   // Logs d'administration
@@ -69,7 +69,7 @@ export function useAdminDashboard() {
     error: logsError,
   } = useQuery<AdminLog[], Error>({
     queryKey: ["/api/admin/logs"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({}),
   });
 
   // Transactions financières
@@ -79,7 +79,7 @@ export function useAdminDashboard() {
     error: transactionsError,
   } = useQuery<TransactionWithUser[], Error>({
     queryKey: ["/api/admin/transactions"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({}),
   });
 
   // Statistiques financières
@@ -89,7 +89,7 @@ export function useAdminDashboard() {
     error: financialStatsError,
   } = useQuery<FinancialStats, Error>({
     queryKey: ["/api/admin/financial-stats"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({}),
   });
 
   // Détails d'une famille
