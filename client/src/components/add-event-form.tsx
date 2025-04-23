@@ -47,10 +47,16 @@ export default function AddEventForm({ familyId, onClose }: AddEventFormProps) {
   // Mutation pour ajouter un événement
   const addEventMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
+      // Convertir la date en chaîne de caractères ISO pour l'API
+      const payload = {
+        ...values,
+        date: values.date.toISOString(),
+      };
+      
       const response = await apiRequest(
         "POST",
         `/api/families/${familyId}/events`,
-        values
+        payload
       );
       
       if (!response.ok) {

@@ -61,10 +61,14 @@ class EventController {
       // Valider les données
       try {
         // Valider les données d'entrée avec le schéma Zod
-        const validatedData = insertEventSchema.parse({
+        // S'assurer que date est bien un objet Date pour Zod
+        const dataToValidate = {
           ...req.body,
           familyId,
-        });
+          date: new Date(req.body.date),
+        };
+        
+        const validatedData = insertEventSchema.parse(dataToValidate);
         
         // Créer l'événement
         const newEvent = await eventService.addEvent(validatedData);
