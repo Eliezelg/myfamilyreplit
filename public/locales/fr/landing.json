@@ -1,69 +1,81 @@
+
 {
   "hero": {
-    "badge": "Nouvelle plateforme familiale",
-    "title": "Connectez votre famille à travers les générations",
-    "description": "MyFamily est la plateforme qui rapproche les familles, facilite le partage de souvenirs et renforce les liens entre toutes les générations.",
-    "startFree": "Démarrer gratuitement",
+    "badge": "Nouvelle version",
+    "title": "Préservez les souvenirs de famille pour les générations futures",
+    "description": "MyFamily vous permet de créer facilement de magnifiques gazettes familiales à partager avec vos proches, où qu'ils soient dans le monde.",
+    "startFree": "Commencer gratuitement",
     "discoverFeatures": "Découvrir les fonctionnalités",
-    "noCreditCard": "Pas besoin de carte bancaire",
-    "quickSetup": "Configuration en 2 minutes"
+    "noCreditCard": "Aucune carte de crédit requise",
+    "quickSetup": "Configuration rapide en 2 minutes"
   },
   "features": {
-    "title": "Fonctionnalités conçues pour les familles modernes",
-    "subtitle": "Des outils simples mais puissants pour renforcer vos liens familiaux",
-    "allFeatures": "Toutes les fonctionnalités",
-    "items": {
-      "connections": {
-        "title": "Connexions Familiales",
-        "description": "Créez et renforcez les liens entre les générations grâce à notre plateforme familiale intuitive."
+    "title": "Tout ce dont votre famille a besoin",
+    "description": "MyFamily offre une suite complète d'outils pour aider votre famille à rester connectée et à préserver vos souvenirs communs.",
+    "cards": {
+      "share": {
+        "title": "Partagez des moments",
+        "description": "Téléchargez et partagez facilement des photos et des histoires avec toute votre famille."
       },
-      "photos": {
-        "title": "Partage de Photos",
-        "description": "Partagez des moments précieux et créez des souvenirs durables pour toute la famille."
+      "organize": {
+        "title": "Organisez des événements",
+        "description": "Planifiez et coordonnez des réunions de famille, des anniversaires et des célébrations spéciales."
       },
-      "events": {
-        "title": "Événements Familiaux",
-        "description": "Planifiez et organisez des rencontres, célébrations et événements importants pour votre famille."
+      "create": {
+        "title": "Créez des gazettes",
+        "description": "Générez automatiquement des gazettes familiales mensuelles avec vos meilleurs souvenirs."
       },
-      "gazette": {
-        "title": "Gazettes Familiales",
-        "description": "Créez des newsletters mensuelles pour partager des nouvelles et histoires avec vos proches."
+      "fund": {
+        "title": "Gérez une cagnotte",
+        "description": "Collectez et gérez des fonds pour des projets familiaux ou des cadeaux communs."
+      }
+    }
+  },
+  "how": {
+    "title": "Comment ça marche",
+    "description": "En trois étapes simples, commencez à créer et partager des souvenirs familiaux",
+    "steps": {
+      "create": {
+        "title": "1. Créez votre espace familial",
+        "description": "Inscrivez-vous et créez votre premier groupe familial en quelques clics."
       },
-      "funds": {
-        "title": "Gestion de Fonds",
-        "description": "Gérez facilement les finances familiales partagées pour les projets et événements communs."
+      "invite": {
+        "title": "2. Invitez votre famille",
+        "description": "Ajoutez tous les membres de votre famille pour qu'ils puissent contribuer et partager."
       },
-      "invitations": {
-        "title": "Invitations Simplifiées",
-        "description": "Invitez facilement de nouveaux membres à rejoindre votre cercle familial en quelques clics."
+      "share": {
+        "title": "3. Partagez vos moments",
+        "description": "Téléchargez des photos, ajoutez des événements et générez votre première gazette."
       }
     }
   },
   "testimonials": {
-    "title": "Ce que nos utilisateurs disent",
-    "subtitle": "Découvrez comment MyFamily transforme la vie de famille",
-    "moreTestimonials": "Voir plus de témoignages",
-    "items": [
+    "title": "Témoignages de familles",
+    "description": "Découvrez comment MyFamily aide des milliers de familles à rester connectées",
+    "quotes": [
       {
-        "quote": "MyFamily a révolutionné la façon dont notre famille reste connectée malgré la distance. C'est incroyable de pouvoir partager notre quotidien si facilement.",
+        "text": "Grâce à MyFamily, ma grand-mère reçoit chaque mois une gazette avec toutes nos photos familiales. Elle adore ça !",
         "author": "Marie L.",
-        "role": "Grand-mère de 4 petits-enfants"
+        "role": "Utilisatrice depuis 1 an"
       },
       {
-        "quote": "La gestion des fonds familiaux est devenue beaucoup plus transparente et simple avec MyFamily. Nous pouvons maintenant organiser nos événements sans tracas.",
+        "text": "Nous sommes une famille dispersée dans 4 pays différents. MyFamily nous aide à rester unis malgré la distance.",
         "author": "Thomas B.",
-        "role": "Père de famille"
+        "role": "Utilisateur depuis 6 mois"
       },
       {
-        "quote": "J'adore recevoir les gazettes mensuelles. C'est comme avoir un journal familial personnalisé qui rassemble toutes nos histoires!",
+        "text": "La cagnotte familiale a simplifié l'organisation des cadeaux d'anniversaire et l'impression des gazettes mensuelles.",
         "author": "Sophie M.",
-        "role": "Tante éloignée"
+        "role": "Utilisatrice depuis 2 ans"
       }
     ]
   },
   "pricing": {
-    "title": "Plans simples et transparents",
-    "subtitle": "Choisissez le plan qui convient à votre famille",
+    "title": "Des forfaits adaptés à toutes les familles",
+    "description": "Choisissez le plan qui correspond le mieux aux besoins de votre famille",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "savePercent": "Économisez 20%",
     "mostPopular": "Le plus populaire",
     "taxIncluded": "Tous les prix sont indiqués TTC. Annulez à tout moment.",
     "needCustom": "Besoin d'une solution personnalisée pour votre organisation ?",
@@ -112,7 +124,7 @@
   "cta": {
     "title": "Prêt à réunir votre famille ?",
     "description": "Créez votre espace familial gratuit aujourd'hui et commencez à partager des moments précieux avec vos proches.",
-    "startFree": "Démarrer gratuitement",
-    "contact": "Nous contacter"
+    "button": "Commencer gratuitement",
+    "subtext": "Aucune carte de crédit requise. Annulez à tout moment."
   }
 }

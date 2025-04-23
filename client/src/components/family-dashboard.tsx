@@ -102,56 +102,66 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   
   // Fonction pour gérer la génération d'une gazette
   const handleGenerateGazette = () => {
-    setIsGeneratingGazette(true);
-    generateGazetteMutation.mutate(currentMonthYear);
+    startTransition(() => {
+      setIsGeneratingGazette(true);
+      generateGazetteMutation.mutate(currentMonthYear);
+    });
   };
   
-  // Family data query - éviter la suspension avec suspense: false
+  // Family data query - éviter la suspension avec suspense: false et enabled
   const { data: family, isLoading: familyLoading } = useQuery<Family>({
     queryKey: [`/api/families/${familyId}`],
-    suspense: false
+    suspense: false,
+    enabled: !isPending
   });
   
-  // Photos query for this family - éviter la suspension avec suspense: false
+  // Photos query for this family - éviter la suspension avec suspense: false et enabled
   const { data: photos, isLoading: photosLoading } = useQuery<Photo[]>({
     queryKey: [`/api/families/${familyId}/photos`],
-    suspense: false
+    suspense: false,
+    enabled: !isPending
   });
   
-  // Members query for this family - éviter la suspension avec suspense: false
+  // Members query for this family - éviter la suspension avec suspense: false et enabled
   const { data: members, isLoading: membersLoading } = useQuery<FamilyMemberWithUser[]>({
     queryKey: [`/api/families/${familyId}/members`],
-    suspense: false
+    suspense: false,
+    enabled: !isPending
   });
   
-  // Fund query for this family - éviter la suspension avec suspense: false
+  // Fund query for this family - éviter la suspension avec suspense: false et enabled
   const { data: fund, refetch: refetchFund, isLoading: fundLoading } = useQuery<FamilyFund>({
     queryKey: [`/api/families/${familyId}/fund`],
-    suspense: false
+    suspense: false,
+    enabled: !isPending
   });
   
-  // Transactions query for this family's fund - éviter la suspension avec suspense: false
+  // Transactions query for this family's fund - éviter la suspension avec suspense: false et enabled
   const { data: transactions, isLoading: transactionsLoading } = useQuery<FundTransaction[]>({
     queryKey: [`/api/families/${familyId}/fund/transactions`],
-    suspense: false
+    suspense: false,
+    enabled: !isPending
   });
   
-  // Events query for this family - éviter la suspension avec suspense: false
+  // Events query for this family - éviter la suspension avec suspense: false et enabled
   const { data: events, isLoading: eventsLoading } = useQuery<Event[]>({
     queryKey: [`/api/families/${familyId}/events`],
-    suspense: false
+    suspense: false,
+    enabled: !isPending
   });
   
-  // Recipients query for this family - éviter la suspension avec suspense: false
+  // Recipients query for this family - éviter la suspension avec suspense: false et enabled
   const { data: recipients, isLoading: recipientsLoading } = useQuery<Recipient[]>({
     queryKey: [`/api/families/${familyId}/recipients`],
-    suspense: false
+    suspense: false,
+    enabled: !isPending
   });
   
-  // Gazettes query for this family - éviter la suspension avec suspense: false
+  // Gazettes query for this family - éviter la suspension avec suspense: false et enabled
   const { data: gazettes = [], isLoading: gazettesLoading } = useQuery<Gazette[]>({
     queryKey: [`/api/families/${familyId}/gazettes`],
-    suspense: false
+    suspense: false,
+    enabled: !isPending
   });
 
   // Helper function to format date
@@ -180,6 +190,19 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
     return formatter.format(amount / 100); // Convert from cents to actual currency
   };
   
+  // Indicateur de chargement global
+  const isAnyLoading = familyLoading || photosLoading || membersLoading || fundLoading || 
+                        transactionsLoading || eventsLoading || recipientsLoading || gazettesLoading || isPending;
+
+  // Affichage d'un état de chargement pendant les transitions
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Invite Family Modal */}
