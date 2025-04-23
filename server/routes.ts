@@ -22,6 +22,7 @@ import { registerAdminRoutes } from "./routes/admin-routes"; // Import des route
 import { promoCodeRouter } from "./routes/promo-code-routes"; // Import des routes de codes promo
 import { subscriptionRouter } from "./routes/subscription-routes"; // Import des routes d'abonnement
 import { emailController } from "./controllers/email-controller"; // Import du contrôleur d'email
+import { registerEmailRoutes } from "./routes/email-routes"; // Import des routes d'email
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -94,6 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerRecipientRoutes(app); // Enregistrement des routes destinataire
   registerEventRoutes(app); // Enregistrement des routes événement
   registerAdminRoutes(app); // Enregistrement des routes admin
+  registerEmailRoutes(app); // Enregistrement des routes d'email
   
   // Enregistrement des routes pour les codes promo et abonnements
   app.use('/api/promo-codes', promoCodeRouter);
