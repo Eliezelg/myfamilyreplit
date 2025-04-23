@@ -48,8 +48,9 @@ class PhotoService {
   /**
    * Crée un objet photo avec les champs nécessaires pour l'insertion
    */
-  createPhotoData(userId: number, familyId: number, filename: string, caption: string, fileSize: number): InsertPhoto {
-    const imageUrl = `/uploads/${filename}`;
+  createPhotoData(userId: number, familyId: number, fileKey: string, caption: string, fileSize: number): InsertPhoto {
+    // Utilise le service R2 pour générer l'URL publique
+    const imageUrl = r2StorageService.getPublicUrl(fileKey);
     const monthYear = this.getCurrentMonthYear();
 
     return {

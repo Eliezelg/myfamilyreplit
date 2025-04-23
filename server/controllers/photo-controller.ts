@@ -1,6 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { photoService } from "../services/photo-service";
 
+// Type pour le fichier de multer-s3 qui inclut la clé et l'emplacement
+interface MulterS3File extends Express.Multer.File {
+  key: string;
+  location: string;
+  bucket: string;
+}
+
 /**
  * Contrôleur pour gérer les requêtes liées aux photos
  */
@@ -32,13 +39,17 @@ class PhotoController {
         return res.status(400).json({ message: "Aucun fichier n'a été téléchargé" });
       }
       
+      // Récupérer les infos du fichier uploadé avec multer-s3
+      const s3File = req.file as MulterS3File;
+      console.log("Photo téléchargée sur R2:", s3File.key);
+      
       // Créer les données de la photo via le service
       const photoData = photoService.createPhotoData(
         userId,
         parseInt(familyId),
-        req.file.filename,
+        s3File.key, // Utiliser la clé R2 au lieu du nom de fichier
         caption || "",
-        req.file.size
+        s3File.size
       );
       
       // Ajouter la photo à la base de données via le service

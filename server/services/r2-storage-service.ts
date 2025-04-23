@@ -1,9 +1,10 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import multer from "multer";
 import multerS3 from "multer-s3";
 import { v4 as uuidv4 } from "uuid";
 import path from "path";
+import { Request } from "express";
 
 /**
  * Service pour gérer le stockage des fichiers sur Cloudflare R2
@@ -39,10 +40,10 @@ class R2StorageService {
       storage: multerS3({
         s3: this.s3Client,
         bucket: this.bucketName,
-        metadata: (req, file, cb) => {
+        metadata: (req: Request, file: Express.Multer.File, cb: (error: Error | null, metadata?: any) => void) => {
           cb(null, { fieldName: file.fieldname });
         },
-        key: (req, file, cb) => {
+        key: (req: Request, file: Express.Multer.File, cb: (error: Error | null, key?: string) => void) => {
           const uniqueFilename = `${folderName}/${uuidv4()}${path.extname(file.originalname)}`;
           cb(null, uniqueFilename);
         },
@@ -50,7 +51,7 @@ class R2StorageService {
       limits: {
         fileSize: 5 * 1024 * 1024, // 5MB
       },
-      fileFilter: (req, file, cb) => {
+      fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
         console.log("Vérification du type de fichier:", file.mimetype);
         // Types de fichiers autorisés selon le dossier
         let allowedTypes: string[] = [];
@@ -71,12 +72,29 @@ class R2StorageService {
 
   /**
    * Génère l'URL publique d'un fichier stocké sur R2
+   * Note: Cette méthode suppose qu'un Workers R2 Bucket ou un domaine personnalisé soit configuré
    */
   public getPublicUrl(key: string): string {
-    // Format de l'URL pour accéder au fichier via Cloudflare R2
-    // Note: Ceci suppose que vous avez configuré un domaine personnalisé ou Workers R2 Bucket
-    // Sinon, vous devrez implémenter une logique pour générer des URL signées
-    return `${this.r2Endpoint}/${this.bucketName}/${key}`;
+    // Format de l'URL peut varier selon votre configuration Cloudflare
+    // Cette URL dépend de la façon dont vous avez configuré l'accès public à votre bucket R2
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    // Si vous utilisez un R2 public endpoint
+    return `https://${this.bucketName}.${accountId}.r2.dev/${key}`;
+  }
+
+  /**
+   * Extrait le chemin de clé à partir d'une URL R2 complète
+   */
+  public getKeyFromUrl(url: string): string | null {
+    // Exemple d'URL: https://bucket-name.account-id.r2.dev/photos/abc123.jpg
+    try {
+      const urlObj = new URL(url);
+      // Extrait le chemin sans le / initial
+      return urlObj.pathname.substring(1);
+    } catch (error) {
+      console.error("Erreur d'analyse de l'URL:", error);
+      return null;
+    }
   }
 
   /**
@@ -84,10 +102,13 @@ class R2StorageService {
    */
   public async deleteFile(key: string): Promise<boolean> {
     try {
-      await this.s3Client.send({
+      const command = new DeleteObjectCommand({
         Bucket: this.bucketName,
         Key: key,
-      } as any);
+      });
+      
+      await this.s3Client.send(command);
+      console.log(`Fichier supprimé avec succès: ${key}`);
       return true;
     } catch (error) {
       console.error("Erreur lors de la suppression du fichier sur R2:", error);

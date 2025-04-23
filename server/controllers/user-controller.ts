@@ -1,45 +1,19 @@
 import { Request, Response, NextFunction } from "express";
 import { userService } from "../services/user-service";
 import { hashPassword, verifyPassword } from "../auth";
-import multer from "multer";
-import { v4 as uuidv4 } from "uuid";
-import path from "path";
-import fs from "fs";
+import { r2StorageService } from "../services/r2-storage-service";
 
 // Interface pour les requêtes avec fichier uploadé par Multer
 interface MulterRequest extends Request {
   file: Express.Multer.File;
 }
 
-// S'assurer que le dossier d'uploads existe
-const uploadDir = path.join(process.cwd(), "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-  console.log("Dossier d'uploads créé:", uploadDir);
+// Interface pour multer-s3 qui étend l'interface de fichier standard
+interface MulterS3File extends Express.Multer.File {
+  key: string;
+  location: string;
+  bucket: string;
 }
-
-// Configuration de multer pour l'upload de fichiers
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req: Request, file: Express.Multer.File, cb: any) {
-      cb(null, uploadDir);
-    },
-    filename: function (req: Request, file: Express.Multer.File, cb: any) {
-      const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
-      cb(null, uniqueFilename);
-    }
-  }),
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB
-  },
-  fileFilter: function (req: Request, file: Express.Multer.File, cb: any) {
-    const allowedTypes = ['image/jpeg', 'image/png'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      return cb(new Error('Only JPEG and PNG files are allowed'));
-    }
-    cb(null, true);
-  }
-});
 
 
 /**
@@ -49,7 +23,7 @@ class UserController {
   /**
    * Middleware d'upload de photo de profil
    */
-  profileUpload = upload.single("profileImage");
+  profileUpload = r2StorageService.getMulterUpload("profiles").single("profileImage");
 
   /**
    * Récupère le profil de l'utilisateur authentifié
@@ -116,10 +90,27 @@ class UserController {
         return res.status(400).send("No image uploaded");
       }
 
-      const imagePath = `/uploads/${req.file.filename}`;
+      // Récupérer le fichier uploadé via multer-s3
+      const s3File = req.file as MulterS3File;
+      console.log("Photo de profil téléchargée sur R2:", s3File.key);
+
+      // Générer l'URL publique
+      const imageUrl = r2StorageService.getPublicUrl(s3File.key);
+      
+      // Mettre à jour le profil avec l'URL de l'image
       const updatedUser = await userService.updateUserProfile(req.user.id, {
-        profileImage: imagePath
+        profileImage: imageUrl
       });
+
+      // Si l'utilisateur avait déjà une photo de profil, supprimer l'ancienne
+      const oldProfileImage = req.user.profileImage;
+      if (oldProfileImage && oldProfileImage.includes('r2.dev')) {
+        const oldKey = r2StorageService.getKeyFromUrl(oldProfileImage);
+        if (oldKey) {
+          console.log("Suppression de l'ancienne photo de profil:", oldKey);
+          await r2StorageService.deleteFile(oldKey);
+        }
+      }
 
       res.json(updatedUser);
     } catch (error) {
