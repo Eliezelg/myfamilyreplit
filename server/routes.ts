@@ -21,6 +21,7 @@ import { registerEventRoutes } from "./routes/event-routes"; // Import des route
 import { registerAdminRoutes } from "./routes/admin-routes"; // Import des routes administrateur
 import { promoCodeRouter } from "./routes/promo-code-routes"; // Import des routes de codes promo
 import { subscriptionRouter } from "./routes/subscription-routes"; // Import des routes d'abonnement
+import { emailController } from "./controllers/email-controller"; // Import du contrôleur d'email
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
