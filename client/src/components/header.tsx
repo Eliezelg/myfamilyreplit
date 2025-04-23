@@ -31,49 +31,49 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/">
-            <a className="flex items-center space-x-2">
+            <span className="flex items-center space-x-2 cursor-pointer">
               <HomeIcon className="h-6 w-6" />
               <span className="text-xl font-bold">{t('app.name')}</span>
-            </a>
+            </span>
           </Link>
         </div>
 
         {/* Desktop navigation */}
         <nav className="hidden md:flex items-center space-x-6">
           <Link href="/">
-            <a className={`text-sm ${isActive('/') ? 'font-bold' : ''}`}>
+            <span className={`text-sm cursor-pointer ${isActive('/') ? 'font-bold' : ''}`}>
               {t('navigation.home')}
-            </a>
+            </span>
           </Link>
           <Link href="/features">
-            <a className={`text-sm ${isActive('/features') ? 'font-bold' : ''}`}>
+            <span className={`text-sm cursor-pointer ${isActive('/features') ? 'font-bold' : ''}`}>
               {t('navigation.features')}
-            </a>
+            </span>
           </Link>
           <Link href="/about">
-            <a className={`text-sm ${isActive('/about') ? 'font-bold' : ''}`}>
+            <span className={`text-sm cursor-pointer ${isActive('/about') ? 'font-bold' : ''}`}>
               {t('navigation.about')}
-            </a>
+            </span>
           </Link>
           <Link href="/contact">
-            <a className={`text-sm ${isActive('/contact') ? 'font-bold' : ''}`}>
+            <span className={`text-sm cursor-pointer ${isActive('/contact') ? 'font-bold' : ''}`}>
               {t('navigation.contact')}
-            </a>
+            </span>
           </Link>
 
           {user && (
             <Link href="/dashboard">
-              <a className={`text-sm ${isActive('/dashboard') ? 'font-bold' : ''}`}>
+              <span className={`text-sm cursor-pointer ${isActive('/dashboard') ? 'font-bold' : ''}`}>
                 {t('navigation.dashboard')}
-              </a>
+              </span>
             </Link>
           )}
 
           {user?.role === 'admin' && (
             <Link href="/admin">
-              <a className={`text-sm ${isActive('/admin') ? 'font-bold' : ''}`}>
+              <span className={`text-sm cursor-pointer ${isActive('/admin') ? 'font-bold' : ''}`}>
                 {t('navigation.admin')}
-              </a>
+              </span>
             </Link>
           )}
         </nav>
@@ -93,9 +93,9 @@ export const Header = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/profile">
-                    <a className="w-full cursor-pointer">
+                    <span className="w-full cursor-pointer">
                       {t('navigation.profile')}
-                    </a>
+                    </span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={logout}>
@@ -127,39 +127,39 @@ export const Header = () => {
         <div className="md:hidden px-4 py-2 bg-background border-t">
           <div className="flex flex-col space-y-3 py-3">
             <Link href="/">
-              <a className={`text-sm ${isActive('/') ? 'font-bold' : ''}`}>
+              <span className={`text-sm cursor-pointer ${isActive('/') ? 'font-bold' : ''}`}>
                 {t('navigation.home')}
-              </a>
+              </span>
             </Link>
             <Link href="/features">
-              <a className={`text-sm ${isActive('/features') ? 'font-bold' : ''}`}>
+              <span className={`text-sm cursor-pointer ${isActive('/features') ? 'font-bold' : ''}`}>
                 {t('navigation.features')}
-              </a>
+              </span>
             </Link>
             <Link href="/about">
-              <a className={`text-sm ${isActive('/about') ? 'font-bold' : ''}`}>
+              <span className={`text-sm cursor-pointer ${isActive('/about') ? 'font-bold' : ''}`}>
                 {t('navigation.about')}
-              </a>
+              </span>
             </Link>
             <Link href="/contact">
-              <a className={`text-sm ${isActive('/contact') ? 'font-bold' : ''}`}>
+              <span className={`text-sm cursor-pointer ${isActive('/contact') ? 'font-bold' : ''}`}>
                 {t('navigation.contact')}
-              </a>
+              </span>
             </Link>
 
             {user && (
               <Link href="/dashboard">
-                <a className={`text-sm ${isActive('/dashboard') ? 'font-bold' : ''}`}>
+                <span className={`text-sm cursor-pointer ${isActive('/dashboard') ? 'font-bold' : ''}`}>
                   {t('navigation.dashboard')}
-                </a>
+                </span>
               </Link>
             )}
 
             {user?.role === 'admin' && (
               <Link href="/admin">
-                <a className={`text-sm ${isActive('/admin') ? 'font-bold' : ''}`}>
+                <span className={`text-sm cursor-pointer ${isActive('/admin') ? 'font-bold' : ''}`}>
                   {t('navigation.admin')}
-                </a>
+                </span>
               </Link>
             )}
           </div>

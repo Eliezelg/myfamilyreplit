@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useTransition } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -158,9 +158,7 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
     },
   });
   
-  // Utiliser startTransition pour l'envoi du formulaire pour éviter la suspension
-  const [startTransition] = useTransition();
-
+  // Utiliser une approche différente pour éviter les problèmes de suspension
   const handleSubmit = () => {
     if (files.length === 0) {
       toast({
@@ -171,9 +169,10 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
       return;
     }
     
-    startTransition(() => {
+    // Utiliser setTimeout pour éviter la suspension synchrone
+    setTimeout(() => {
       uploadMutation.mutate();
-    });
+    }, 0);
   };
   
   // Clean up previews when modal closes
