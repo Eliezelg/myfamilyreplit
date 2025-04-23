@@ -20,6 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 // Schema pour les informations de la famille
 const createFamilySchema = insertFamilySchema.extend({
   name: z.string().min(2, "שם המשפחה חייב להכיל לפחות 2 תווים"),
+  promoCode: z.string().optional(),
 });
 
 // Schema pour les informations du destinataire
@@ -41,6 +42,18 @@ interface CreateFamilyFormProps {
 
 // Prix de l'abonnement en shekels (en agorot)
 const SUBSCRIPTION_PRICE = 7000; // 70 shekels
+// Prix de l'abonnement à vie avec code promo
+const LIFETIME_PRICE = 5000; // 50 shekels
+
+// Interface pour le résultat de validation du code promo
+interface PromoValidationResult {
+  isValid: boolean;
+  finalPrice: number;
+  originalPrice: number;
+  discount: number;
+  message: string;
+  isLifetime?: boolean;
+}
 
 export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
   const { toast } = useToast();
@@ -50,6 +63,67 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
   const [recipientData, setRecipientData] = useState<CreateRecipientFormValues | null>(null);
   const [addRecipientLater, setAddRecipientLater] = useState(false);
   const [newFamily, setNewFamily] = useState<Family | null>(null);
+  const [promoValidation, setPromoValidation] = useState<PromoValidationResult | null>(null);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  
+  // Mutation pour valider les codes promo
+  const validatePromoCodeMutation = useMutation({
+    mutationFn: async (code: string) => {
+      setIsValidatingPromo(true);
+      const response = await apiRequest("POST", "/api/promo-codes/validate", {
+        code,
+        originalPrice: SUBSCRIPTION_PRICE
+      });
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      if (data.promoCode) {
+        setPromoValidation({
+          isValid: true,
+          originalPrice: data.originalPrice || SUBSCRIPTION_PRICE,
+          finalPrice: data.finalPrice,
+          discount: data.discount,
+          message: data.message || "קוד קופון תקף",
+          isLifetime: data.promoCode.type === "lifetime"
+        });
+        toast({
+          title: "קוד קופון תקף",
+          description: data.promoCode.type === "lifetime" 
+            ? "מחיר מנוי לכל החיים: 50 ש״ח" 
+            : `נחה בסך ${data.discount / 100} ש״ח`,
+        });
+      } else {
+        setPromoValidation({
+          isValid: false,
+          originalPrice: SUBSCRIPTION_PRICE,
+          finalPrice: SUBSCRIPTION_PRICE,
+          discount: 0,
+          message: data.message || "קוד קופון לא תקף",
+        });
+        toast({
+          title: "קוד קופון לא תקף",
+          description: data.message || "קוד הקופון שהזנת אינו תקף",
+          variant: "destructive",
+        });
+      }
+      setIsValidatingPromo(false);
+    },
+    onError: (error: Error) => {
+      setPromoValidation({
+        isValid: false,
+        originalPrice: SUBSCRIPTION_PRICE,
+        finalPrice: SUBSCRIPTION_PRICE,
+        discount: 0,
+        message: "שגיאה באימות קוד הקופון",
+      });
+      toast({
+        title: "שגיאה באימות קוד הקופון",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsValidatingPromo(false);
+    }
+  });
 
   // Formulaire pour les informations de la famille
   const familyForm = useForm<CreateFamilyFormValues>({
@@ -57,6 +131,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     defaultValues: {
       name: "",
       imageUrl: "", // Ensure this is always a string, never null
+      promoCode: "",
     },
   });
 
@@ -136,6 +211,11 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
 
   // Gérer la soumission du formulaire d'informations de la famille
   const onInfoSubmit = (data: CreateFamilyFormValues) => {
+    // Si un code promo est entré, le valider avant de passer à l'étape suivante
+    if (data.promoCode && data.promoCode.trim() && !promoValidation) {
+      validatePromoCodeMutation.mutate(data.promoCode);
+    }
+    
     setFamilyData(data);
     setStep('recipient');
   };
@@ -237,6 +317,59 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                         ref={field.ref}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={familyForm.control}
+                name="promoCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex justify-between items-center">
+                      <FormLabel>קוד קופון (אופציונלי)</FormLabel>
+                      {field.value && field.value.length > 2 && (
+                        <Button 
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => validatePromoCodeMutation.mutate(field.value)}
+                          disabled={isValidatingPromo || validatePromoCodeMutation.isPending}
+                          className="h-6 px-2 text-xs"
+                        >
+                          {isValidatingPromo ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            'בדוק קוד'
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                    <FormControl>
+                      <Input 
+                        placeholder="הכנס קוד קופון אם יש לך" 
+                        value={field.value || ''} 
+                        onChange={(e) => {
+                          field.onChange(e);
+                          // Réinitialiser la validation si le code change
+                          if (promoValidation && promoValidation.isValid) {
+                            setPromoValidation(null);
+                          }
+                        }}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        className={promoValidation?.isValid ? "border-green-500 focus-visible:ring-green-500" : ""}
+                      />
+                    </FormControl>
+                    {promoValidation?.isValid && (
+                      <div className="text-sm text-green-600 flex items-center mt-1">
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        {promoValidation.isLifetime 
+                          ? "קוד תקף! מנוי לכל החיים: 50 ש״ח" 
+                          : `קוד תקף! הנחה: ${promoValidation.discount / 100} ש״ח`}
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
