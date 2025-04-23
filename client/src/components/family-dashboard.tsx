@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +34,21 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   const [isGeneratingGazette, setIsGeneratingGazette] = useState(false);
   const { toast } = useToast();
   const [_, navigate] = useLocation();
+  const queryClientHook = useQueryClient();
+  
+  // Fonction pour rafraîchir les données du fonds
+  const refreshFundData = useCallback(() => {
+    queryClientHook.invalidateQueries({ queryKey: [`/api/families/${familyId}/fund`] });
+    queryClientHook.invalidateQueries({ queryKey: [`/api/families/${familyId}/fund/transactions`] });
+  }, [familyId, queryClientHook]);
+  
+  // Effet pour rafraîchir les données au retour de la modale
+  useEffect(() => {
+    if (!isAddFundsModalOpen) {
+      // Rafraîchit les données après la fermeture de la modale
+      refreshFundData();
+    }
+  }, [isAddFundsModalOpen, refreshFundData]);
   
   // Mutation pour générer une gazette
   const generateGazetteMutation = useMutation({
