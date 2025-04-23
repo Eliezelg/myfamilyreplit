@@ -55,14 +55,16 @@ export default function AdminFinances({
 }: AdminFinancesProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredTransactions = transactions.filter((tx) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      (tx.description && tx.description.toLowerCase().includes(searchLower)) ||
-      (tx.user.fullName && tx.user.fullName.toLowerCase().includes(searchLower)) ||
-      tx.type.toLowerCase().includes(searchLower)
-    );
-  });
+  const filteredTransactions = Array.isArray(transactions) 
+  ? transactions.filter((tx) => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        (tx.description && tx.description.toLowerCase().includes(searchLower)) ||
+        (tx.user && tx.user.fullName && tx.user.fullName.toLowerCase().includes(searchLower)) ||
+        (tx.type && tx.type.toLowerCase().includes(searchLower))
+      );
+    })
+  : [];
 
   // Formater les montants en shekels (ILS)
   const formatCurrency = (amount: number) => {

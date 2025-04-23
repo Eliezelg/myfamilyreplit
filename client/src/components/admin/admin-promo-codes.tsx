@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Search, Plus, Edit, Trash2, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { PromoCode } from "@shared/schema";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,27 +48,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAdminDashboard } from "@/hooks/use-admin-dashboard";
 
-// Type pour les codes promo
-type PromoCode = {
-  id: number;
-  code: string;
-  discount: string;
-  type: string;
-  description?: string;
-  maxUses?: number;
-  usesCount: number;
-  isActive: boolean;
-  startDate: string;
-  endDate?: string;
-  createdBy?: number;
-  createdAt: string;
+// Type étendu pour les codes promo avec les relations
+interface PromoCodeWithRelations extends PromoCode {
   creator?: {
     id: number;
     username: string;
     fullName: string;
   };
   subscriptions?: any[];
-};
+}
 
 // Schéma de validation pour le formulaire
 const promoCodeSchema = z.object({
@@ -187,7 +176,7 @@ export default function AdminPromoCodes({
       type: code.type as "lifetime" | "percentage" | "fixed",
       discount: code.discount.toString(),
       description: code.description || "",
-      maxUses: code.maxUses,
+      maxUses: code.maxUses !== null ? code.maxUses : undefined,
       isActive: code.isActive,
       startDate: new Date(code.startDate).toISOString().split('T')[0],
       endDate: code.endDate ? new Date(code.endDate).toISOString().split('T')[0] : undefined,
