@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Header from "../components/header";
 import FamilyDashboard from "../components/family-dashboard";
@@ -146,11 +146,17 @@ export default function HomePage() {
             
             {/* Dashboard for the selected family */}
             {activeFamily && (
-              <FamilyDashboard 
-                familyId={activeFamily.id}
-                familyName={activeFamily.name}
-                onUploadClick={() => setIsUploadModalOpen(true)}
-              />
+              <React.Suspense fallback={
+                <div className="flex justify-center items-center h-64">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              }>
+                <FamilyDashboard 
+                  familyId={activeFamily.id}
+                  familyName={activeFamily.name}
+                  onUploadClick={() => setIsUploadModalOpen(true)}
+                />
+              </React.Suspense>
             )}
           </div>
         )}
