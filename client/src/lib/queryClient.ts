@@ -49,9 +49,12 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: Infinity,
       retry: false,
+      throwOnError: false, // Empêche les erreurs de remonter à la limite des erreurs
+      suspense: false, // Désactive la suspension pour toutes les requêtes par défaut
     },
     mutations: {
       retry: false,
+      throwOnError: false, // Empêche les erreurs de remonter à la limite des erreurs
     },
   },
 });

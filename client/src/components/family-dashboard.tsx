@@ -216,7 +216,9 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
         onClose={() => setIsEventsViewerOpen(false)}
         onAddEvent={() => {
           setIsEventsViewerOpen(false);
-          setTimeout(() => setIsAddEventModalOpen(true), 300);
+          startTransition(() => {
+            setTimeout(() => setIsAddEventModalOpen(true), 300);
+          });
         }}
       />
       
