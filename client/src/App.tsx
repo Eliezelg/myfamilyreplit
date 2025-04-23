@@ -11,6 +11,10 @@ import ProfilePage from "@/pages/profile-page";
 import TestUploadPage from "@/pages/test-upload-page";
 import GazetteSettingsPage from "@/pages/gazette-settings-page";
 import AdminDashboard from "@/pages/admin-dashboard";
+import LandingPage from "@/pages/landing-page";
+import FeaturesPage from "@/pages/features-page";
+import AboutPage from "@/pages/about-page";
+import ContactPage from "@/pages/contact-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AdminRoute } from "./lib/admin-route";
 import { LocaleProvider } from "./components/ui/locale-provider";
@@ -19,13 +23,24 @@ import { AuthProvider } from "./hooks/use-auth";
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={HomePage} />
+      {/* Public routes - new landing pages */}
+      <Route path="/" component={LandingPage} />
+      <Route path="/features" component={FeaturesPage} />
+      <Route path="/about" component={AboutPage} />
+      <Route path="/contact" component={ContactPage} />
+      
+      {/* Protected routes - require authentication */}
+      <ProtectedRoute path="/dashboard" component={HomePage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/families/:id/gazette-settings" component={GazetteSettingsPage} />
       <AdminRoute path="/admin" component={AdminDashboard} />
+      
+      {/* Authentication routes */}
       <Route path="/auth" component={AuthPage} />
       <Route path="/join-family" component={JoinFamilyPage} />
       <Route path="/test-upload" component={TestUploadPage} />
+      
+      {/* Fallback route */}
       <Route component={NotFound} />
     </Switch>
   );
