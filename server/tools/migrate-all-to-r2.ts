@@ -133,12 +133,17 @@ async function migrateAllToR2() {
   }
 }
 
-// Exécuter la migration complète
-migrateAllToR2()
-  .then(() => {
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error("Erreur fatale lors de la migration :", error);
-    process.exit(1);
-  });
+// Exécuter la migration complète si ce script est appelé directement
+if (require.main === module) {
+  migrateAllToR2()
+    .then(() => {
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error("Erreur fatale lors de la migration :", error);
+      process.exit(1);
+    });
+}
+
+// Exporter la fonction pour pouvoir l'utiliser dans d'autres scripts
+export { migrateAllToR2 };

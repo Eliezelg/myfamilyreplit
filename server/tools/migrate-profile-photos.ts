@@ -1,6 +1,6 @@
 import { storage } from "../storage";
 import { db } from "../db";
-import { User, users, Children, children } from "@shared/schema";
+import { User, users, children, Child } from "@shared/schema";
 import { r2StorageService } from "../services/r2-storage-service";
 import fs from "fs";
 import path from "path";
