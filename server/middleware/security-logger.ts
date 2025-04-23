@@ -28,7 +28,7 @@ export function securityLogger(req: Request, res: Response, next: NextFunction) 
       method: req.method,
       path: req.path,
       userAgent: req.headers['user-agent'],
-      userId: req.isAuthenticated() ? (req.user as any).id : 'anonymous',
+      userId: (req.isAuthenticated && typeof req.isAuthenticated === 'function' && req.isAuthenticated()) ? (req.user as any).id : 'anonymous',
       status: 'pending'
     };
 

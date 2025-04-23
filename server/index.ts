@@ -16,13 +16,13 @@ const app = express();
 app.use(express.json({ limit: '1mb' })); // Limite la taille du JSON
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// Appliquer les middleware de sécurité
+// Configurer l'authentification d'abord
+setupAuth(app);
+
+// Ensuite appliquer les middleware de sécurité
 setupSecurityMiddleware(app);
 app.use(securityLogger);
 app.use(bruteForceProtection);
-
-// Configurer l'authentification
-setupAuth(app);
 
 // Appliquer la protection des sessions
 import { sessionProtection } from "./middleware/session-protection";
