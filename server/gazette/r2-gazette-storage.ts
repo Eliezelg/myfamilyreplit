@@ -33,6 +33,13 @@ export class R2GazetteStorage {
         accessKeyId: process.env.CLOUDFLARE_ACCESS_KEY_ID || "",
         secretAccessKey: process.env.CLOUDFLARE_SECRET_ACCESS_KEY || "",
       },
+      forcePathStyle: true, // Nécessaire pour certains environnements
+      tls: true,
+      // Ajout d'options avancées pour résoudre les problèmes SSL/TLS
+      requestHandler: {
+        connectionTimeout: 5000, // Timeout en ms
+        socketTimeout: 5000      // Timeout en ms
+      }
     });
 
     console.log("R2GazetteStorage initialisé avec le bucket:", this.bucketName);

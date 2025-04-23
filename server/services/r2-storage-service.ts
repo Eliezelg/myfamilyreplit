@@ -27,6 +27,13 @@ class R2StorageService {
         accessKeyId: process.env.CLOUDFLARE_ACCESS_KEY_ID || "",
         secretAccessKey: process.env.CLOUDFLARE_SECRET_ACCESS_KEY || "",
       },
+      forcePathStyle: true, // Nécessaire pour certains environnements
+      tls: true,
+      // Ajout d'options avancées pour résoudre les problèmes SSL/TLS
+      requestHandler: {
+        connectionTimeout: 5000, // Timeout en ms
+        socketTimeout: 5000      // Timeout en ms
+      }
     });
 
     console.log(`R2StorageService initialisé avec le bucket: ${this.bucketName}`);
@@ -75,6 +82,13 @@ class R2StorageService {
    * Note: Cette méthode suppose qu'un Workers R2 Bucket ou un domaine personnalisé soit configuré
    */
   public getPublicUrl(key: string): string {
+    // Pour le développement local, un chemin relatif peut être utilisé
+    // pour éviter les problèmes SSL/TLS avec Cloudflare
+    if (process.env.NODE_ENV === "development") {
+      // Format temporaire pour le développement
+      return `/r2/${key}`;
+    }
+    
     // Format de l'URL peut varier selon votre configuration Cloudflare
     // Cette URL dépend de la façon dont vous avez configuré l'accès public à votre bucket R2
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
