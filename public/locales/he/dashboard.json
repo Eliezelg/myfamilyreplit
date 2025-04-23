@@ -1,0 +1,63 @@
+{
+  "welcome": "ברוכים הבאים, {{familyName}}",
+  "overview": "הנה מה שקורה בגזטה המשפחתית שלך",
+  "gazette": {
+    "title": "גזטה לחודש {{month}}",
+    "status": "בהכנה",
+    "closingDate": "תאריך סגירה",
+    "uploadedPhotos": "תמונות שהועלו",
+    "contributors": "תורמים החודש",
+    "outOf": "/",
+    "members": "חברים",
+    "uploadPhotos": "העלה תמונות",
+    "generateGazette": "הפק גזטה לחודש {{month}}",
+    "generating": "מייצר גזטה...",
+    "selectMonth": "בחר חודש"
+  },
+  "photos": {
+    "recentPhotos": "תמונות אחרונות",
+    "viewAll": "ראה את כל התמונות",
+    "noPhotos": "אין תמונות להצגה, העלה את התמונות הראשונות שלך!",
+    "uploaded": "העלה תמונה"
+  },
+  "activity": {
+    "title": "פעילות משפחתית",
+    "viewEvents": "ראה את כל האירועים",
+    "noActivity": "אין פעילות להצגה"
+  },
+  "familyFund": {
+    "title": "קופת המשפחה",
+    "status": "מאוזן",
+    "currentBalance": "יתרה נוכחית",
+    "sufficientBalance": "יתרה מספקת לגזטה הבאה",
+    "addFunds": "הוסף כספים",
+    "manageRecipients": "נהל מקבלים",
+    "recentTransactions": "עסקאות אחרונות",
+    "viewAll": "ראה את כל העסקאות",
+    "noTransactions": "אין עסקאות אחרונות",
+    "transactionDate": "תאריך",
+    "transactionAmount": "סכום",
+    "transactionType": "סוג",
+    "transactionDescription": "תיאור"
+  },
+  "events": {
+    "title": "אירועים קרובים",
+    "addEvent": "הוסף אירוע",
+    "viewAll": "ראה את כל האירועים",
+    "noEvents": "אין אירועים קרובים",
+    "today": "היום",
+    "tomorrow": "מחר",
+    "inDays": "בעוד {{days}} ימים"
+  },
+  "members": {
+    "title": "חברי המשפחה",
+    "inviteMembers": "הזמן חברים",
+    "viewAll": "ראה את כל החברים",
+    "noMembers": "אין חברים נוספים"
+  },
+  "modals": {
+    "addFunds": "הוספת כסף לקופה המשפחתית",
+    "addEvent": "הוספת אירוע חדש",
+    "close": "סגור"
+  }
+}

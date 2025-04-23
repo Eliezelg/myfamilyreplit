@@ -1,0 +1,63 @@
+{
+  "welcome": "Welcome, {{familyName}}",
+  "overview": "Here's what's happening in your family gazette",
+  "gazette": {
+    "title": "Gazette for {{month}}",
+    "status": "In Preparation",
+    "closingDate": "Closing Date",
+    "uploadedPhotos": "Uploaded Photos",
+    "contributors": "Contributors this month",
+    "outOf": "out of",
+    "members": "members",
+    "uploadPhotos": "Upload Photos",
+    "generateGazette": "Generate Gazette for {{month}}",
+    "generating": "Generating...",
+    "selectMonth": "Select Month"
+  },
+  "photos": {
+    "recentPhotos": "Recent Photos",
+    "viewAll": "View all photos",
+    "noPhotos": "No photos to display, upload your first photos!",
+    "uploaded": "uploaded a photo"
+  },
+  "activity": {
+    "title": "Family Activity",
+    "viewEvents": "View all events",
+    "noActivity": "No activity to display"
+  },
+  "familyFund": {
+    "title": "Family Fund",
+    "status": "Balanced",
+    "currentBalance": "Current Balance",
+    "sufficientBalance": "Sufficient balance for next gazette",
+    "addFunds": "Add Funds",
+    "manageRecipients": "Manage Recipients",
+    "recentTransactions": "Recent Transactions",
+    "viewAll": "View all transactions",
+    "noTransactions": "No recent transactions",
+    "transactionDate": "Date",
+    "transactionAmount": "Amount",
+    "transactionType": "Type",
+    "transactionDescription": "Description"
+  },
+  "events": {
+    "title": "Upcoming Events",
+    "addEvent": "Add Event",
+    "viewAll": "View all events",
+    "noEvents": "No upcoming events",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "inDays": "In {{days}} days"
+  },
+  "members": {
+    "title": "Family Members",
+    "inviteMembers": "Invite Members",
+    "viewAll": "View all members",
+    "noMembers": "No additional members"
+  },
+  "modals": {
+    "addFunds": "Add funds to the family fund",
+    "addEvent": "Add a new event",
+    "close": "Close"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "welcome": "Bienvenue, {{familyName}}",
+  "overview": "Voici ce qui se passe dans votre gazette familiale",
+  "gazette": {
+    "title": "Gazette du mois de {{month}}",
+    "status": "En préparation",
+    "closingDate": "Date de clôture",
+    "uploadedPhotos": "Photos téléchargées",
+    "contributors": "Contributeurs du mois",
+    "outOf": "sur",
+    "members": "membres",
+    "uploadPhotos": "Télécharger des photos",
+    "generateGazette": "Générer la gazette pour {{month}}",
+    "generating": "Génération en cours...",
+    "selectMonth": "Choisir un mois"
+  },
+  "photos": {
+    "recentPhotos": "Photos récentes",
+    "viewAll": "Voir toutes les photos",
+    "noPhotos": "Aucune photo à afficher, téléchargez vos premières photos !",
+    "uploaded": "a téléchargé une photo"
+  },
+  "activity": {
+    "title": "Activité familiale",
+    "viewEvents": "Voir tous les événements",
+    "noActivity": "Aucune activité à afficher"
+  },
+  "familyFund": {
+    "title": "Fonds familial",
+    "status": "Équilibré",
+    "currentBalance": "Solde actuel",
+    "sufficientBalance": "Solde suffisant pour la prochaine gazette",
+    "addFunds": "Ajouter des fonds",
+    "manageRecipients": "Gérer les destinataires",
+    "recentTransactions": "Transactions récentes",
+    "viewAll": "Voir toutes les transactions",
+    "noTransactions": "Aucune transaction récente",
+    "transactionDate": "Date",
+    "transactionAmount": "Montant",
+    "transactionType": "Type",
+    "transactionDescription": "Description"
+  },
+  "events": {
+    "title": "Événements à venir",
+    "addEvent": "Ajouter un événement",
+    "viewAll": "Voir tous les événements",
+    "noEvents": "Aucun événement à venir",
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "inDays": "Dans {{days}} jours"
+  },
+  "members": {
+    "title": "Membres de la famille",
+    "inviteMembers": "Inviter des membres",
+    "viewAll": "Voir tous les membres",
+    "noMembers": "Aucun membre supplémentaire"
+  },
+  "modals": {
+    "addFunds": "Ajouter des fonds à la caisse familiale",
+    "addEvent": "Ajouter un nouvel événement",
+    "close": "Fermer"
+  }
+}
