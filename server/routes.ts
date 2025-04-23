@@ -86,6 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerGazetteRoutes(app);
   registerInvitationRoutes(app); // Enregistrement des routes d'invitation
   registerPhotoRoutes(app); // Enregistrement des routes photo
+  registerRecipientRoutes(app); // Enregistrement des routes destinataire
   //registerBasicTestRoutes(app);
   //registerTestUploadRoutes(app);
 
