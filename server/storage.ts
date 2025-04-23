@@ -31,9 +31,12 @@ export interface IStorage {
   // User operations (maintenu pour compatibilité mais délégué au service)
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByResetToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserProfile(id: number, profileData: Partial<User>): Promise<User>;
   updateUserPassword(id: number, newPassword: string): Promise<User>;
+  updateUser(id: number, userData: Partial<User>): Promise<User>;
 
   // Children operations
   getUserChildren(userId: number): Promise<Child[]>;
