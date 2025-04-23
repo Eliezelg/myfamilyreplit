@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import 'dotenv/config';
+import path from 'path';
 import { setupTestUploadRoutes } from "./test-upload";
 import { setupSecurityMiddleware } from "./middleware/security";
 import { securityLogger } from "./middleware/security-logger";
@@ -15,6 +16,9 @@ const app = express();
 // Configurer les middlewares
 app.use(express.json({ limit: '1mb' })); // Limite la taille du JSON
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Servir les fichiers de traduction
+app.use('/locales', express.static(path.join(process.cwd(), 'public/locales')));
 
 // Configurer l'authentification d'abord
 setupAuth(app);
