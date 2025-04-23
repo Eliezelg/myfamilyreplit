@@ -1,6 +1,7 @@
 import { storage } from "../storage";
 import { InsertPhoto, Photo } from "../../shared/schema";
 import { r2StorageService } from "./r2-storage-service";
+import { localStorageService } from "./local-storage-service";
 import multer from "multer";
 
 /**
@@ -8,11 +9,17 @@ import multer from "multer";
  */
 class PhotoService {
   public upload: multer.Multer;
+  private useLocalStorage: boolean = true; // Utiliser le stockage local temporairement
 
   constructor() {
-    // Configurer multer avec R2 pour l'upload des fichiers
-    this.upload = r2StorageService.getMulterUpload("photos");
-    console.log("PhotoService initialisé avec stockage R2");
+    // Choisir entre R2 et stockage local
+    if (this.useLocalStorage) {
+      this.upload = localStorageService.getMulterUpload("photos");
+      console.log("PhotoService initialisé avec stockage LOCAL");
+    } else {
+      this.upload = r2StorageService.getMulterUpload("photos");
+      console.log("PhotoService initialisé avec stockage R2");
+    }
   }
 
   /**
@@ -49,8 +56,16 @@ class PhotoService {
    * Crée un objet photo avec les champs nécessaires pour l'insertion
    */
   createPhotoData(userId: number, familyId: number, fileKey: string, caption: string, fileSize: number): InsertPhoto {
-    // Utilise le service R2 pour générer l'URL publique
-    const imageUrl = r2StorageService.getPublicUrl(fileKey);
+    // Choisir entre R2 et stockage local pour l'URL publique
+    let imageUrl: string;
+    if (this.useLocalStorage) {
+      imageUrl = localStorageService.getPublicUrl(fileKey, 'photos');
+      console.log("URL locale générée:", imageUrl);
+    } else {
+      imageUrl = r2StorageService.getPublicUrl(fileKey);
+      console.log("URL R2 générée:", imageUrl);
+    }
+    
     const monthYear = this.getCurrentMonthYear();
 
     return {
