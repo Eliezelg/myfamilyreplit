@@ -93,14 +93,15 @@ function HeaderNav() {
               <NavigationMenuList>
                 {navigation.map((item) => (
                   <NavigationMenuItem key={item.name}>
-                    <Link href={item.href}>
-                      <NavigationMenuLink className={cn(
+                    <div
+                      onClick={() => window.location.href = item.href}
+                      className={cn(
                         navigationMenuTriggerStyle(),
-                        "text-foreground hover:text-primary transition-colors duration-200"
-                      )}>
-                        {item.name}
-                      </NavigationMenuLink>
-                    </Link>
+                        "text-foreground hover:text-primary transition-colors duration-200 cursor-pointer"
+                      )}
+                    >
+                      {item.name}
+                    </div>
                   </NavigationMenuItem>
                 ))}
               </NavigationMenuList>
@@ -270,25 +271,28 @@ function FooterSection() {
             <h3 className="font-medium text-base mb-4">Liens rapides</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/features">
-                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
-                    Fonctionnalités
-                  </span>
-                </Link>
+                <div 
+                  onClick={() => window.location.href = "/features"}
+                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  Fonctionnalités
+                </div>
               </li>
               <li>
-                <Link href="/about">
-                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
-                    À propos
-                  </span>
-                </Link>
+                <div 
+                  onClick={() => window.location.href = "/about"}
+                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  À propos
+                </div>
               </li>
               <li>
-                <Link href="/contact">
-                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
-                    Contact
-                  </span>
-                </Link>
+                <div 
+                  onClick={() => window.location.href = "/contact"}
+                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  Contact
+                </div>
               </li>
             </ul>
           </div>
@@ -298,18 +302,20 @@ function FooterSection() {
             <h3 className="font-medium text-base mb-4">Légal</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/privacy">
-                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
-                    Politique de confidentialité
-                  </span>
-                </Link>
+                <div 
+                  onClick={() => window.location.href = "/privacy"}
+                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  Politique de confidentialité
+                </div>
               </li>
               <li>
-                <Link href="/terms">
-                  <span className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
-                    Conditions d'utilisation
-                  </span>
-                </Link>
+                <div 
+                  onClick={() => window.location.href = "/terms"}
+                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  Conditions d'utilisation
+                </div>
               </li>
             </ul>
           </div>

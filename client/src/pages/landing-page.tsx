@@ -124,49 +124,49 @@ export default function LandingPage() {
   return (
     <MainLayout>
       {/* Hero Section */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-primary/5 to-primary/10">
+      <section className="py-20 md:py-28 bg-[#F5F5F5]">
         <div className="container px-4 md:px-6">
           <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
             <div className="flex flex-col justify-center space-y-4">
-              <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary">
+              <div className="inline-block rounded-lg bg-[#4A90E2]/10 px-3 py-1 text-sm text-[#1F3A93]">
                 Nouvelle plateforme familiale
               </div>
-              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-[#333333]">
                 Connectez votre famille à travers les générations
               </h1>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+              <p className="max-w-[600px] text-[#333333] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                 MyFamily est la plateforme qui rapproche les familles, facilite le partage de souvenirs et renforce les liens entre toutes les générations.
               </p>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <Link href="/auth?tab=register">
-                  <Button size="lg" className="gap-1">
+                  <button className="btn-primary inline-flex items-center gap-1 px-6 py-3 text-lg">
                     Démarrer gratuitement
                     <ChevronRight className="h-4 w-4" />
-                  </Button>
+                  </button>
                 </Link>
                 <Link href="/features">
-                  <Button size="lg" variant="outline">
+                  <button className="btn-secondary inline-flex items-center gap-1 px-6 py-3 text-lg">
                     Découvrir les fonctionnalités
-                  </Button>
+                  </button>
                 </Link>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="h-4 w-4 text-primary" />
+              <div className="flex items-center gap-2 text-sm text-[#333333]">
+                <CheckCircle className="h-4 w-4 text-[#1F3A93]" />
                 <span>Pas besoin de carte bancaire</span>
                 <span className="mx-2">•</span>
-                <Clock className="h-4 w-4 text-primary" />
+                <Clock className="h-4 w-4 text-[#1F3A93]" />
                 <span>Configuration en 2 minutes</span>
               </div>
             </div>
             <div className="flex items-center justify-center">
               <div className="relative h-[350px] w-full md:h-[420px] lg:h-[450px]">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary to-blue-400 rounded-lg opacity-10 blur-3xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#1F3A93] to-[#4A90E2] rounded-lg opacity-10 blur-3xl"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="h-[320px] w-[300px] md:h-[380px] md:w-[350px] bg-background rounded-xl shadow-2xl overflow-hidden border">
-                    <div className="h-full w-full bg-gradient-to-br from-primary/30 to-blue-400/30 flex items-center justify-center">
+                  <div className="h-[320px] w-[300px] md:h-[380px] md:w-[350px] bg-white rounded-xl shadow-2xl overflow-hidden border">
+                    <div className="h-full w-full bg-gradient-to-br from-[#4A90E2]/30 to-[#1F3A93]/30 flex items-center justify-center">
                       <div className="text-center p-6">
                         <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-white/90 mb-4">
-                          <Heart className="h-10 w-10 text-primary" />
+                          <Heart className="h-10 w-10 text-[#FF6F61]" />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-2">MyFamily</h3>
                         <p className="text-white/90 mb-6">Votre espace familial en ligne</p>
