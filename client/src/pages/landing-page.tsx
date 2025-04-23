@@ -187,163 +187,166 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 bg-white">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12 md:mb-16">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[#333333] font-montserrat">
               Fonctionnalités conçues pour les familles modernes
             </h2>
-            <p className="mt-4 text-muted-foreground md:text-xl">
+            <p className="mt-4 text-[#333333] md:text-xl font-opensans">
               Des outils simples mais puissants pour renforcer vos liens familiaux
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="border-none shadow-md hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="mb-2">{feature.icon}</div>
-                  <CardTitle>{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
+              <div key={index} className="card-myfamily p-6 flex flex-col items-center text-center">
+                <div className="mb-4 p-3 rounded-full bg-[#4A90E2]/10">
+                  <div className="text-[#1F3A93]">{feature.icon}</div>
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-[#333333] font-montserrat">{feature.title}</h3>
+                <p className="text-[#333333] font-opensans">{feature.description}</p>
+              </div>
             ))}
           </div>
           <div className="mt-12 text-center">
             <Link href="/features">
-              <Button variant="outline" size="lg" className="gap-2">
+              <button className="btn-secondary inline-flex items-center gap-1 px-6 py-3">
                 Toutes les fonctionnalités
                 <ArrowUpRight className="h-4 w-4" />
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16 md:py-24 bg-muted/20">
+      <section className="py-16 md:py-24 bg-[#F5F5F5]">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[#333333] font-montserrat">
               Ce que nos utilisateurs disent
             </h2>
-            <p className="mt-4 text-muted-foreground md:text-xl">
+            <p className="mt-4 text-[#333333] md:text-xl font-opensans">
               Découvrez comment MyFamily transforme la vie de famille
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="bg-background">
-                <CardContent className="pt-6">
-                  <div className="mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <svg key={i} className="inline-block h-5 w-5 fill-primary" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="mb-4 italic text-muted-foreground">"{testimonial.quote}"</p>
-                  <div>
-                    <p className="font-semibold">{testimonial.author}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div key={index} className="bg-white rounded-lg shadow p-6 border border-gray-100">
+                <div className="mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="inline-block h-5 w-5 fill-[#FF6F61]" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="mb-4 italic text-[#333333] font-opensans">"{testimonial.quote}"</p>
+                <div>
+                  <p className="font-semibold text-[#1F3A93] font-montserrat">{testimonial.author}</p>
+                  <p className="text-sm text-[#333333]/70 font-opensans">{testimonial.role}</p>
+                </div>
+              </div>
             ))}
           </div>
           <div className="mt-12 text-center">
             <Link href="/testimonials">
-              <Button variant="outline" size="lg" className="gap-2">
+              <button className="btn-secondary inline-flex items-center gap-1 px-6 py-3">
                 Voir plus de témoignages
                 <ArrowUpRight className="h-4 w-4" />
-              </Button>
+              </button>
             </Link>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 bg-white">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-[#333333] font-montserrat">
               Plans simples et transparents
             </h2>
-            <p className="mt-4 text-muted-foreground md:text-xl">
+            <p className="mt-4 text-[#333333] md:text-xl font-opensans">
               Choisissez le plan qui convient à votre famille
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {pricingPlans.map((plan, index) => (
-              <Card 
+              <div 
                 key={index} 
-                className={`flex flex-col ${plan.highlighted ? 'border-primary shadow-lg relative' : ''}`}
+                className={`card-myfamily flex flex-col p-0 ${plan.highlighted ? 'border-[#1F3A93] shadow-lg relative' : ''}`}
               >
                 {plan.highlighted && (
-                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary text-white text-sm font-medium py-1 px-3 rounded-full">
+                  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#1F3A93] text-white text-sm font-medium py-1 px-3 rounded-full">
                     Le plus populaire
                   </div>
                 )}
-                <CardHeader>
-                  <CardTitle>{plan.name}</CardTitle>
-                  <CardDescription>{plan.description}</CardDescription>
+                <div className="p-6 border-b">
+                  <h3 className="text-xl font-bold text-[#333333] font-montserrat">{plan.name}</h3>
+                  <p className="text-[#333333]/70 text-sm mb-3 font-opensans">{plan.description}</p>
                   <div className="mt-4">
-                    <span className="text-3xl font-bold">{plan.price}</span>
+                    <span className="text-3xl font-bold text-[#1F3A93] font-montserrat">{plan.price}</span>
                   </div>
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <ul className="space-y-2">
+                </div>
+                <div className="p-6 flex-1">
+                  <ul className="space-y-3 font-opensans">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-primary mr-2" />
-                        <span>{feature}</span>
+                        <CheckCircle className="h-5 w-5 text-[#4A90E2] mr-2 flex-shrink-0" />
+                        <span className="text-[#333333]">{feature}</span>
                       </li>
                     ))}
                   </ul>
-                </CardContent>
-                <div className="p-6 pt-0 mt-auto">
+                </div>
+                <div className="p-6 pt-0 mt-auto border-t">
                   <Link href={plan.price === "Gratuit" ? "/auth?tab=register" : "/pricing"}>
-                    <Button 
-                      variant={plan.highlighted ? "default" : "outline"} 
-                      className="w-full"
-                    >
-                      {plan.price === "Gratuit" ? "Commencer" : "Choisir"}
-                    </Button>
+                    {plan.highlighted ? (
+                      <button className="btn-primary w-full">
+                        {plan.price === "Gratuit" ? "Commencer" : "Choisir"}
+                      </button>
+                    ) : (
+                      <button className="btn-secondary w-full">
+                        {plan.price === "Gratuit" ? "Commencer" : "Choisir"}
+                      </button>
+                    )}
                   </Link>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
-          <div className="mt-8 text-center text-sm text-muted-foreground">
-            <p>Tous les prix sont indiqués TTC. Annulez à tout moment.</p>
-            <p className="mt-1">Besoin d'une solution personnalisée pour votre organisation ? <Link href="/contact" className="text-primary hover:underline">Contactez-nous</Link></p>
+          <div className="mt-8 text-center text-sm">
+            <p className="text-[#333333]/70 font-opensans">Tous les prix sont indiqués TTC. Annulez à tout moment.</p>
+            <p className="mt-1 font-opensans">Besoin d'une solution personnalisée pour votre organisation ? 
+              <Link href="/contact">
+                <span className="text-[#1F3A93] hover:underline ml-1 cursor-pointer">Contactez-nous</span>
+              </Link>
+            </p>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-primary text-primary-foreground">
+      <section className="py-16 md:py-24 bg-[#1F3A93] text-white">
         <div className="container px-4 md:px-6">
           <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl font-montserrat">
                 Prêt à réunir votre famille ?
               </h2>
-              <p className="mt-4 text-primary-foreground/90 md:text-xl max-w-md">
+              <p className="mt-4 text-white/90 md:text-xl max-w-md font-opensans">
                 Créez votre espace familial gratuit aujourd'hui et commencez à partager des moments précieux avec vos proches.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-end">
               <Link href="/auth?tab=register">
-                <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                <button className="bg-[#FF6F61] text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-[#e86557] transition-colors w-full sm:w-auto">
                   Démarrer gratuitement
-                </Button>
+                </button>
               </Link>
               <Link href="/contact">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary-foreground/20 hover:bg-primary-foreground/10">
+                <button className="border border-white text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/10 transition-colors w-full sm:w-auto">
                   Nous contacter
-                </Button>
+                </button>
               </Link>
             </div>
           </div>
@@ -351,33 +354,33 @@ export default function LandingPage() {
       </section>
 
       {/* Key Benefits */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 bg-white">
         <div className="container px-4 md:px-6">
           <div className="grid gap-12 lg:grid-cols-3">
             <div className="flex flex-col items-center text-center">
-              <div className="mb-4 rounded-full bg-primary/10 p-4">
-                <Shield className="h-8 w-8 text-primary" />
+              <div className="mb-4 rounded-full bg-[#4A90E2]/10 p-4">
+                <Shield className="h-8 w-8 text-[#1F3A93]" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Confidentialité garantie</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-bold mb-2 text-[#333333] font-montserrat">Confidentialité garantie</h3>
+              <p className="text-[#333333] font-opensans">
                 Vos données familiales restent privées et sécurisées. Nous ne partageons jamais vos informations.
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="mb-4 rounded-full bg-primary/10 p-4">
-                <Award className="h-8 w-8 text-primary" />
+              <div className="mb-4 rounded-full bg-[#4A90E2]/10 p-4">
+                <Award className="h-8 w-8 text-[#1F3A93]" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Expérience familiale unique</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-bold mb-2 text-[#333333] font-montserrat">Expérience familiale unique</h3>
+              <p className="text-[#333333] font-opensans">
                 Une plateforme conçue spécifiquement pour les familles, avec des fonctionnalités adaptées à vos besoins.
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="mb-4 rounded-full bg-primary/10 p-4">
-                <BarChart className="h-8 w-8 text-primary" />
+              <div className="mb-4 rounded-full bg-[#4A90E2]/10 p-4">
+                <BarChart className="h-8 w-8 text-[#1F3A93]" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Mises à jour régulières</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-xl font-bold mb-2 text-[#333333] font-montserrat">Mises à jour régulières</h3>
+              <p className="text-[#333333] font-opensans">
                 Nous améliorons constamment notre plateforme avec de nouvelles fonctionnalités basées sur vos retours.
               </p>
             </div>
