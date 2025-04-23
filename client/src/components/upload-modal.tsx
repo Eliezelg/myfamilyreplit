@@ -12,6 +12,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getCookie } from "@/lib/utils";
 import { X, Upload, Edit2 } from "lucide-react";
 import SimplePhotoEditor from "./simple-photo-editor";
 
@@ -91,10 +92,7 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
           console.log("Processing file:", fileObj.file.name);
           
           // Récupérer le token CSRF du cookie
-          const csrfToken = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('XSRF-TOKEN='))
-            ?.split('=')[1];
+          const csrfToken = getCookie('XSRF-TOKEN');
             
           // Create a new FormData for each file
           const formData = new FormData();
