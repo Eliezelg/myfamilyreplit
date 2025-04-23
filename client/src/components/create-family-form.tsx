@@ -68,7 +68,9 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
   
   // Mutation pour valider les codes promo
   const validatePromoCodeMutation = useMutation({
-    mutationFn: async (code: string) => {
+    mutationFn: async (code: string | undefined) => {
+      if (!code) return { isValid: false, message: "Code invalide" };
+      
       setIsValidatingPromo(true);
       const response = await apiRequest("POST", "/api/promo-codes/validate", {
         code,
@@ -155,18 +157,26 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
       familyData, 
       paymentToken, 
       recipientData,
-      addRecipientLater
+      addRecipientLater,
+      paymentInfo
     }: { 
       familyData: CreateFamilyFormValues, 
       paymentToken: string,
       recipientData?: CreateRecipientFormValues,
-      addRecipientLater: boolean 
+      addRecipientLater: boolean,
+      paymentInfo?: {
+        amount: number,
+        subscriptionType: 'regular' | 'lifetime',
+        promoCode?: string,
+        promoValidation?: PromoValidationResult
+      }
     }) => {
       const response = await apiRequest("POST", "/api/families/create-with-payment", {
         familyData,
         paymentToken,
         recipientData,
-        addRecipientLater
+        addRecipientLater,
+        paymentInfo
       });
       return await response.json();
     },
@@ -259,13 +269,28 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     }
 
     setStep('processing');
+    
+    // Ajout des informations supplémentaires pour les codes promo
+    const paymentInfo = {
+      amount: promoValidation?.isValid && promoValidation?.isLifetime 
+        ? LIFETIME_PRICE 
+        : SUBSCRIPTION_PRICE,
+      subscriptionType: promoValidation?.isValid && promoValidation?.isLifetime 
+        ? 'lifetime' 
+        : 'regular',
+      promoCode: (familyData.promoCode && promoValidation?.isValid) 
+        ? familyData.promoCode 
+        : undefined,
+      promoValidation: promoValidation?.isValid ? promoValidation : undefined
+    };
 
     // Créer la famille avec le nouveau processus intégré (paiement d'abord, puis création)
     createFamilyWithPaymentMutation.mutate({
       familyData,
       paymentToken: cardToken,
       recipientData: addRecipientLater ? undefined : recipientData || undefined,
-      addRecipientLater
+      addRecipientLater,
+      paymentInfo
     });
   };
 
@@ -334,7 +359,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
                           type="button"
                           variant="ghost"
                           size="sm"
-                          onClick={() => validatePromoCodeMutation.mutate(field.value)}
+                          onClick={() => field.value && validatePromoCodeMutation.mutate(field.value)}
                           disabled={isValidatingPromo || validatePromoCodeMutation.isPending}
                           className="h-6 px-2 text-xs"
                         >
@@ -538,7 +563,11 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
         <CardHeader>
           <CardTitle className="text-center">תשלום דמי מנוי</CardTitle>
           <CardDescription className="text-center">
-            דמי מנוי שנתי למשפחה: 70 ש"ח
+            {promoValidation?.isValid && promoValidation?.isLifetime ? (
+              <>מנוי <span className="font-bold">לכל החיים</span> למשפחה: 50 ש"ח</>
+            ) : (
+              <>דמי מנוי שנתי למשפחה: 70 ש"ח</>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -546,6 +575,19 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
           <div className="bg-muted/30 p-4 rounded-md">
             <h3 className="font-medium mb-2">פרטי המשפחה</h3>
             <p>שם: {familyData?.name}</p>
+            
+            {/* Afficher les informations sur le code promo */}
+            {familyData?.promoCode && promoValidation?.isValid && (
+              <div className="mt-2 py-2 px-3 bg-green-50 text-green-800 rounded-md border border-green-200">
+                <p className="font-medium">קוד קופון: {familyData.promoCode}</p>
+                {promoValidation.isLifetime ? (
+                  <p className="text-sm">סוג מנוי: לכל החיים</p>
+                ) : (
+                  <p className="text-sm">הנחה: {promoValidation.discount / 100} ש"ח</p>
+                )}
+              </div>
+            )}
+            
             {recipientData && !addRecipientLater && (
               <div className="mt-2">
                 <p className="font-medium mt-2">פרטי משלוח הגזטה:</p>
@@ -579,7 +621,11 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
               ) : (
                 <>
                   <CreditCard className="ml-2 h-4 w-4" />
-                  צור משפחה ושלם 70 ש"ח
+                  {promoValidation?.isValid && promoValidation?.isLifetime ? (
+                    <>צור משפחה ושלם 50 ש"ח</>
+                  ) : (
+                    <>צור משפחה ושלם 70 ש"ח</>
+                  )}
                 </>
               )}
             </Button>
