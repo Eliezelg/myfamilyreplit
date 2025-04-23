@@ -87,7 +87,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   });
   
   // Fund query for this family
-  const { data: fund } = useQuery<FamilyFund>({
+  const { data: fund, refetch: refetchFund } = useQuery<FamilyFund>({
     queryKey: [`/api/families/${familyId}/fund`],
   });
   

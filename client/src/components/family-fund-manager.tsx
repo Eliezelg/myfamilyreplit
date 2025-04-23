@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CreditCardForm } from "./credit-card-form";
+import { DirectPaymentForm } from "./direct-payment-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,8 +22,8 @@ export function FamilyFundManager({ familyId }: FamilyFundManagerProps) {
   const { toast } = useToast();
   const [amount, setAmount] = useState(10000); // 100 shekels par défaut
   const [customAmount, setCustomAmount] = useState("");
-  const [cardToken, setCardToken] = useState<string | null>(null);
   const [showCustomAmount, setShowCustomAmount] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const queryClient = useQueryClient();
 
   // Récupérer les informations du fonds de famille
@@ -35,62 +35,6 @@ export function FamilyFundManager({ familyId }: FamilyFundManagerProps) {
   const { data: transactions, isLoading: isLoadingTransactions } = useQuery<FundTransaction[]>({
     queryKey: ["/api/families", familyId, "fund/transactions"],
   });
-
-  // Mutation pour ajouter des fonds
-  const addFundsMutation = useMutation({
-    mutationFn: async ({ amount, token }: { amount: number; token: string }) => {
-      const response = await apiRequest("POST", "/api/payments/add-funds", {
-        familyId,
-        amount,
-        token
-      });
-      return await response.json();
-    },
-    onSuccess: (data) => {
-      if (data.success) {
-        toast({
-          title: "הכסף נוסף בהצלחה",
-          description: `נוספו ${data.amountFromCard / 100} ש"ח לקופה המשפחתית`,
-        });
-        
-        // Réinitialiser les états
-        setCardToken(null);
-        setCustomAmount("");
-        
-        // Invalider les requêtes pour recharger les données
-        queryClient.invalidateQueries({ queryKey: ["/api/families", familyId, "fund"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/families", familyId, "fund/transactions"] });
-      } else {
-        toast({
-          title: "שגיאה בהוספת כספים",
-          description: data.message || "לא ניתן להוסיף את הכספים",
-          variant: "destructive",
-        });
-      }
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "שגיאה בהוספת כספים",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Gérer l'enregistrement de la carte
-  const handleCardSaved = (cardData: { 
-    cardNumberMask: string; 
-    expiration: string; 
-    token: string 
-  }) => {
-    setCardToken(cardData.token);
-    
-    // Afficher un message de confirmation
-    toast({
-      title: "כרטיס נשמר בהצלחה",
-      description: `כרטיס המסתיים ב-${cardData.cardNumberMask.slice(-4)} נשמר`,
-    });
-  };
 
   // Gérer la sélection du montant
   const handleAmountSelect = (selectedAmount: number) => {
@@ -111,28 +55,19 @@ export function FamilyFundManager({ familyId }: FamilyFundManagerProps) {
     }
   };
 
-  // Gérer l'ajout de fonds
-  const handleAddFunds = () => {
-    if (!cardToken) {
-      toast({
-        title: "חסר כרטיס אשראי",
-        description: "נא להזין פרטי כרטיס אשראי",
-        variant: "destructive",
-      });
-      return;
-    }
+  // Gérer le succès du paiement
+  const handlePaymentSuccess = () => {
+    // Fermer le formulaire de paiement
+    setShowPaymentForm(false);
     
-    if (amount <= 0) {
-      toast({
-        title: "סכום לא תקין",
-        description: "נא להזין סכום חיובי",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Réinitialiser les montants
+    setCustomAmount("");
+    setAmount(10000);
     
-    // Ajouter les fonds
-    addFundsMutation.mutate({ amount, token: cardToken });
+    // Rafraîchir les données
+    queryClient.invalidateQueries({ queryKey: ["/api/families", familyId, "fund"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/families", familyId, "fund/transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/families"] }); // Invalider toutes les données des familles
   };
 
   // Formater la date pour l'affichage
@@ -149,91 +84,97 @@ export function FamilyFundManager({ familyId }: FamilyFundManagerProps) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>קופה משפחתית</CardTitle>
-          <CardDescription>
-            הקופה המשפחתית מאפשרת לכם לשלם עבור מנוי, תמונות ופעילויות משפחתיות
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Afficher le solde actuel */}
-          <div className="bg-primary/10 p-6 rounded-lg text-center">
-            <p className="text-sm text-muted-foreground mb-2">יתרה נוכחית</p>
-            <h2 className="text-3xl font-bold">
-              {isLoadingFund ? (
-                <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-              ) : (
-                `${(familyFund?.balance || 0) / 100} ש"ח`
-              )}
-            </h2>
-          </div>
-
-          {/* Sélection du montant */}
-          <div className="space-y-3">
-            <Label>סכום להפקדה</Label>
-            <div className="grid grid-cols-3 gap-3">
-              {DEFAULT_AMOUNTS.map((amt) => (
-                <Button
-                  key={amt}
-                  type="button"
-                  variant={amount === amt && !showCustomAmount ? "default" : "outline"}
-                  onClick={() => handleAmountSelect(amt)}
-                >
-                  {amt / 100} ש"ח
-                </Button>
-              ))}
-            </div>
-            
-            <div className="flex items-center mt-3">
-              <Button
-                type="button"
-                variant={showCustomAmount ? "default" : "outline"}
-                onClick={() => setShowCustomAmount(true)}
-                className="w-full"
-              >
-                סכום אחר
-              </Button>
-            </div>
-            
-            {showCustomAmount && (
-              <div className="mt-3">
-                <Label>סכום מותאם אישית (ש"ח)</Label>
-                <Input
-                  type="text"
-                  value={customAmount}
-                  onChange={handleCustomAmountChange}
-                  placeholder="הכנס סכום בשקלים"
-                  className="mt-1"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Formulaire de carte de crédit */}
-          <CreditCardForm
-            onCardSaved={handleCardSaved}
-            buttonText="שמור כרטיס"
-            title="פרטי תשלום"
-            disabled={addFundsMutation.isPending}
-          />
-
-          <Button
-            onClick={handleAddFunds}
-            className="w-full"
-            disabled={!cardToken || addFundsMutation.isPending || amount <= 0}
+      {showPaymentForm ? (
+        <div>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowPaymentForm(false)}
+            className="mb-4"
           >
-            {addFundsMutation.isPending ? (
-              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <PlusCircle className="ml-2 h-4 w-4" />
-                הוסף {amount / 100} ש"ח לקופה
-              </>
-            )}
+            חזרה לבחירת הסכום
           </Button>
-        </CardContent>
-      </Card>
+          
+          <DirectPaymentForm 
+            familyId={familyId}
+            amount={amount}
+            onPaymentSuccess={handlePaymentSuccess}
+            onPaymentFailure={() => {}}
+            buttonText="הוסף כסף לקופה"
+          />
+        </div>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>קופה משפחתית</CardTitle>
+            <CardDescription>
+              הקופה המשפחתית מאפשרת לכם לשלם עבור מנוי, תמונות ופעילויות משפחתיות
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Afficher le solde actuel */}
+            <div className="bg-primary/10 p-6 rounded-lg text-center">
+              <p className="text-sm text-muted-foreground mb-2">יתרה נוכחית</p>
+              <h2 className="text-3xl font-bold">
+                {isLoadingFund ? (
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                ) : (
+                  `${(familyFund?.balance || 0) / 100} ש"ח`
+                )}
+              </h2>
+            </div>
+
+            {/* Sélection du montant */}
+            <div className="space-y-3">
+              <Label>סכום להפקדה</Label>
+              <div className="grid grid-cols-3 gap-3">
+                {DEFAULT_AMOUNTS.map((amt) => (
+                  <Button
+                    key={amt}
+                    type="button"
+                    variant={amount === amt && !showCustomAmount ? "default" : "outline"}
+                    onClick={() => handleAmountSelect(amt)}
+                  >
+                    {amt / 100} ש"ח
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="flex items-center mt-3">
+                <Button
+                  type="button"
+                  variant={showCustomAmount ? "default" : "outline"}
+                  onClick={() => setShowCustomAmount(true)}
+                  className="w-full"
+                >
+                  סכום אחר
+                </Button>
+              </div>
+              
+              {showCustomAmount && (
+                <div className="mt-3">
+                  <Label>סכום מותאם אישית (ש"ח)</Label>
+                  <Input
+                    type="text"
+                    value={customAmount}
+                    onChange={handleCustomAmountChange}
+                    placeholder="הכנס סכום בשקלים"
+                    className="mt-1"
+                  />
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={() => setShowPaymentForm(true)}
+              className="w-full"
+              disabled={amount <= 0}
+            >
+              <PlusCircle className="ml-2 h-4 w-4" />
+              המשך להוספת {amount / 100} ש"ח לקופה
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Historique des transactions */}
       <Card>
