@@ -1,6 +1,7 @@
 import { storage } from "../storage";
-import { Invitation, InsertInvitation } from "../../shared/schema";
+import { Invitation, InsertInvitation, User } from "../../shared/schema";
 import { v4 as uuidv4 } from "uuid";
+import { emailController } from "../controllers/email-controller";
 
 /**
  * Service pour gérer les invitations aux familles
@@ -64,8 +65,18 @@ export class InvitationService {
     
     const newInvitation = await storage.createInvitation(invitation);
     
-    // TODO: Implémenter l'envoi d'email avec un service d'email
-    // Pour l'instant, on simule juste et on retourne l'invitation
+    // Envoyer l'email d'invitation
+    try {
+      // Récupérer les informations sur l'utilisateur qui invite
+      const inviter = await storage.getUser(userId);
+      if (inviter) {
+        await emailController.sendFamilyInvitation(email, inviter.username, newInvitation, familyName);
+        console.log(`Email d'invitation à la famille envoyé à ${email}`);
+      }
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi de l\'email d\'invitation:', emailError);
+      // Continuer le processus même si l'email échoue
+    }
     
     return newInvitation;
   }
@@ -118,13 +129,26 @@ export class InvitationService {
     }
     
     // Ajouter l'utilisateur comme membre de la famille
-    await storage.addFamilyMember(family.id, {
+    await storage.addFamilyMember({
+      familyId: family.id,
       userId,
       role: "member"
     });
     
     // Marquer l'invitation comme acceptée
     await storage.updateInvitationStatus(invitation.id, "accepted");
+    
+    // Envoyer un email de confirmation de rejoindre la famille
+    try {
+      const user = await storage.getUser(userId);
+      if (user) {
+        await emailController.sendFamilyJoinConfirmation(user, family);
+        console.log(`Email de confirmation de rejoindre la famille envoyé à ${user.email}`);
+      }
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi de l\'email de confirmation de rejoindre la famille:', emailError);
+      // Continuer le processus même si l'email échoue
+    }
     
     return {
       familyId: family.id,

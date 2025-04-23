@@ -1,7 +1,8 @@
 import { db } from "../db";
-import { families, familyMembers, type Family, type FamilyMember, type InsertFamily, type InsertFamilyMember, type FamilyFund } from "@shared/schema";
+import { families, familyMembers, type Family, type FamilyMember, type InsertFamily, type InsertFamilyMember, type FamilyFund, type User } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { storage } from "../storage";
+import { emailController } from "../controllers/email-controller";
 
 /**
  * Service pour gérer les opérations liées aux familles
@@ -22,6 +23,18 @@ class FamilyService {
         userId: userId,
         role: "admin"
       });
+      
+      // Envoyer un email de confirmation de création de famille
+      try {
+        const user = await storage.getUser(userId);
+        if (user) {
+          await emailController.sendFamilyCreationConfirmation(user, newFamily);
+          console.log(`Email de confirmation de création de famille envoyé à ${user.email}`);
+        }
+      } catch (emailError) {
+        console.error('Erreur lors de l\'envoi de l\'email de confirmation de création de famille:', emailError);
+        // Continuer le processus même si l'email échoue
+      }
     }
 
     return newFamily;
