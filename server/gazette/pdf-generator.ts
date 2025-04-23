@@ -234,7 +234,7 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
 /**
  * Ajoute l'en-tête au document PDF
  */
-function addHeader(doc: PDFKit.PDFDocument, family: Family, monthYear: string) {
+export function addHeader(doc: PDFKit.PDFDocument, family: Family, monthYear: string) {
   // Logo et titre
   doc.fontSize(24)
      .font('Helvetica-Bold')
@@ -260,7 +260,7 @@ function addHeader(doc: PDFKit.PDFDocument, family: Family, monthYear: string) {
 /**
  * Ajoute la section des photos au document PDF
  */
-function addPhotoSection(doc: PDFKit.PDFDocument, photos: (Photo & { user?: User })[]) {
+export function addPhotoSection(doc: PDFKit.PDFDocument, photos: (Photo & { user?: User })[]) {
   // Titre de la section
   doc.fontSize(16)
      .font('Helvetica-Bold')
@@ -277,13 +277,7 @@ function addPhotoSection(doc: PDFKit.PDFDocument, photos: (Photo & { user?: User
   let y = doc.y;
   
   photos.forEach((photo, index) => {
-    const filePath = path.join(process.cwd(), photo.imageUrl);
-    
-    // Vérifier si le fichier existe
-    if (!fs.existsSync(filePath)) {
-      console.warn(`Le fichier ${filePath} n'existe pas, la photo sera ignorée`);
-      return;
-    }
+    const imageUrl = photo.imageUrl;
     
     // Vérifier s'il reste assez d'espace sur la page
     if (y + photoWidth > doc.page.height - 100) {
@@ -301,11 +295,32 @@ function addPhotoSection(doc: PDFKit.PDFDocument, photos: (Photo & { user?: User
     
     try {
       // Ajouter l'image
-      doc.image(filePath, x, y, {
-        width: photoWidth,
-        height: photoWidth,
-        fit: [photoWidth, photoWidth]
-      });
+      // Vérifier si l'URL est une URL R2 ou un chemin local
+      const isExternalUrl = imageUrl.startsWith('http');
+      
+      if (isExternalUrl) {
+        // Pour les URLs externes (R2), utiliser l'URL directement
+        doc.image(imageUrl, x, y, {
+          width: photoWidth,
+          height: photoWidth,
+          fit: [photoWidth, photoWidth]
+        });
+      } else {
+        // Pour les chemins locaux, utiliser le chemin complet
+        const filePath = path.join(process.cwd(), imageUrl);
+        
+        // Vérifier si le fichier existe
+        if (!fs.existsSync(filePath)) {
+          console.warn(`Le fichier ${filePath} n'existe pas, la photo sera ignorée`);
+          return;
+        }
+        
+        doc.image(filePath, x, y, {
+          width: photoWidth,
+          height: photoWidth,
+          fit: [photoWidth, photoWidth]
+        });
+      }
       
       // Ajouter la légende
       doc.fontSize(10)
@@ -322,7 +337,7 @@ function addPhotoSection(doc: PDFKit.PDFDocument, photos: (Photo & { user?: User
                { width: photoWidth, align: 'center' });
       
     } catch (error) {
-      console.error(`Erreur lors de l'ajout de l'image ${filePath}:`, error);
+      console.error(`Erreur lors de l'ajout de l'image ${imageUrl}:`, error);
     }
   });
   
@@ -333,7 +348,7 @@ function addPhotoSection(doc: PDFKit.PDFDocument, photos: (Photo & { user?: User
 /**
  * Ajoute la section des anniversaires au document PDF
  */
-function addBirthdaySection(doc: PDFKit.PDFDocument, birthdays: BirthdayEvent[], monthYear: string) {
+export function addBirthdaySection(doc: PDFKit.PDFDocument, birthdays: BirthdayEvent[], monthYear: string) {
   // Ajouter une nouvelle page pour les anniversaires
   doc.addPage();
   
@@ -397,7 +412,7 @@ function addBirthdaySection(doc: PDFKit.PDFDocument, birthdays: BirthdayEvent[],
 /**
  * Ajoute le pied de page au document PDF
  */
-function addFooter(doc: PDFKit.PDFDocument) {
+export function addFooter(doc: PDFKit.PDFDocument) {
   const range = doc.bufferedPageRange();
   const pageCount = range.count;
   const startPage = range.start;
@@ -429,7 +444,7 @@ function addFooter(doc: PDFKit.PDFDocument) {
 /**
  * Formate une chaîne de caractères au format YYYY-MM en un format lisible (Mois Année)
  */
-function formatMonthYear(monthYear: string): string {
+export function formatMonthYear(monthYear: string): string {
   try {
     const date = parse(monthYear, 'yyyy-MM', new Date());
     return format(date, 'MMMM yyyy', { locale: fr });

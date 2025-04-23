@@ -121,8 +121,8 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
     // Récupérer les anniversaires du mois
     const birthdays = await getUpcomingBirthdays(familyId, monthYear);
     
-    // Générer le PDF
-    const result = await generateGazettePDF(photosWithUser, family, birthdays, monthYear);
+    // Générer le PDF avec Cloudflare R2
+    const result = await r2GazetteStorage.generateAndUploadPDF(photosWithUser, family, birthdays, monthYear);
     
     // Mettre à jour ou créer l'enregistrement de la gazette
     if (gazette) {

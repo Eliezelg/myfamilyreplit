@@ -3,7 +3,15 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Readable } from "stream";
 import PDFDocument from "pdfkit";
 import { Family, Photo, User } from "@shared/schema";
-import { BirthdayEvent, GazetteGenerationResult } from "./pdf-generator";
+import { 
+  BirthdayEvent, 
+  GazetteGenerationResult, 
+  addHeader, 
+  addPhotoSection, 
+  addBirthdaySection, 
+  addFooter, 
+  formatMonthYear 
+} from "./pdf-generator";
 
 /**
  * Service pour gérer le stockage des PDFs de gazette sur Cloudflare R2
@@ -94,7 +102,7 @@ export class R2GazetteStorage {
 
   /**
    * Ajoute le contenu au PDF (en-tête, photos, anniversaires, etc.)
-   * Cette méthode est un placeholder, vous devrez l'adapter à votre logique existante
+   * Utilise les fonctions existantes de mise en page du module pdf-generator
    */
   private addContentToPDF(
     doc: PDFKit.PDFDocument,
@@ -103,17 +111,21 @@ export class R2GazetteStorage {
     birthdays: BirthdayEvent[],
     monthYear: string
   ): void {
-    // Placeholder - à remplacer par votre logique de mise en page existante
-    // Exemple d'en-tête simple
-    doc.fontSize(24).text(`Gazette de la famille ${family.name}`, { align: 'center' });
-    doc.fontSize(16).text(`Edition: ${monthYear}`, { align: 'center' });
-    doc.moveDown(2);
-
-    // TODO: Remplacer par vos fonctions de mise en page existantes
-    // addHeader(doc, family, monthYear);
-    // addPhotoSection(doc, photos);
-    // addBirthdaySection(doc, birthdays, monthYear);
-    // addFooter(doc);
+    // Utiliser les fonctions existantes pour générer le contenu du PDF
+    addHeader(doc, family, monthYear);
+    
+    // Ajouter la section des photos si des photos sont disponibles
+    if (photos.length > 0) {
+      addPhotoSection(doc, photos);
+    }
+    
+    // Ajouter la section des anniversaires si des anniversaires sont disponibles
+    if (birthdays.length > 0) {
+      addBirthdaySection(doc, birthdays, monthYear);
+    }
+    
+    // Ajouter le pied de page
+    addFooter(doc);
   }
 
   /**
