@@ -1,6 +1,7 @@
 import { db } from "../db";
-import { families, familyMembers, type Family, type FamilyMember, type InsertFamily, type InsertFamilyMember } from "@shared/schema";
+import { families, familyMembers, type Family, type FamilyMember, type InsertFamily, type InsertFamilyMember, type FamilyFund } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
+import { storage } from "../storage";
 
 /**
  * Service pour gérer les opérations liées aux familles
@@ -173,22 +174,9 @@ class FamilyService {
   /**
    * Récupère le fond d'une famille
    */
-  async getFamilyFund(familyId: number): Promise<any | undefined> {
-    // Implémenter selon votre schéma de base de données
-    // Exemple:
-    // const [fund] = await db.select()
-    //   .from(familyFunds)
-    //   .where(eq(familyFunds.familyId, familyId));
-    
-    // return fund || undefined;
-    
-    // Pour le moment, renvoyer un objet fictif pour éviter les erreurs
-    return {
-      id: familyId,
-      balance: 0,
-      currency: "ILS",
-      familyId: familyId
-    };
+  async getFamilyFund(familyId: number): Promise<FamilyFund | undefined> {
+    // Utiliser directement le service storage qui implémente déjà cette fonctionnalité
+    return await storage.getFamilyFund(familyId);
   }
 }
 
