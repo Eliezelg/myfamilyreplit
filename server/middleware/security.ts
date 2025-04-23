@@ -15,11 +15,21 @@ export function setupSecurityMiddleware(app: Express) {
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
           imgSrc: ["'self'", "data:", "https://*.r2.cloudflarestorage.com"],
           connectSrc: ["'self'", "https://*.r2.cloudflarestorage.com"],
+          objectSrc: ["'none'"],
+          upgradeInsecureRequests: [],
+          blockAllMixedContent: [],
         },
       },
       xssFilter: true,
       noSniff: true,
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      hsts: {
+        maxAge: 15552000, // 180 jours
+        includeSubDomains: true,
+        preload: true
+      },
+      frameguard: { action: 'deny' },
+      permittedCrossDomainPolicies: { permittedPolicies: 'none' },
     })
   );
 
@@ -28,6 +38,16 @@ export function setupSecurityMiddleware(app: Express) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
+    
+    // Empêcher l'accès direct aux fichiers sensibles
+    const sensitivePatterns = [/\.env$/i, /\.log$/i, /\.config$/i, /\.sql$/i, /\.json$/i];
+    const requestPath = req.path.toLowerCase();
+    
+    if (sensitivePatterns.some(pattern => pattern.test(requestPath))) {
+      return res.status(403).send('Accès interdit');
+    }
+    
     next();
   });
 

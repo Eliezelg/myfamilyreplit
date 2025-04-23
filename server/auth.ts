@@ -16,41 +16,56 @@ declare global {
 const scryptAsync = promisify(scrypt);
 
 export async function hashPassword(password: string) {
+  // Augmentation du coût de hachage pour une sécurité accrue
   const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  const buf = (await scryptAsync(password, salt, 64, { N: 16384, r: 8, p: 1 })) as Buffer;
   const hashedPassword = `${buf.toString("hex")}.${salt}`;
-  console.log(`Mot de passe haché: ${hashedPassword.substring(0, 10)}...`);
+  
+  // Éviter de logger les mots de passe même partiellement
+  console.log(`Hachage du mot de passe effectué`);
   return hashedPassword;
 }
 
 export async function comparePasswords(supplied: string, stored: string) {
-  // Ne pas logger les mots de passe ou leurs parties pour des raisons de sécurité
-  console.log(`Tentative de vérification de mot de passe`);
+  const startTime = Date.now();
+  
+  // Ne pas logger les informations sensibles
+  console.log(`Vérification d'authentification en cours`);
   
   const [hashed, salt] = stored.split(".");
   
   if (!hashed || !salt) {
-    console.error(`Format de mot de passe invalide`);
+    console.error(`Erreur de format d'authentification`);
     // Simuler un délai constant pour éviter les attaques temporelles
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await ensureMinimumTime(startTime);
     return false;
   }
   
   try {
     const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64, { N: 16384, r: 8, p: 1 })) as Buffer;
     
     const result = timingSafeEqual(hashedBuf, suppliedBuf);
     
     // Pas de détails sur le résultat dans les logs
-    console.log(`Vérification de mot de passe terminée`);
+    console.log(`Processus d'authentification terminé`);
     
+    // Assurer un temps d'exécution constant
+    await ensureMinimumTime(startTime);
     return result;
   } catch (error) {
-    console.error(`Erreur lors de la vérification du mot de passe:`, error);
+    console.error(`Erreur lors du processus d'authentification:`, error);
     // Simuler un délai constant pour éviter les attaques temporelles
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await ensureMinimumTime(startTime);
     return false;
+  }
+}
+
+// Fonction utilitaire pour assurer un temps d'exécution minimum
+async function ensureMinimumTime(startTime: number, minTimeMs: number = 1000) {
+  const elapsedTime = Date.now() - startTime;
+  if (elapsedTime < minTimeMs) {
+    await new Promise(resolve => setTimeout(resolve, minTimeMs - elapsedTime));
   }
 }
 

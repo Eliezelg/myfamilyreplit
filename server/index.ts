@@ -6,6 +6,7 @@ import { setupTestUploadRoutes } from "./test-upload";
 import { setupSecurityMiddleware } from "./middleware/security";
 import { securityLogger } from "./middleware/security-logger";
 import { csrfProtection, setupCSRF } from "./middleware/csrf-protection";
+import { bruteForceProtection } from "./middleware/auth-protection";
 import { setupAuth } from "./auth"; // Added for authentication setup
 
 
@@ -18,9 +19,14 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // Appliquer les middleware de sécurité
 setupSecurityMiddleware(app);
 app.use(securityLogger);
+app.use(bruteForceProtection);
 
 // Configurer l'authentification
 setupAuth(app);
+
+// Appliquer le sanitizer pour toutes les routes d'API
+import { sanitizeInputs } from "./middleware/sanitizer";
+app.use('/api', sanitizeInputs);
 
 // Appliquer la protection CSRF après l'authentification
 app.use('/api', csrfProtection);
