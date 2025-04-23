@@ -1,0 +1,163 @@
+Le tableau de bord administrateur de la plateforme MyFamily devra permettre une gestion complète et centralisée de la plateforme. Voici les éléments clés à intégrer, ainsi que les actions que l’admin doit pouvoir effectuer :
+
+
+---
+
+1. Vue d'ensemble / Dashboard général
+
+Statistiques globales :
+
+Nombre de familles créées
+
+Nombre de membres actifs
+
+Nombre de gazettes générées ce mois
+
+Cagnottes totales
+
+État des impressions et envois
+
+Taux de participation des membres
+
+
+Alertes système (échecs de paiement, problèmes d’impression, etc.)
+
+
+
+---
+
+2. Gestion des utilisateurs et familles
+
+Lister / rechercher / filtrer les familles et les membres
+
+Voir les détails d’un compte famille :
+
+Membres
+
+Historique des contributions
+
+Abonnements
+
+Adresse(s) postale(s)
+
+
+Modifier / suspendre / supprimer un compte famille ou utilisateur
+
+Changer les rôles et permissions des membres (admin famille, contributeur, etc.)
+
+Réinitialiser un mot de passe
+
+
+
+---
+
+3. Gestion des gazettes
+
+Suivre le statut de génération (en cours, prêt, envoyé, en attente)
+
+Visualiser le contenu d'une gazette (aperçu PDF)
+
+Relancer une génération / impression manuelle si besoin
+
+Intervenir sur des contenus bloqués (photos non valides, contenu signalé)
+
+
+
+---
+
+4. Gestion du contenu et modération
+
+Accès à tous les contenus partagés (photos, textes)
+
+Signalement de contenus inappropriés
+
+Filtrage automatique : consulter et valider/refuser
+
+Supprimer ou modifier un contenu
+
+
+
+---
+
+5. Gestion de la cagnotte et des paiements
+
+Accès à l’historique des transactions
+
+Vérification des prélèvements / paiements échoués
+
+Gestion des remboursements
+
+Suivi des soldes de cagnottes
+
+Génération de rapports financiers détaillés
+
+
+
+---
+
+6. Gestion des codes promos et parrainages
+
+Créer, activer, désactiver des codes promo
+
+Suivre leur utilisation (familles, montants, fréquence)
+
+Gérer les avantages liés au parrainage
+
+
+
+---
+
+7. Outils marketing et engagement
+
+Envoyer des notifications globales ou ciblées
+
+Suggestions de thématiques de mois
+
+Suivi des badges et récompenses accordées
+
+Tableaux de contribution par membre et par famille
+
+
+
+---
+
+8. Suivi logistique des impressions
+
+Vérifier les états d’impression et de livraison
+
+Gérer les retours ou les erreurs d’envoi
+
+Visualiser les adresses postales par destinataire
+
+Alerte sur adresses invalides ou en double
+
+
+
+---
+
+9. Administration technique
+
+Logs d’activité (audit trail)
+
+Gestion des accès (ajout d’admins, rôles)
+
+État des serveurs et de la base de données
+
+Déclenchement manuel de tâches de fond (queue, nettoyage)
+
+
+
+---
+
+10. Gestion de la documentation / support
+
+Accès au support client (tickets en cours, FAQ)
+
+Gérer la documentation utilisateur (multilingue)
+
+
+
+---
+
+Souhaitez-vous que je vous aide à concevoir une maquette ou une interface visuelle de ce tableau de bord ?
+
