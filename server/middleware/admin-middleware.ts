@@ -1,4 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
+import { Session } from 'express-session';
+
+// Import de la définition étendue de Session depuis auth-middleware.ts
+declare module 'express-session' {
+  interface Session {
+    user?: any;
+  }
+}
 
 /**
  * Middleware pour vérifier si l'utilisateur est un administrateur

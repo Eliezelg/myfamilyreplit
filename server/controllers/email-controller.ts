@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { emailService } from '../services/email-service';
 import { User, Family, Invitation } from '@shared/schema';
 import { storage } from '../storage';
+import '@shared/schema'; // Pour s'assurer que les types sont bien importés
 
 /**
  * Contrôleur pour les fonctionnalités liées aux emails
@@ -51,7 +52,7 @@ export class EmailController {
    */
   async sendWelcomeEmail(user: User) {
     try {
-      await emailService.sendWelcomeEmail(user);
+      await emailService.sendWelcomeEmail(user.email, user.fullName || user.username);
       console.log(`Email de bienvenue envoyé à ${user.email}`);
       return true;
     } catch (error) {
@@ -65,7 +66,7 @@ export class EmailController {
    */
   async sendPasswordResetEmail(user: User, resetToken: string) {
     try {
-      await emailService.sendPasswordResetEmail(user, resetToken);
+      await emailService.sendPasswordResetEmail(user.email, resetToken);
       console.log(`Email de récupération de mot de passe envoyé à ${user.email}`);
       return true;
     } catch (error) {
@@ -79,10 +80,11 @@ export class EmailController {
    */
   async sendFamilyCreationConfirmation(user: User, family: Family) {
     try {
-      await emailService.sendFamilyCreationConfirmation(user, {
-        id: family.id,
-        name: family.name
-      });
+      await emailService.sendFamilyCreationConfirmation(
+        user.email, 
+        user.fullName || user.username, 
+        family.name
+      );
       console.log(`Email de confirmation de création de famille envoyé à ${user.email}`);
       return true;
     } catch (error) {
@@ -96,10 +98,11 @@ export class EmailController {
    */
   async sendFamilyJoinConfirmation(user: User, family: Family) {
     try {
-      await emailService.sendFamilyJoinConfirmation(user, {
-        id: family.id,
-        name: family.name
-      });
+      await emailService.sendFamilyJoinConfirmation(
+        user.email, 
+        user.fullName || user.username, 
+        family.name
+      );
       console.log(`Email de confirmation de rejoindre une famille envoyé à ${user.email}`);
       return true;
     } catch (error) {
@@ -113,11 +116,12 @@ export class EmailController {
    */
   async sendFamilyInvitation(email: string, inviterName: string, invitation: Invitation, familyName: string) {
     try {
-      await emailService.sendFamilyInvitationEmail(email, inviterName, {
-        id: invitation.familyId,
-        name: familyName,
-        invitationToken: invitation.token
-      });
+      await emailService.sendFamilyInvitation(
+        email, 
+        inviterName, 
+        invitation.token, 
+        familyName
+      );
       console.log(`Email d'invitation à rejoindre une famille envoyé à ${email}`);
       return true;
     } catch (error) {
@@ -141,26 +145,22 @@ export class EmailController {
       // Récupérer les membres de la famille
       const familyMembers = await storage.getFamilyMembers(familyId);
       
-      // Date de clôture (dans 2 jours)
-      const closingDate = new Date();
-      closingDate.setDate(closingDate.getDate() + 2);
-      
       // Envoyer un email à chaque membre de la famille
+      let successCount = 0;
       for (const member of familyMembers) {
-        if (member.user) {
-          await emailService.sendGazetteReminderEmail(
-            member.user, 
+        if (member.user && member.user.email) {
+          await emailService.sendGazetteReminder(
+            member.user.email, 
             family.name, 
-            familyId, 
-            photosCount,
-            photoTarget,
-            closingDate
+            photosCount, 
+            photoTarget
           );
           console.log(`Email de rappel pour la gazette envoyé à ${member.user.email}`);
+          successCount++;
         }
       }
       
-      return true;
+      return successCount > 0;
     } catch (error) {
       console.error('Erreur lors de l\'envoi des emails de rappel pour la gazette:', error);
       return false;
