@@ -15,26 +15,41 @@ const csrfProtection = csrf({
 
 // Middleware pour injecter le token CSRF dans les réponses
 export function setupCSRF(req: Request, res: Response, next: NextFunction) {
-  // Ajouter une méthode csrfToken au request si elle n'existe pas encore
-  if (!req.csrfToken && req.session) {
-    // On continue sans erreur, le middleware csrfProtection l'ajoutera plus tard
-    next();
-    return;
-  }
-  
-  try {
-    if (req.method === 'GET' && req.path.startsWith('/api/')) {
-      const token = req.csrfToken();
-      res.cookie('XSRF-TOKEN', token, {
+  // Si c'est une route d'API GET, on ajoute le token CSRF
+  if (req.method === 'GET' && req.path.startsWith('/api/')) {
+    // Utiliser csrf middleware pour cette requête spécifique
+    csrf({ 
+      cookie: {
+        key: '_csrf',
+        httpOnly: true,
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: false
-      });
-    }
-    next();
-  } catch (err) {
-    // En cas d'erreur, on continue sans bloquer la requête
-    console.warn('Erreur CSRF:', err);
+        secure: process.env.NODE_ENV === 'production'
+      }
+    })(req, res, function(err) {
+      if (err) {
+        // En cas d'erreur, on continue sans bloquer
+        console.warn('Erreur génération CSRF:', err);
+        return next();
+      }
+      
+      try {
+        // Si req.csrfToken existe maintenant, on l'utilise
+        if (typeof req.csrfToken === 'function') {
+          const token = req.csrfToken();
+          res.cookie('XSRF-TOKEN', token, {
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            httpOnly: false
+          });
+        }
+        next();
+      } catch (err) {
+        console.warn('Erreur CSRF:', err);
+        next();
+      }
+    });
+  } else {
+    // Pour les autres routes, on continue normalement
     next();
   }
 }
