@@ -1,7 +1,6 @@
 import { db } from "../db";
 import { events, users, children, familyMembers, type Event, type InsertEvent } from "@shared/schema";
 import { eq, and, gt, lte } from "drizzle-orm";
-import { storage } from "../storage";
 
 /**
  * Service pour gérer les opérations liées aux événements
@@ -19,8 +18,13 @@ class EventService {
         .where(eq(events.familyId, familyId))
         .orderBy(events.date);
       
-      // 2. Récupérer les membres de la famille
-      const familyMembers = await storage.getFamilyMembers(familyId);
+      // 2. Récupérer les membres de la famille avec leurs utilisateurs
+      const members = await db.query.familyMembers.findMany({
+        where: eq(familyMembers.familyId, familyId),
+        with: {
+          user: true
+        }
+      });
       
       // Dates pour calculer les événements des 30 prochains jours
       const today = new Date();
@@ -31,7 +35,7 @@ class EventService {
       const allEvents: Event[] = [...manualEvents];
       
       // 3. Ajouter les anniversaires des utilisateurs membres de la famille
-      for (const member of familyMembers) {
+      for (const member of members) {
         if (member.user && member.user.birthDate) {
           // Créer un événement pour l'anniversaire de l'utilisateur
           const userBirthDate = new Date(member.user.birthDate);
@@ -61,9 +65,11 @@ class EventService {
       }
       
       // 4. Ajouter les anniversaires des enfants des membres de la famille
-      for (const member of familyMembers) {
-        // Récupérer les enfants de ce membre
-        const userChildren = await storage.getUserChildren(member.userId);
+      for (const member of members) {
+        // Récupérer les enfants de ce membre 
+        const userChildren = await db.select()
+          .from(children)
+          .where(eq(children.userId, member.userId));
         
         for (const child of userChildren) {
           if (child.birthDate) {

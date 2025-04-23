@@ -22,7 +22,7 @@ const PgSession = connectPgSimple(session);
 // Import des services
 import { userService } from "./services/user-service";
 import { childService } from "./services/child-service";
-import { familyService } from "./services/family-service"; // Import du nouveau service
+import { familyService } from "./services/family-service";
 
 export interface IStorage {
   // Session store
@@ -476,6 +476,9 @@ export class DatabaseStorage implements IStorage {
 
   // Event operations
   async getFamilyEvents(familyId: number): Promise<Event[]> {
+    // Cette méthode est maintenant implémentée directement dans le service d'événements
+    // et ne doit plus être appelée directement depuis le stockage
+    // pour éviter des dépendances circulaires
     return db.select()
       .from(events)
       .where(eq(events.familyId, familyId))
