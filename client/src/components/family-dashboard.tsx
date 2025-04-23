@@ -115,53 +115,67 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
     enabled: !isPending
   });
   
-  // Photos query for this family - éviter la suspension avec suspense: false et enabled
+  // Photos query for this family
   const { data: photos, isLoading: photosLoading } = useQuery<Photo[]>({
     queryKey: [`/api/families/${familyId}/photos`],
     suspense: false,
-    enabled: !isPending
+    enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false
   });
   
-  // Members query for this family - éviter la suspension avec suspense: false et enabled
+  // Members query for this family
   const { data: members, isLoading: membersLoading } = useQuery<FamilyMemberWithUser[]>({
     queryKey: [`/api/families/${familyId}/members`],
     suspense: false,
-    enabled: !isPending
+    enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false
   });
   
-  // Fund query for this family - éviter la suspension avec suspense: false et enabled
+  // Fund query for this family
   const { data: fund, refetch: refetchFund, isLoading: fundLoading } = useQuery<FamilyFund>({
     queryKey: [`/api/families/${familyId}/fund`],
     suspense: false,
-    enabled: !isPending
+    enabled: true,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false
   });
   
-  // Transactions query for this family's fund - éviter la suspension avec suspense: false et enabled
+  // Transactions query for this family's fund
   const { data: transactions, isLoading: transactionsLoading } = useQuery<FundTransaction[]>({
     queryKey: [`/api/families/${familyId}/fund/transactions`],
     suspense: false,
-    enabled: !isPending
+    enabled: true,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: false
   });
   
-  // Events query for this family - éviter la suspension avec suspense: false et enabled
+  // Events query for this family
   const { data: events, isLoading: eventsLoading } = useQuery<Event[]>({
     queryKey: [`/api/families/${familyId}/events`],
     suspense: false,
-    enabled: !isPending
+    enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false
   });
   
-  // Recipients query for this family - éviter la suspension avec suspense: false et enabled
+  // Recipients query for this family
   const { data: recipients, isLoading: recipientsLoading } = useQuery<Recipient[]>({
     queryKey: [`/api/families/${familyId}/recipients`],
     suspense: false,
-    enabled: !isPending
+    enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false
   });
   
-  // Gazettes query for this family - éviter la suspension avec suspense: false et enabled
+  // Gazettes query for this family
   const { data: gazettes = [], isLoading: gazettesLoading } = useQuery<Gazette[]>({
     queryKey: [`/api/families/${familyId}/gazettes`],
     suspense: false,
-    enabled: !isPending
+    enabled: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false
   });
 
   // Helper function to format date

@@ -1,130 +1,73 @@
-
 {
   "hero": {
-    "badge": "Nouvelle version",
-    "title": "Préservez les souvenirs de famille pour les générations futures",
-    "description": "MyFamily vous permet de créer facilement de magnifiques gazettes familiales à partager avec vos proches, où qu'ils soient dans le monde.",
-    "startFree": "Commencer gratuitement",
-    "discoverFeatures": "Découvrir les fonctionnalités",
-    "noCreditCard": "Aucune carte de crédit requise",
-    "quickSetup": "Configuration rapide en 2 minutes"
+    "title": "Restez connecté avec votre famille",
+    "subtitle": "Partagez des moments précieux, organisez des événements et créez des souvenirs durables.",
+    "cta": "Commencer maintenant",
+    "secondaryCta": "En savoir plus"
   },
   "features": {
-    "title": "Tout ce dont votre famille a besoin",
-    "description": "MyFamily offre une suite complète d'outils pour aider votre famille à rester connectée et à préserver vos souvenirs communs.",
-    "cards": {
-      "share": {
-        "title": "Partagez des moments",
-        "description": "Téléchargez et partagez facilement des photos et des histoires avec toute votre famille."
-      },
-      "organize": {
-        "title": "Organisez des événements",
-        "description": "Planifiez et coordonnez des réunions de famille, des anniversaires et des célébrations spéciales."
-      },
-      "create": {
-        "title": "Créez des gazettes",
-        "description": "Générez automatiquement des gazettes familiales mensuelles avec vos meilleurs souvenirs."
-      },
-      "fund": {
-        "title": "Gérez une cagnotte",
-        "description": "Collectez et gérez des fonds pour des projets familiaux ou des cadeaux communs."
-      }
+    "title": "Fonctionnalités",
+    "subtitle": "Découvrez comment MyFamily peut aider votre famille à rester connectée",
+    "feature1": {
+      "title": "Gazette familiale",
+      "description": "Créez et partagez des gazettes mensuelles avec tous les membres de la famille."
+    },
+    "feature2": {
+      "title": "Partage de photos",
+      "description": "Téléchargez et partagez facilement des photos avec toute la famille."
+    },
+    "feature3": {
+      "title": "Calendrier d'événements",
+      "description": "Organisez et suivez les événements importants de la famille."
+    },
+    "feature4": {
+      "title": "Fonds familial",
+      "description": "Gérez un fonds commun pour les projets et événements familiaux."
     }
   },
-  "how": {
+  "howItWorks": {
     "title": "Comment ça marche",
-    "description": "En trois étapes simples, commencez à créer et partager des souvenirs familiaux",
-    "steps": {
-      "create": {
-        "title": "1. Créez votre espace familial",
-        "description": "Inscrivez-vous et créez votre premier groupe familial en quelques clics."
-      },
-      "invite": {
-        "title": "2. Invitez votre famille",
-        "description": "Ajoutez tous les membres de votre famille pour qu'ils puissent contribuer et partager."
-      },
-      "share": {
-        "title": "3. Partagez vos moments",
-        "description": "Téléchargez des photos, ajoutez des événements et générez votre première gazette."
-      }
+    "subtitle": "En quelques étapes simples, commencez à connecter votre famille",
+    "step1": {
+      "title": "Créez votre famille",
+      "description": "Inscrivez-vous et créez un espace pour votre famille."
+    },
+    "step2": {
+      "title": "Invitez les membres",
+      "description": "Envoyez des invitations à tous les membres de votre famille."
+    },
+    "step3": {
+      "title": "Partagez des moments",
+      "description": "Commencez à télécharger des photos et à créer des événements."
+    },
+    "step4": {
+      "title": "Recevez des gazettes",
+      "description": "Générez et partagez des gazettes mensuelles avec tous les membres."
     }
   },
   "testimonials": {
-    "title": "Témoignages de familles",
-    "description": "Découvrez comment MyFamily aide des milliers de familles à rester connectées",
-    "quotes": [
-      {
-        "text": "Grâce à MyFamily, ma grand-mère reçoit chaque mois une gazette avec toutes nos photos familiales. Elle adore ça !",
-        "author": "Marie L.",
-        "role": "Utilisatrice depuis 1 an"
-      },
-      {
-        "text": "Nous sommes une famille dispersée dans 4 pays différents. MyFamily nous aide à rester unis malgré la distance.",
-        "author": "Thomas B.",
-        "role": "Utilisateur depuis 6 mois"
-      },
-      {
-        "text": "La cagnotte familiale a simplifié l'organisation des cadeaux d'anniversaire et l'impression des gazettes mensuelles.",
-        "author": "Sophie M.",
-        "role": "Utilisatrice depuis 2 ans"
-      }
-    ]
-  },
-  "pricing": {
-    "title": "Des forfaits adaptés à toutes les familles",
-    "description": "Choisissez le plan qui correspond le mieux aux besoins de votre famille",
-    "monthly": "Mensuel",
-    "yearly": "Annuel",
-    "savePercent": "Économisez 20%",
-    "mostPopular": "Le plus populaire",
-    "taxIncluded": "Tous les prix sont indiqués TTC. Annulez à tout moment.",
-    "needCustom": "Besoin d'une solution personnalisée pour votre organisation ?",
-    "contactUs": "Contactez-nous",
-    "plans": {
-      "essential": {
-        "name": "Essentiel",
-        "price": "Gratuit",
-        "description": "Pour les petites familles qui débutent",
-        "features": [
-          "Jusqu'à 10 membres",
-          "Partage de photos basique",
-          "Calendrier d'événements",
-          "1 groupe familial"
-        ],
-        "cta": "Commencer"
-      },
-      "family": {
-        "name": "Famille",
-        "price": "9,99€ /mois",
-        "description": "Pour les familles qui veulent plus de fonctionnalités",
-        "features": [
-          "Jusqu'à 30 membres",
-          "Gazettes familiales illimitées",
-          "Édition photo avancée",
-          "Gestion de fonds familiaux",
-          "3 groupes familiaux"
-        ],
-        "cta": "Choisir"
-      },
-      "premium": {
-        "name": "Premium",
-        "price": "19,99€ /mois",
-        "description": "Pour les grandes familles et les événements importants",
-        "features": [
-          "Membres illimités",
-          "Stockage photos illimité",
-          "Outils avancés d'organisation",
-          "Groupes familiaux illimités",
-          "Support prioritaire"
-        ],
-        "cta": "Choisir"
-      }
+    "title": "Ce que disent nos utilisateurs",
+    "subtitle": "Découvrez comment MyFamily a aidé d'autres familles",
+    "testimonial1": {
+      "quote": "MyFamily nous a aidés à rester connectés malgré la distance. Les gazettes mensuelles sont devenues une tradition que nous attendons tous avec impatience.",
+      "author": "Marie D.",
+      "role": "Mère de famille"
+    },
+    "testimonial2": {
+      "quote": "L'organisation des réunions familiales est devenue tellement plus simple. Tout le monde est au courant des événements à venir.",
+      "author": "Thomas L.",
+      "role": "Père de famille"
+    },
+    "testimonial3": {
+      "quote": "Je peux enfin partager facilement les photos de mes enfants avec mes parents qui vivent loin. C'est vraiment pratique !",
+      "author": "Sophie M.",
+      "role": "Mère de famille"
     }
   },
   "cta": {
-    "title": "Prêt à réunir votre famille ?",
-    "description": "Créez votre espace familial gratuit aujourd'hui et commencez à partager des moments précieux avec vos proches.",
-    "button": "Commencer gratuitement",
-    "subtext": "Aucune carte de crédit requise. Annulez à tout moment."
+    "title": "Prêt à connecter votre famille ?",
+    "subtitle": "Commencez dès aujourd'hui et créez des souvenirs durables.",
+    "button": "Créer votre famille",
+    "secondaryButton": "En savoir plus"
   }
 }
