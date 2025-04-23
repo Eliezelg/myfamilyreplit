@@ -52,6 +52,14 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
     }
   }, [isAddFundsModalOpen, refreshFundData]);
   
+  // Effet pour rafraîchir les événements après la fermeture de la modale
+  useEffect(() => {
+    if (!isAddEventModalOpen) {
+      // Rafraîchir les données d'événements
+      queryClientHook.invalidateQueries({ queryKey: [`/api/families/${familyId}/events`] });
+    }
+  }, [isAddEventModalOpen, familyId, queryClientHook]);
+  
   // Mutation pour générer une gazette
   const generateGazetteMutation = useMutation({
     mutationFn: async (monthYear: string) => {
@@ -687,7 +695,12 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                 ) : (
                   <div className="text-center py-4">
                     <p className="text-gray-500">אין אירועים קרובים</p>
-                    <Button variant="outline" size="sm" className="mt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={() => setIsAddEventModalOpen(true)}
+                    >
                       הוסף אירוע
                     </Button>
                   </div>

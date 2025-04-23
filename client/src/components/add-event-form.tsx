@@ -119,7 +119,8 @@ export default function AddEventForm({ familyId, onClose }: AddEventFormProps) {
                 <Textarea 
                   placeholder="פרטים נוספים על האירוע"
                   rows={3}
-                  {...field} 
+                  {...field}
+                  value={field.value || ""} 
                 />
               </FormControl>
               <FormMessage />
