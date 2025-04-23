@@ -20,20 +20,7 @@ export class EmailController {
         return res.status(400).json({ message: 'Adresse email requise' });
       }
       
-      const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #4a6ee0;">Test d'email MyFamily</h1>
-          <p>Ceci est un email de test de la plateforme MyFamily.</p>
-          <p>Si vous recevez cet email, cela signifie que la configuration de l'envoi d'emails fonctionne correctement.</p>
-          <p>L'équipe MyFamily</p>
-        </div>
-      `;
-      
-      const result = await emailService.sendEmail({
-        to: email,
-        subject: 'Test d\'email MyFamily',
-        html
-      });
+      const result = await emailService.sendTestEmail(email);
       
       if (result) {
         return res.status(200).json({ message: 'Email de test envoyé avec succès' });
