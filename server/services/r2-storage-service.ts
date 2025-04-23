@@ -1,4 +1,4 @@
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import multer from "multer";
 import multerS3 from "multer-s3";
@@ -112,6 +112,32 @@ class R2StorageService {
       return true;
     } catch (error) {
       console.error("Erreur lors de la suppression du fichier sur R2:", error);
+      return false;
+    }
+  }
+  
+  /**
+   * Télécharge un Buffer sur R2
+   * 
+   * @param buffer Le buffer contenant les données du fichier
+   * @param key La clé (chemin) sous laquelle le fichier sera stocké
+   * @param contentType Le type MIME du fichier
+   * @returns Promesse résolue à true si le téléchargement a réussi, false sinon
+   */
+  public async uploadBuffer(buffer: Buffer, key: string, contentType: string = 'application/octet-stream'): Promise<boolean> {
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      });
+      
+      await this.s3Client.send(command);
+      console.log(`Fichier téléchargé avec succès: ${key}`);
+      return true;
+    } catch (error) {
+      console.error("Erreur lors du téléchargement du fichier sur R2:", error);
       return false;
     }
   }
