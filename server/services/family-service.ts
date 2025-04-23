@@ -133,12 +133,18 @@ class FamilyService {
   }
 
   /**
-   * Récupère tous les membres d'une famille
+   * Récupère tous les membres d'une famille avec leurs données utilisateur
    */
-  async getFamilyMembers(familyId: number): Promise<FamilyMember[]> {
-    return db.select()
-      .from(familyMembers)
-      .where(eq(familyMembers.familyId, familyId));
+  async getFamilyMembers(familyId: number): Promise<(FamilyMember & { user?: User })[]> {
+    // Faire une jointure avec la table des utilisateurs pour récupérer les noms
+    const members = await db.query.familyMembers.findMany({
+      where: eq(familyMembers.familyId, familyId),
+      with: {
+        user: true
+      }
+    });
+    
+    return members;
   }
 
   /**
