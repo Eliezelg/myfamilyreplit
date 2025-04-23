@@ -106,44 +106,52 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
     generateGazetteMutation.mutate(currentMonthYear);
   };
   
-  // Family data query
-  const { data: family } = useQuery<Family>({
+  // Family data query - éviter la suspension avec suspense: false
+  const { data: family, isLoading: familyLoading } = useQuery<Family>({
     queryKey: [`/api/families/${familyId}`],
+    suspense: false
   });
   
-  // Photos query for this family
-  const { data: photos } = useQuery<Photo[]>({
+  // Photos query for this family - éviter la suspension avec suspense: false
+  const { data: photos, isLoading: photosLoading } = useQuery<Photo[]>({
     queryKey: [`/api/families/${familyId}/photos`],
+    suspense: false
   });
   
-  // Members query for this family
-  const { data: members } = useQuery<FamilyMemberWithUser[]>({
+  // Members query for this family - éviter la suspension avec suspense: false
+  const { data: members, isLoading: membersLoading } = useQuery<FamilyMemberWithUser[]>({
     queryKey: [`/api/families/${familyId}/members`],
+    suspense: false
   });
   
-  // Fund query for this family
-  const { data: fund, refetch: refetchFund } = useQuery<FamilyFund>({
+  // Fund query for this family - éviter la suspension avec suspense: false
+  const { data: fund, refetch: refetchFund, isLoading: fundLoading } = useQuery<FamilyFund>({
     queryKey: [`/api/families/${familyId}/fund`],
+    suspense: false
   });
   
-  // Transactions query for this family's fund
-  const { data: transactions } = useQuery<FundTransaction[]>({
+  // Transactions query for this family's fund - éviter la suspension avec suspense: false
+  const { data: transactions, isLoading: transactionsLoading } = useQuery<FundTransaction[]>({
     queryKey: [`/api/families/${familyId}/fund/transactions`],
+    suspense: false
   });
   
-  // Events query for this family
-  const { data: events } = useQuery<Event[]>({
+  // Events query for this family - éviter la suspension avec suspense: false
+  const { data: events, isLoading: eventsLoading } = useQuery<Event[]>({
     queryKey: [`/api/families/${familyId}/events`],
+    suspense: false
   });
   
-  // Recipients query for this family
-  const { data: recipients } = useQuery<Recipient[]>({
+  // Recipients query for this family - éviter la suspension avec suspense: false
+  const { data: recipients, isLoading: recipientsLoading } = useQuery<Recipient[]>({
     queryKey: [`/api/families/${familyId}/recipients`],
+    suspense: false
   });
   
-  // Gazettes query for this family
-  const { data: gazettes = [] } = useQuery<Gazette[]>({
+  // Gazettes query for this family - éviter la suspension avec suspense: false
+  const { data: gazettes = [], isLoading: gazettesLoading } = useQuery<Gazette[]>({
     queryKey: [`/api/families/${familyId}/gazettes`],
+    suspense: false
   });
 
   // Helper function to format date

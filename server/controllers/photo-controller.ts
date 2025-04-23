@@ -39,17 +39,32 @@ class PhotoController {
         return res.status(400).json({ message: "Aucun fichier n'a été téléchargé" });
       }
       
-      // Récupérer les infos du fichier uploadé avec multer-s3
-      const s3File = req.file as MulterS3File;
-      console.log("Photo téléchargée sur R2:", s3File.key);
+      // Vérifier si le fichier provient de multer-s3 ou du stockage local
+      const file = req.file;
+      let fileKey: string;
+      let fileSize: number;
+      
+      // Déterminer le type de stockage utilisé
+      if ('key' in file) {
+        // C'est un fichier S3/R2
+        const s3File = file as MulterS3File;
+        console.log("Photo téléchargée sur R2:", s3File.key);
+        fileKey = s3File.key;
+        fileSize = s3File.size;
+      } else {
+        // C'est un fichier local
+        console.log("Photo téléchargée localement:", file.filename);
+        fileKey = file.filename;
+        fileSize = file.size;
+      }
       
       // Créer les données de la photo via le service
       const photoData = photoService.createPhotoData(
         userId,
         parseInt(familyId),
-        s3File.key, // Utiliser la clé R2 au lieu du nom de fichier
+        fileKey,
         caption || "",
-        s3File.size
+        fileSize
       );
       
       // Ajouter la photo à la base de données via le service
