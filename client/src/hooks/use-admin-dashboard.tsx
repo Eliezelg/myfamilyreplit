@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
-import { User, Family, AdminLog, FundTransaction } from "@shared/schema";
+import { User, Family, AdminLog, FundTransaction, PromoCode } from "@shared/schema";
 import { useToast } from "./use-toast";
 
 // Types pour le dashboard admin
@@ -91,6 +91,16 @@ export function useAdminDashboard() {
     queryKey: ["/api/admin/financial-stats"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
+  
+  // Liste des codes promo
+  const {
+    data: promoCodes,
+    isLoading: isLoadingPromoCodes,
+    error: promoCodesError,
+  } = useQuery<PromoCode[], Error>({
+    queryKey: ["/api/promo-codes"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
 
   // Détails d'une famille
   const getFamilyDetails = (familyId: number) => {
@@ -146,6 +156,77 @@ export function useAdminDashboard() {
       });
     },
   });
+  
+  // Création d'un code promo
+  const createPromoCodeMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/promo-codes", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/promo-codes"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: `La création du code promo a échoué: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mise à jour d'un code promo
+  const updatePromoCodeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const res = await apiRequest("PUT", `/api/promo-codes/${id}`, data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/promo-codes"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: `La mise à jour du code promo a échoué: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Activer/désactiver un code promo
+  const togglePromoCodeStatusMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("PATCH", `/api/promo-codes/${id}/toggle`, {});
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/promo-codes"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: `Le changement du statut du code promo a échoué: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Suppression d'un code promo
+  const deletePromoCodeMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/promo-codes/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/promo-codes"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Erreur",
+        description: `La suppression du code promo a échoué: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
 
   return {
     // Statistiques générales
@@ -178,5 +259,14 @@ export function useAdminDashboard() {
     financialStats,
     isLoadingFinancialStats,
     financialStatsError,
+    
+    // Gestion des codes promo
+    promoCodes,
+    isLoadingPromoCodes,
+    promoCodesError,
+    createPromoCodeMutation,
+    updatePromoCodeMutation,
+    togglePromoCodeStatusMutation,
+    deletePromoCodeMutation,
   };
 }

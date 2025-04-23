@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, Users, Home, PieChart, CreditCard, Clock, Settings, Shield } from "lucide-react";
+import { Loader2, Users, Home, PieChart, CreditCard, Clock, Settings, Shield, Tag } from "lucide-react";
 import { useAdminDashboard } from "@/hooks/use-admin-dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import AdminFamilies from "@/components/admin/admin-families";
 import AdminFinances from "@/components/admin/admin-finances";
 import AdminLogs from "@/components/admin/admin-logs";
 import AdminStats from "@/components/admin/admin-stats";
+import AdminPromoCodes from "@/components/admin/admin-promo-codes";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -25,6 +26,8 @@ export default function AdminDashboard() {
     isLoadingTransactions,
     financialStats,
     isLoadingFinancialStats,
+    promoCodes,
+    isLoadingPromoCodes,
     updateUserRoleMutation,
     deleteUserMutation
   } = useAdminDashboard();
@@ -75,6 +78,14 @@ export default function AdminDashboard() {
             Finances
           </Button>
           <Button
+            variant={activeTab === "promo-codes" ? "default" : "ghost"}
+            className="w-full justify-start"
+            onClick={() => setActiveTab("promo-codes")}
+          >
+            <Tag className="mr-2 h-4 w-4" />
+            Codes promo
+          </Button>
+          <Button
             variant={activeTab === "logs" ? "default" : "ghost"}
             className="w-full justify-start"
             onClick={() => setActiveTab("logs")}
@@ -106,11 +117,12 @@ export default function AdminDashboard() {
           <h2 className="text-xl font-bold">Admin Dashboard</h2>
           
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
-            <TabsList className="grid grid-cols-5">
+            <TabsList className="grid grid-cols-6">
               <TabsTrigger value="overview"><Home className="h-4 w-4" /></TabsTrigger>
               <TabsTrigger value="users"><Users className="h-4 w-4" /></TabsTrigger>
               <TabsTrigger value="families"><Home className="h-4 w-4" /></TabsTrigger>
               <TabsTrigger value="finances"><CreditCard className="h-4 w-4" /></TabsTrigger>
+              <TabsTrigger value="promo-codes"><Tag className="h-4 w-4" /></TabsTrigger>
               <TabsTrigger value="logs"><Clock className="h-4 w-4" /></TabsTrigger>
             </TabsList>
           </Tabs>
@@ -153,6 +165,12 @@ export default function AdminDashboard() {
               <AdminLogs 
                 logs={adminLogs || []} 
                 isLoading={isLoadingLogs}
+              />
+            )}
+            {activeTab === "promo-codes" && (
+              <AdminPromoCodes 
+                promoCodes={promoCodes || []} 
+                isLoading={isLoadingPromoCodes}
               />
             )}
             {activeTab === "settings" && (
