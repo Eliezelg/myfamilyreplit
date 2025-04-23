@@ -2,6 +2,8 @@ import { ReactNode } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
+import Header from "@/components/header";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -50,7 +52,7 @@ interface MainLayoutProps {
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <HeaderNav />
+      <Header />
       <main className="flex-1">
         {children}
       </main>
@@ -234,6 +236,7 @@ function HeaderNav() {
 
 function FooterSection() {
   const currentYear = new Date().getFullYear();
+  const { t } = useTranslation('common');
 
   return (
     <footer className="bg-muted/20 border-t">
@@ -245,10 +248,10 @@ function FooterSection() {
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-base">
                 מ
               </div>
-              <h2 className="font-bold text-xl text-primary">MyFamily</h2>
+              <h2 className="font-bold text-xl text-primary">{t('app.name')}</h2>
             </div>
             <p className="text-muted-foreground">
-              Créez des liens durables entre les générations avec notre plateforme familiale innovante.
+              {t('app.tagline')}
             </p>
             <div className="flex space-x-4 pt-2">
               <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
@@ -268,61 +271,56 @@ function FooterSection() {
 
           {/* Quick links */}
           <div>
-            <h3 className="font-medium text-base mb-4">Liens rapides</h3>
+            <h3 className="font-medium text-base mb-4">{t('common.quickLinks')}</h3>
             <ul className="space-y-2">
               <li>
-                <div 
-                  onClick={() => window.location.href = "/features"}
-                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                >
-                  Fonctionnalités
-                </div>
+                <Link href="/features">
+                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t('navigation.features')}
+                  </a>
+                </Link>
               </li>
               <li>
-                <div 
-                  onClick={() => window.location.href = "/about"}
-                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                >
-                  À propos
-                </div>
+                <Link href="/about">
+                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t('navigation.about')}
+                  </a>
+                </Link>
               </li>
               <li>
-                <div 
-                  onClick={() => window.location.href = "/contact"}
-                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                >
-                  Contact
-                </div>
+                <Link href="/contact">
+                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t('navigation.contact')}
+                  </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h3 className="font-medium text-base mb-4">Légal</h3>
+            <h3 className="font-medium text-base mb-4">{t('common.legal')}</h3>
             <ul className="space-y-2">
               <li>
-                <div 
-                  onClick={() => window.location.href = "/privacy"}
-                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                >
-                  Politique de confidentialité
-                </div>
+                <Link href="/privacy">
+                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t('common.privacyPolicy')}
+                  </a>
+                </Link>
               </li>
               <li>
-                <div 
-                  onClick={() => window.location.href = "/terms"}
-                  className="text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                >
-                  Conditions d'utilisation
-                </div>
+                <Link href="/terms">
+                  <a className="text-muted-foreground hover:text-primary transition-colors cursor-pointer">
+                    {t('common.termsOfService')}
+                  </a>
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* Contact */}
           <div>
-            <h3 className="font-medium text-base mb-4">Contact</h3>
+            <h3 className="font-medium text-base mb-4">{t('navigation.contact')}</h3>
             <ul className="space-y-2">
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
@@ -342,10 +340,10 @@ function FooterSection() {
 
         <div className="border-t mt-10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {currentYear} MyFamily. Tous droits réservés.
+            © {currentYear} {t('app.name')}. {t('common.allRightsReserved')}
           </p>
           <p className="text-sm text-muted-foreground flex items-center">
-            Conçu avec <Heart className="h-4 w-4 mx-1 text-red-500" /> pour toutes les familles
+            {t('common.designedWith')} <Heart className="h-4 w-4 mx-1 text-red-500" /> {t('common.forAllFamilies')}
           </p>
         </div>
       </div>

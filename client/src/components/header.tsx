@@ -19,7 +19,7 @@ export const Header = () => {
   const { t } = useTranslation('common');
   const { dir } = useLocale();
   const [location] = useLocation();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const isActive = (path: string) => {
@@ -61,7 +61,7 @@ export const Header = () => {
             </a>
           </Link>
 
-          {isAuthenticated && (
+          {user && (
             <Link href="/dashboard">
               <a className={`text-sm ${isActive('/dashboard') ? 'font-bold' : ''}`}>
                 {t('navigation.dashboard')}
@@ -81,7 +81,7 @@ export const Header = () => {
         <div className="flex items-center space-x-4">
           <LocaleSwitcher />
 
-          {isAuthenticated ? (
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -147,7 +147,7 @@ export const Header = () => {
               </a>
             </Link>
 
-            {isAuthenticated && (
+            {user && (
               <Link href="/dashboard">
                 <a className={`text-sm ${isActive('/dashboard') ? 'font-bold' : ''}`}>
                   {t('navigation.dashboard')}
