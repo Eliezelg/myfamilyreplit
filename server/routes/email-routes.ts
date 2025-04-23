@@ -1,14 +1,13 @@
 import { Express, Request, Response } from 'express';
 import { emailController } from '../controllers/email-controller';
+import { requireAdmin } from '../middleware/admin-middleware';
 
 /**
  * Enregistrement des routes pour les emails
  */
 export function registerEmailRoutes(app: Express) {
   // Route de test d'email (admin seulement)
-  app.post('/api/email/test', async (req: Request, res: Response) => {
-    // Temporairement sans vérification admin jusqu'à ce que nous ayons les bons middleware
-    // TODO: Ajouter requireAuth et requireAdmin quand ils sont disponibles
+  app.post('/api/email/test', requireAdmin, async (req: Request, res: Response) => {
     await emailController.sendTestEmail(req, res);
   });
   

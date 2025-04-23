@@ -4,6 +4,7 @@ import { storage } from "../storage";
 import { getUpcomingBirthdays } from "./pdf-generator";
 import { Family, Gazette } from "@shared/schema";
 import { r2GazetteStorage } from "./r2-gazette-storage";
+import { emailController } from "../controllers/email-controller";
 
 /**
  * Planifie la génération automatique des gazettes
@@ -105,9 +106,22 @@ export async function generateGazetteForFamily(familyId: number, monthYear: stri
     // Récupérer les photos du mois pour cette famille
     const photos = await storage.getFamilyPhotos(familyId, monthYear);
     
-    // Si aucune photo, ne pas générer de gazette
+    // Vérifier s'il y a suffisamment de photos
     if (photos.length === 0) {
       throw new Error(`Aucune photo disponible pour la famille ${familyId} au mois ${monthYear}`);
+    }
+    
+    // Si le nombre de photos est inférieur au seuil (par exemple 10 photos), envoyer un rappel
+    const PHOTO_TARGET = 10;
+    if (photos.length < PHOTO_TARGET) {
+      // Envoyer un email de rappel aux membres de la famille
+      try {
+        await emailController.sendGazetteReminder(familyId, photos.length, PHOTO_TARGET);
+        console.log(`[Gazette] Email de rappel envoyé pour la famille ${familyId}: ${photos.length}/${PHOTO_TARGET} photos`);
+      } catch (emailError) {
+        console.error(`[Gazette] Erreur lors de l'envoi de l'email de rappel pour la famille ${familyId}:`, emailError);
+        // Continuer le processus même si l'email échoue
+      }
     }
     
     // Récupérer les détails utilisateur pour chaque photo
