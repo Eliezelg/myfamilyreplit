@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { User, Family, AdminLog, FundTransaction, PromoCode } from "@shared/schema";
 import { useToast } from "./use-toast";
+import { useTransitionEffect } from '../lib/transition-wrapper'; // Added import
 
 // Types pour le dashboard admin
 type DashboardStats = {
@@ -31,6 +32,7 @@ type TransactionWithUser = FundTransaction & {
 // Hook principal pour le dashboard admin
 export function useAdminDashboard() {
   const { toast } = useToast();
+  const { isPending, runWithTransition } = useTransitionEffect(); // Added
 
   // Statistiques générales
   const {
@@ -91,7 +93,7 @@ export function useAdminDashboard() {
     queryKey: ["/api/admin/financial-stats"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
-  
+
   // Liste des codes promo
   const {
     data: promoCodes,
@@ -114,24 +116,24 @@ export function useAdminDashboard() {
 
   const getFamilyDetails = async (familyId: number): Promise<any> => {
     if (familyId <= 0) return null;
-    
+
     if (familyDetailsCache[familyId]) {
       return familyDetailsCache[familyId];
     }
-    
+
     try {
       const response = await fetch(`/api/admin/families/${familyId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch family details');
       }
       const data = await response.json();
-      
+
       // Update cache
       queryClient.setQueryData(["/api/admin/families/details"], {
         ...familyDetailsCache,
         [familyId]: data
       });
-      
+
       return data;
     } catch (error) {
       console.error('Error fetching family details:', error);
@@ -184,7 +186,7 @@ export function useAdminDashboard() {
       });
     },
   });
-  
+
   // Création d'un code promo
   const createPromoCodeMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -287,7 +289,7 @@ export function useAdminDashboard() {
     financialStats,
     isLoadingFinancialStats,
     financialStatsError,
-    
+
     // Gestion des codes promo
     promoCodes,
     isLoadingPromoCodes,

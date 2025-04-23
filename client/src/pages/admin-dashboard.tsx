@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Loader2, Users, Home, PieChart, CreditCard, Clock, Settings, Shield, Tag } from "lucide-react";
 import { useAdminDashboard } from "@/hooks/use-admin-dashboard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,9 @@ import AdminFinances from "@/components/admin/admin-finances";
 import AdminLogs from "@/components/admin/admin-logs";
 import AdminStats from "@/components/admin/admin-stats";
 import AdminPromoCodes from "@/components/admin/admin-promo-codes";
+// Added import for TransitionWrapper -  assuming this component exists in the project. Adjust path if necessary.
+import { TransitionWrapper } from "@/lib/transition-wrapper";
+
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -115,7 +118,7 @@ export default function AdminDashboard() {
       <div className="block md:hidden bg-white shadow-sm p-4 fixed top-0 left-0 right-0 z-10">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold">Admin Dashboard</h2>
-          
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-auto">
             <TabsList className="grid grid-cols-6">
               <TabsTrigger value="overview"><Home className="h-4 w-4" /></TabsTrigger>
@@ -131,65 +134,62 @@ export default function AdminDashboard() {
 
       {/* Main content */}
       <div className="flex-1 md:p-8 p-4 mt-16 md:mt-0">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-[80vh]">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <>
-            {activeTab === "overview" && <AdminStats stats={stats} financialStats={financialStats} />}
-            {activeTab === "users" && (
-              <AdminUsers 
-                users={users || []} 
-                updateUserRole={(userId, role) => 
-                  updateUserRoleMutation.mutate({ userId, role })
-                }
-                deleteUser={(userId) => deleteUserMutation.mutate(userId)}
-                isLoading={isLoadingUsers}
-              />
-            )}
-            {activeTab === "families" && (
-              <AdminFamilies 
-                families={families || []} 
-                isLoading={isLoadingFamilies}
-              />
-            )}
-            {activeTab === "finances" && (
-              <AdminFinances 
-                transactions={transactions || []} 
-                financialStats={financialStats}
-                isLoading={isLoadingTransactions || isLoadingFinancialStats}
-              />
-            )}
-            {activeTab === "logs" && (
-              <AdminLogs 
-                logs={adminLogs || []} 
-                isLoading={isLoadingLogs}
-              />
-            )}
-            {activeTab === "promo-codes" && (
-              <AdminPromoCodes 
-                promoCodes={promoCodes || []} 
-                isLoading={isLoadingPromoCodes}
-              />
-            )}
-            {activeTab === "settings" && (
+        <Suspense fallback={<div className="flex items-center justify-center h-[80vh]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsContent value="overview" className="mt-6">
+              <TransitionWrapper fallback={<div className="p-4 text-center">Chargement des statistiques...</div>}>
+                <AdminStats stats={stats} financialStats={financialStats} />
+              </TransitionWrapper>
+            </TabsContent>
+            <TabsContent value="users" className="mt-6">
+              <TransitionWrapper fallback={<div className="p-4 text-center">Chargement des utilisateurs...</div>}>
+                <AdminUsers
+                  users={users || []}
+                  updateUserRole={(userId, role) => updateUserRoleMutation.mutate({ userId, role })}
+                  deleteUser={(userId) => deleteUserMutation.mutate(userId)}
+                  isLoading={isLoadingUsers}
+                />
+              </TransitionWrapper>
+            </TabsContent>
+            <TabsContent value="families" className="mt-6">
+              <TransitionWrapper fallback={<div className="p-4 text-center">Chargement des familles...</div>}>
+                <AdminFamilies families={families || []} isLoading={isLoadingFamilies} />
+              </TransitionWrapper>
+            </TabsContent>
+            <TabsContent value="finances" className="mt-6">
+              <TransitionWrapper fallback={<div className="p-4 text-center">Chargement des finances...</div>}>
+                <AdminFinances
+                  transactions={transactions || []}
+                  financialStats={financialStats}
+                  isLoading={isLoadingTransactions || isLoadingFinancialStats}
+                />
+              </TransitionWrapper>
+            </TabsContent>
+            <TabsContent value="promo-codes" className="mt-6">
+              <TransitionWrapper fallback={<div className="p-4 text-center">Chargement des codes promo...</div>}>
+                <AdminPromoCodes promoCodes={promoCodes || []} isLoading={isLoadingPromoCodes} />
+              </TransitionWrapper>
+            </TabsContent>
+            <TabsContent value="logs" className="mt-6">
+              <TransitionWrapper fallback={<div className="p-4 text-center">Chargement des journaux...</div>}>
+                <AdminLogs logs={adminLogs || []} isLoading={isLoadingLogs} />
+              </TransitionWrapper>
+            </TabsContent>
+            <TabsContent value="settings" className="mt-6">
               <div>
                 <Card>
                   <CardHeader>
                     <CardTitle>Paramètres du système</CardTitle>
-                    <CardDescription>
-                      Configuration avancée de la plateforme
-                    </CardDescription>
+                    <CardDescription>Configuration avancée de la plateforme</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p>Fonctionnalité à implémenter.</p>
                   </CardContent>
                 </Card>
               </div>
-            )}
-          </>
-        )}
+            </TabsContent>
+          </Tabs>
+        </Suspense>
       </div>
     </div>
   );
