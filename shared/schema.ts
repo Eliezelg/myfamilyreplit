@@ -16,6 +16,8 @@ export const users = pgTable("users", {
   role: text("role").default("user").notNull(),  // "user", "admin", "superadmin"
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastLoginAt: timestamp("last_login_at"),
+  resetPasswordToken: text("reset_password_token"),
+  resetPasswordExpires: timestamp("reset_password_expires"),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({

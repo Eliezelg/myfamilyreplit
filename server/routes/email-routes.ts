@@ -12,9 +12,7 @@ export function registerEmailRoutes(app: Express) {
   });
   
   // Route pour envoyer un rappel de gazette manuellement (admin seulement)
-  app.post('/api/email/gazette-reminder/:familyId', async (req: Request, res: Response) => {
-    // Temporairement sans vérification admin jusqu'à ce que nous ayons les bons middleware
-    // TODO: Ajouter requireAuth et requireAdmin quand ils sont disponibles
+  app.post('/api/email/gazette-reminder/:familyId', requireAdmin, async (req: Request, res: Response) => {
     try {
       const familyId = parseInt(req.params.familyId);
       const photosCount = parseInt(req.body.photosCount) || 0;

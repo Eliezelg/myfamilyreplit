@@ -104,6 +104,17 @@ export class UserService {
     const user = allUsers.find(u => u.email.toLowerCase() === normalizedEmail);
     return user || undefined;
   }
+  
+  /**
+   * Récupère un utilisateur par son token de réinitialisation de mot de passe
+   */
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    // Recherche dans tous les utilisateurs car nous n'avons pas d'index sur le token
+    const allUsers = await db.select().from(users);
+    
+    const user = allUsers.find(u => u.resetPasswordToken === token);
+    return user || undefined;
+  }
 
   /**
    * Crée un nouvel utilisateur
@@ -119,6 +130,21 @@ export class UserService {
   async updateUserProfile(id: number, profileData: Partial<User>): Promise<User> {
     // Prétraiter les données pour s'assurer que les dates sont correctement formatées
     const sanitizedData = sanitizeData(profileData);
+
+    const [updatedUser] = await db.update(users)
+      .set(sanitizedData)
+      .where(eq(users.id, id))
+      .returning();
+
+    return updatedUser;
+  }
+  
+  /**
+   * Met à jour les informations d'un utilisateur (méthode générique)
+   */
+  async updateUser(id: number, userData: Partial<User>): Promise<User> {
+    // Prétraiter les données pour s'assurer qu'elles sont correctement formatées
+    const sanitizedData = sanitizeData(userData);
 
     const [updatedUser] = await db.update(users)
       .set(sanitizedData)
