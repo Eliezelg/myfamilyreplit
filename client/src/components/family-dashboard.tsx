@@ -369,7 +369,10 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                         </div>
                       </div>
                       <div>
-                        <p className="font-medium">משתמש <span className="font-normal text-gray-500">העלה תמונה</span></p>
+                        <p className="font-medium">
+                          {members?.find(m => m.userId === photo.userId)?.user?.username || "משתמש"}
+                          <span className="font-normal text-gray-500"> העלה תמונה</span>
+                        </p>
                         <p className="text-sm text-gray-500">{formatDate(photo.uploadedAt.toString())}</p>
                       </div>
                     </div>
@@ -442,7 +445,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                               ל
                             </div>
                           </div>
-                          <span>משתמש</span>
+                          <span>{members?.find(m => m.userId === transaction.userId)?.user?.username || "משתמש"}</span>
                         </div>
                         <span className="font-medium text-green-600">
                           {formatCurrency(transaction.amount)}+
