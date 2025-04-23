@@ -32,10 +32,13 @@ app.use(sessionProtection);
 import { sanitizeInputs } from "./middleware/sanitizer";
 app.use('/api', sanitizeInputs);
 
+// Configuration des cookies pour CSRF
+import cookieParser from 'cookie-parser';
+app.use(cookieParser());
+
 // Appliquer la protection CSRF après l'authentification
-// Assurez-vous que setupCSRF est exécuté avant csrfProtection
-app.use(setupCSRF);
 app.use('/api', csrfProtection);
+app.use(setupCSRF);
 
 
 app.use((req, res, next) => {
