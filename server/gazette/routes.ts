@@ -3,6 +3,8 @@ import { storage } from "../storage";
 import { generateGazetteForFamily, generateGazetteOnDemand } from "./scheduler";
 import path from "path";
 import fs from "fs";
+import axios from "axios";
+import { r2GazetteStorage } from "./r2-gazette-storage";
 
 // Middleware pour vérifier si l'utilisateur est admin d'une famille
 async function checkFamilyAdmin(req: Request, res: Response, next: NextFunction) {
@@ -112,13 +114,35 @@ export function registerGazetteRoutes(app: Express) {
         return res.status(404).send("Le fichier PDF de la gazette n'existe pas");
       }
       
-      const filePath = gazette.pdfUrl;
-      if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
-        return res.status(404).send("Le fichier PDF de la gazette n'existe pas");
-      }
+      // Vérifier si l'URL est une URL externe (Cloudflare R2) ou un chemin local
+      const pdfUrl = gazette.pdfUrl;
+      const isExternalUrl = pdfUrl.startsWith('http');
       
-      // Envoyer le fichier au client
-      res.download(path.join(process.cwd(), filePath));
+      if (isExternalUrl) {
+        try {
+          // Pour les URL externes (R2), récupérer le fichier et le transmettre
+          const response = await axios.get(pdfUrl, { responseType: 'arraybuffer' });
+          
+          // Définir les en-têtes pour le téléchargement
+          const filename = `gazette_famille_${gazette.familyId}_${gazette.monthYear}.pdf`;
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+          
+          // Envoyer le fichier
+          res.send(response.data);
+        } catch (error) {
+          console.error("Erreur lors du téléchargement du PDF depuis R2:", error);
+          return res.status(404).send("Impossible d'accéder au fichier PDF de la gazette");
+        }
+      } else {
+        // Pour les fichiers locaux (ancien système), vérifier si le fichier existe
+        if (!fs.existsSync(path.join(process.cwd(), pdfUrl))) {
+          return res.status(404).send("Le fichier PDF de la gazette n'existe pas");
+        }
+        
+        // Envoyer le fichier local au client
+        res.download(path.join(process.cwd(), pdfUrl));
+      }
     } catch (error) {
       next(error);
     }
@@ -136,11 +160,19 @@ export function registerGazetteRoutes(app: Express) {
       
       // Vérifier si une gazette existe déjà pour ce mois
       const existingGazette = await storage.getFamilyGazetteByMonthYear(familyId, monthYear);
-      if (existingGazette) {
-        // Si elle existe mais n'a pas de fichier PDF, on la régénère
-        if (existingGazette.pdfUrl && fs.existsSync(path.join(process.cwd(), existingGazette.pdfUrl))) {
+      if (existingGazette && existingGazette.pdfUrl) {
+        // Si elle existe et a une URL de PDF
+        // Vérifier si c'est une URL R2 ou un chemin local
+        const isExternalUrl = existingGazette.pdfUrl.startsWith('http');
+        
+        if (isExternalUrl) {
+          // Si c'est une URL R2, on considère que la gazette existe déjà
+          return res.status(400).send("Une gazette existe déjà pour ce mois");
+        } else if (fs.existsSync(path.join(process.cwd(), existingGazette.pdfUrl))) {
+          // Si c'est un chemin local et que le fichier existe, la gazette existe déjà
           return res.status(400).send("Une gazette existe déjà pour ce mois");
         }
+        // Sinon, le fichier n'existe pas, on va régénérer la gazette
       }
       
       // Générer la gazette

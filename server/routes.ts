@@ -98,6 +98,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/promo-codes', promoCodeRouter);
   app.use('/api/subscriptions', subscriptionRouter);
   
+  // Planifier la génération automatique des gazettes
+  scheduleGazetteGeneration();
+  
   //registerBasicTestRoutes(app);
   //registerTestUploadRoutes(app);
 
