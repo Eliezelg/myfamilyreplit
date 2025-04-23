@@ -1,64 +1,18 @@
-import fs from "fs";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
 import { storage } from "../storage";
 import { InsertPhoto, Photo } from "../../shared/schema";
+import { r2StorageService } from "./r2-storage-service";
 import multer from "multer";
 
 /**
  * Service pour gérer toutes les opérations liées aux photos
  */
 class PhotoService {
-  private uploadDir: string;
   public upload: multer.Multer;
 
   constructor() {
-    // Configurer le répertoire d'upload
-    this.uploadDir = path.join(process.cwd(), "uploads");
-    this.ensureUploadDirExists();
-    
-    // Configurer multer pour l'upload de fichiers
-    this.upload = this.configureMulter();
-  }
-
-  /**
-   * S'assure que le répertoire d'upload existe
-   */
-  private ensureUploadDirExists(): void {
-    if (!fs.existsSync(this.uploadDir)) {
-      fs.mkdirSync(this.uploadDir, { recursive: true });
-      console.log("Dossier d'uploads créé:", this.uploadDir);
-    }
-  }
-
-  /**
-   * Configure multer pour l'upload des fichiers
-   */
-  private configureMulter(): multer.Multer {
-    return multer({
-      storage: multer.diskStorage({
-        destination: (req, file, cb) => {
-          console.log("Upload directory (photo service):", this.uploadDir);
-          cb(null, this.uploadDir);
-        },
-        filename: (req, file, cb) => {
-          const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
-          console.log("Generated filename (photo service):", uniqueFilename);
-          cb(null, uniqueFilename);
-        }
-      }),
-      limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB
-      },
-      fileFilter: (req, file, cb) => {
-        console.log("Checking file mimetype (photo service):", file.mimetype);
-        const allowedTypes = ['image/jpeg', 'image/png'];
-        if (!allowedTypes.includes(file.mimetype)) {
-          return cb(new Error('Seuls les fichiers JPEG et PNG sont autorisés'));
-        }
-        cb(null, true);
-      }
-    });
+    // Configurer multer avec R2 pour l'upload des fichiers
+    this.upload = r2StorageService.getMulterUpload("photos");
+    console.log("PhotoService initialisé avec stockage R2");
   }
 
   /**
