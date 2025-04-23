@@ -429,8 +429,10 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                           className="bg-white hover:bg-white/90 text-black rounded-full transform transition-transform hover:scale-110"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedPhoto(photo);
-                            setIsPhotoModalOpen(true);
+                            startTransition(() => {
+                              setSelectedPhoto(photo);
+                              setIsPhotoModalOpen(true);
+                            });
                           }}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
@@ -460,7 +462,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                 <Button 
                   variant="link" 
                   className="gap-1 p-0"
-                  onClick={() => setIsEventsViewerOpen(true)}
+                  onClick={() => startTransition(() => setIsEventsViewerOpen(true))}
                 >
                   {t('activity.viewEvents')}
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
@@ -537,7 +539,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                 <Button 
                   className="gap-2" 
                   variant="secondary"
-                  onClick={() => setIsAddFundsModalOpen(true)}
+                  onClick={() => startTransition(() => setIsAddFundsModalOpen(true))}
                 >
                   <PlusCircle className="w-5 h-5" />
                   {t('familyFund.addFunds')}
@@ -610,7 +612,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   size="sm" 
                   variant="outline" 
                   className="gap-1"
-                  onClick={() => setIsInviteModalOpen(true)}
+                  onClick={() => startTransition(() => setIsInviteModalOpen(true))}
                 >
                   <UserPlus className="w-4 h-4" />
                   {t('members.inviteMembers')}
