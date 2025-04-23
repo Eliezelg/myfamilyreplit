@@ -164,14 +164,3 @@ function getContentTypeFromFileName(fileName: string): string {
       return 'application/octet-stream';
   }
 }
-
-// Exécuter la migration
-migratePhotos()
-  .then(() => {
-    console.log("Migration terminée !");
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error("Erreur fatale lors de la migration :", error);
-    process.exit(1);
-  });
