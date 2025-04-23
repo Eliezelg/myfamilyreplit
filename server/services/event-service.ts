@@ -18,13 +18,23 @@ class EventService {
         .where(eq(events.familyId, familyId))
         .orderBy(events.date);
       
-      // 2. Récupérer les membres de la famille avec leurs utilisateurs
-      const members = await db.query.familyMembers.findMany({
-        where: eq(familyMembers.familyId, familyId),
-        with: {
-          user: true
-        }
-      });
+      // 2. Récupérer les membres de la famille
+      const familyMembersResult = await db.select()
+        .from(familyMembers)
+        .where(eq(familyMembers.familyId, familyId));
+
+      // Récupérer les utilisateurs pour ces membres
+      const members = [];
+      for (const member of familyMembersResult) {
+        const [user] = await db.select()
+          .from(users)
+          .where(eq(users.id, member.userId));
+          
+        members.push({
+          ...member,
+          user
+        });
+      }
       
       // Dates pour calculer les événements des 30 prochains jours
       const today = new Date();

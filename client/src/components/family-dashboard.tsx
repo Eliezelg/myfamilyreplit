@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient, User, Gazette } from "@shared/schema";
-import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus, Download, RefreshCw, FileDown, Newspaper, Settings } from "lucide-react";
+import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus, Download, RefreshCw, FileDown, Newspaper, Settings, Plus } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import InviteFamilyModal from "./invite-family-modal";
 import { FamilyFundManager } from "./family-fund-manager";
+import AddEventForm from "./add-event-form";
 import { format, parse } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ interface FamilyDashboardProps {
 export default function FamilyDashboard({ familyId, familyName, onUploadClick }: FamilyDashboardProps) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAddFundsModalOpen, setIsAddFundsModalOpen] = useState(false);
+  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [currentMonthYear, setCurrentMonthYear] = useState<string>(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -180,6 +182,33 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                 </Button>
               </div>
               <FamilyFundManager familyId={familyId} />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Add Event Modal */}
+      {isAddEventModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">הוספת אירוע חדש</h2>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setIsAddEventModalOpen(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </Button>
+              </div>
+              
+              <AddEventForm 
+                familyId={familyId} 
+                onClose={() => setIsAddEventModalOpen(false)} 
+              />
             </div>
           </div>
         </div>
@@ -616,12 +645,23 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">אירועים קרובים</h3>
-                <Button variant="link" className="gap-1 p-0">
-                  כל האירועים
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
-                  </svg>
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => setIsAddEventModalOpen(true)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    הוסף אירוע
+                  </Button>
+                  <Button variant="link" className="gap-1 p-0">
+                    כל האירועים
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                  </Button>
+                </div>
               </div>
               
               <div className="space-y-3">
