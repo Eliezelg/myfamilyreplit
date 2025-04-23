@@ -20,7 +20,7 @@ class R2StorageService {
     this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || "";
     this.r2Endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
 
-    // Initialiser le client S3 pour Cloudflare R2 avec une configuration robuste
+    // Configuration plus simple pour contourner les problèmes SSL
     this.s3Client = new S3Client({
       region: "auto", // La région est 'auto' pour Cloudflare R2
       endpoint: this.r2Endpoint,
@@ -28,15 +28,7 @@ class R2StorageService {
         accessKeyId: process.env.CLOUDFLARE_ACCESS_KEY_ID || "",
         secretAccessKey: process.env.CLOUDFLARE_SECRET_ACCESS_KEY || "",
       },
-      forcePathStyle: true, // Utilisation du style de chemin forcé pour une meilleure compatibilité
-      
-      // Configuration additionnelle pour contourner les problèmes SSL
-      maxAttempts: 3, // Nombre de tentatives maximales
-      // Configuration HTTP spécifique
-      requestHandler: {
-        connectionTimeout: 10000, // 10 secondes de timeout
-        socketTimeout: 10000,     // 10 secondes de timeout
-      }
+      forcePathStyle: true
     });
 
     console.log(`R2StorageService initialisé avec le bucket: ${this.bucketName}`);
@@ -46,46 +38,8 @@ class R2StorageService {
    * Configure multer pour l'upload des fichiers vers R2
    */
   public getMulterUpload(folderName: string = "general") {
-    // Si en environnement de développement, utiliser le stockage local
-    if (process.env.NODE_ENV === "development") {
-      // Pour prévenir les problèmes avec les tests en environnement de développement
-      console.log("[R2Storage] Utilisation du stockage local pour le développement");
-      return multer({
-        storage: multer.diskStorage({
-          destination: function(req, file, cb) {
-            // Assurez-vous que le répertoire existe
-            const uploadDir = path.join(process.cwd(), 'uploads', folderName);
-            fs.mkdirSync(uploadDir, { recursive: true });
-            cb(null, uploadDir);
-          },
-          filename: function(req, file, cb) {
-            const uniqueFilename = `${uuidv4()}${path.extname(file.originalname)}`;
-            cb(null, uniqueFilename);
-          }
-        }),
-        limits: {
-          fileSize: 5 * 1024 * 1024, // 5MB
-        },
-        fileFilter: (req, file, cb) => {
-          console.log("Vérification du type de fichier:", file.mimetype);
-          // Types de fichiers autorisés selon le dossier
-          let allowedTypes: string[] = [];
-
-          if (folderName === "gazettes") {
-            allowedTypes = ["application/pdf"];
-          } else {
-            allowedTypes = ["image/jpeg", "image/png"];
-          }
-
-          if (!allowedTypes.includes(file.mimetype)) {
-            return cb(new Error(`Seuls les fichiers ${allowedTypes.join(", ")} sont autorisés pour ${folderName}`));
-          }
-          cb(null, true);
-        }
-      });
-    }
-    
-    // En production, utiliser R2
+    // Utiliser R2 dans tous les environnements
+    console.log(`[R2Storage] Configuration multer pour ${folderName} avec R2`);
     return multer({
       storage: multerS3({
         s3: this.s3Client,
@@ -125,17 +79,10 @@ class R2StorageService {
    * Note: Cette méthode suppose qu'un Workers R2 Bucket ou un domaine personnalisé soit configuré
    */
   public getPublicUrl(key: string): string {
-    // Pour le développement local, un chemin relatif peut être utilisé
-    // pour éviter les problèmes SSL/TLS avec Cloudflare
-    if (process.env.NODE_ENV === "development") {
-      // Format temporaire pour le développement
-      return `/r2/${key}`;
-    }
-    
-    // Format de l'URL peut varier selon votre configuration Cloudflare
-    // Cette URL dépend de la façon dont vous avez configuré l'accès public à votre bucket R2
+    // Utiliser une URL directe vers le bucket R2 via le domaine dev
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-    // Si vous utilisez un R2 public endpoint
+    
+    // Format Cloudflare R2 public endpoint standard
     return `https://${this.bucketName}.${accountId}.r2.dev/${key}`;
   }
 

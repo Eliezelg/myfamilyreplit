@@ -9,7 +9,7 @@ import multer from "multer";
  */
 class PhotoService {
   public upload: multer.Multer;
-  private useLocalStorage: boolean = false; // Utilisation de R2 pour le stockage
+  private useLocalStorage: boolean = false; // Nous utilisons R2 dans tous les environnements
 
   constructor() {
     // Choisir entre R2 et stockage local

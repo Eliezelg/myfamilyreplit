@@ -20,24 +20,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // Servir les fichiers de traduction
 app.use('/locales', express.static(path.join(process.cwd(), 'public/locales')));
 
-// Route pour servir les fichiers R2 en local (développement seulement)
-app.use("/r2", (req, res, next) => {
-  if (process.env.NODE_ENV === "development") {
-    // Extrait le chemin demandé après /r2/
-    const filePath = req.path;
-    // Si le chemin commence par /photos/, servir depuis le dossier uploads/photos
-    if (filePath.startsWith("/photos/")) {
-      return res.sendFile(path.join(process.cwd(), "uploads", filePath));
-    }
-    // Si le chemin commence par /gazettes/, servir depuis le dossier uploads/gazettes
-    if (filePath.startsWith("/gazettes/")) {
-      return res.sendFile(path.join(process.cwd(), "uploads", filePath));
-    }
-    // Autres types de fichiers
-    return res.sendFile(path.join(process.cwd(), "uploads", filePath));
-  }
-  next();
-});
+// Cette route de secours a été supprimée car nous utilisons directement R2 dans tous les environnements
 
 // Configurer l'authentification d'abord
 setupAuth(app);
