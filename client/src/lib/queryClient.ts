@@ -49,8 +49,18 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Récupérer le token CSRF du cookie
+    const csrfToken = getCookie('XSRF-TOKEN');
+    
+    // Préparer les headers avec CSRF token
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
+    }
+    
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

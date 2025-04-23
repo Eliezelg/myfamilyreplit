@@ -90,6 +90,12 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
         try {
           console.log("Processing file:", fileObj.file.name);
           
+          // Récupérer le token CSRF du cookie
+          const csrfToken = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('XSRF-TOKEN='))
+            ?.split('=')[1];
+            
           // Create a new FormData for each file
           const formData = new FormData();
           formData.append("file", fileObj.file);
@@ -98,6 +104,10 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
           const safeCaption = fileObj.caption || "";
           formData.append("caption", safeCaption);
           formData.append("familyId", familyId.toString());
+          // Ajouter le token CSRF si disponible
+          if (csrfToken) {
+            formData.append("_csrf", csrfToken);
+          }
           
           console.log("Uploading file:", fileObj.file.name, "Size:", fileObj.file.size);
           
@@ -106,7 +116,10 @@ export default function UploadModal({ isOpen, onClose, familyId }: UploadModalPr
           const response = await fetch("/api/photos/upload", {
             method: "POST",
             body: formData,
-            credentials: "include"
+            credentials: "include",
+            headers: csrfToken ? {
+              'X-CSRF-Token': csrfToken
+            } : undefined
           });
           
           let result;

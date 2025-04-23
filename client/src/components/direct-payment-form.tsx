@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { LoaderCircle, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getCookie } from "@/lib/utils";
 
 // Schéma de validation pour le formulaire de paiement direct
 const directPaymentSchema = z.object({
