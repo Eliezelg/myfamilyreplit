@@ -19,6 +19,8 @@ import { registerPhotoRoutes } from "./routes/photo-routes"; // Import des route
 import { registerRecipientRoutes } from "./routes/recipient-routes"; // Import des routes destinataire
 import { registerEventRoutes } from "./routes/event-routes"; // Import des routes événement
 import { registerAdminRoutes } from "./routes/admin-routes"; // Import des routes administrateur
+import { promoCodeRouter } from "./routes/promo-code-routes"; // Import des routes de codes promo
+import { subscriptionRouter } from "./routes/subscription-routes"; // Import des routes d'abonnement
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -91,6 +93,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerRecipientRoutes(app); // Enregistrement des routes destinataire
   registerEventRoutes(app); // Enregistrement des routes événement
   registerAdminRoutes(app); // Enregistrement des routes admin
+  
+  // Enregistrement des routes pour les codes promo et abonnements
+  app.use('/api/promo-codes', promoCodeRouter);
+  app.use('/api/subscriptions', subscriptionRouter);
+  
   //registerBasicTestRoutes(app);
   //registerTestUploadRoutes(app);
 
