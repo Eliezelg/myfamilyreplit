@@ -30,6 +30,7 @@ interface FamilyDashboardProps {
 }
 
 export default function FamilyDashboard({ familyId, familyName, onUploadClick }: FamilyDashboardProps) {
+  const { t } = useTranslation('dashboard');
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAddFundsModalOpen, setIsAddFundsModalOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
@@ -270,14 +271,14 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-2xl font-bold">ברוכים הבאים, {familyName}</h2>
-            <p className="text-gray-600">הנה מה שקורה בגזטה המשפחתית שלך</p>
+            <h2 className="text-2xl font-bold">{t('welcome', { familyName })}</h2>
+            <p className="text-gray-600">{t('overview')}</p>
           </div>
           
           <div className="relative">
             <Button variant="outline" className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white">
-                מ
+                {familyName.charAt(0)}
               </div>
               <span>{familyName}</span>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
@@ -296,8 +297,8 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold">גזטה לחודש {getCurrentMonth()}</h3>
-                <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">בהכנה</span>
+                <h3 className="text-xl font-bold">{t('gazette.title', { month: getCurrentMonth() })}</h3>
+                <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">{t('gazette.status')}</span>
               </div>
               
               <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
@@ -306,7 +307,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     <CalendarIcon className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">תאריך סגירה</p>
+                    <p className="text-sm text-gray-500">{t('gazette.closingDate')}</p>
                     <p className="font-medium">31/08/2023</p>
                   </div>
                 </div>
@@ -316,7 +317,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     <Image className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">תמונות שהועלו</p>
+                    <p className="text-sm text-gray-500">{t('gazette.uploadedPhotos')}</p>
                     <p className="font-medium">{photos?.length || 0} / 28</p>
                   </div>
                 </div>
@@ -326,8 +327,8 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     <Users className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">תורמים החודש</p>
-                    <p className="font-medium">{transactions?.length || 0} / {members?.length || 0} חברים</p>
+                    <p className="text-sm text-gray-500">{t('gazette.contributors')}</p>
+                    <p className="font-medium">{transactions?.length || 0} {t('gazette.outOf')} {members?.length || 0} {t('gazette.members')}</p>
                   </div>
                 </div>
               </div>
@@ -337,7 +338,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                   </svg>
-                  העלה תמונות
+                  {t('gazette.uploadPhotos')}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -348,12 +349,12 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   {isGeneratingGazette ? (
                     <>
                       <RefreshCw className="h-4 w-4 animate-spin" />
-                      מייצר גזטה...
+                      {t('gazette.generating')}
                     </>
                   ) : (
                     <>
                       <Newspaper className="h-4 w-4" />
-                      הפק גזטה לחודש {getCurrentMonth()}
+                      {t('gazette.generateGazette', { month: getCurrentMonth() })}
                     </>
                   )}
                 </Button>
@@ -362,7 +363,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   onValueChange={setCurrentMonthYear}
                 >
                   <SelectTrigger className="w-36">
-                    <SelectValue placeholder="בחר חודש" />
+                    <SelectValue placeholder={t('gazette.selectMonth')} />
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 6 }, (_, index) => {
@@ -387,13 +388,13 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">תמונות אחרונות</h3>
+                <h3 className="text-xl font-bold">{t('photos.recentPhotos')}</h3>
                 <Button 
                   variant="link" 
                   className="gap-1 p-0"
                   onClick={() => setIsPhotosViewerOpen(true)}
                 >
-                  הצג הכל
+                  {t('photos.viewAll')}
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
                   </svg>
@@ -413,7 +414,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     >
                       <img 
                         src={photo.imageUrl} 
-                        alt="תמונת משפחה" 
+                        alt="Family photo" 
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
@@ -436,9 +437,9 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   ))
                 ) : (
                   <div className="col-span-full text-center py-8">
-                    <p className="text-gray-500">אין תמונות להצגה, העלה את התמונות הראשונות שלך!</p>
+                    <p className="text-gray-500">{t('photos.noPhotos')}</p>
                     <Button variant="outline" className="mt-4" onClick={onUploadClick}>
-                      העלה תמונות
+                      {t('gazette.uploadPhotos')}
                     </Button>
                   </div>
                 )}
@@ -450,13 +451,13 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">פעילות משפחתית</h3>
+                <h3 className="text-xl font-bold">{t('activity.title')}</h3>
                 <Button 
                   variant="link" 
                   className="gap-1 p-0"
-                  onClick={() => setIsPhotosViewerOpen(true)}
+                  onClick={() => setIsEventsViewerOpen(true)}
                 >
-                  הצג הכל
+                  {t('activity.viewEvents')}
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
                   </svg>
@@ -471,19 +472,19 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                         {members?.find(m => m.userId === photo.userId)?.user?.profileImage ? (
                           <img 
                             src={members?.find(m => m.userId === photo.userId)?.user?.profileImage || ""} 
-                            alt={members?.find(m => m.userId === photo.userId)?.user?.username || "משתמש"} 
+                            alt={members?.find(m => m.userId === photo.userId)?.user?.username || "User"} 
                             className="h-full w-full object-cover"
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                            {members?.find(m => m.userId === photo.userId)?.user?.username?.charAt(0).toUpperCase() || "מ"}
+                            {members?.find(m => m.userId === photo.userId)?.user?.username?.charAt(0).toUpperCase() || "U"}
                           </div>
                         )}
                       </div>
                       <div>
                         <p className="font-medium">
-                          {members?.find(m => m.userId === photo.userId)?.user?.username || "משתמש"}
-                          <span className="font-normal text-gray-500"> העלה תמונה</span>
+                          {members?.find(m => m.userId === photo.userId)?.user?.username || "User"}
+                          <span className="font-normal text-gray-500"> {t('photos.uploaded')}</span>
                         </p>
                         <p className="text-sm text-gray-500">{formatDate(photo.uploadedAt.toString())}</p>
                       </div>
@@ -491,7 +492,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   ))
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-gray-500">אין פעילות להצגה</p>
+                    <p className="text-gray-500">{t('activity.noActivity')}</p>
                   </div>
                 )}
               </div>
@@ -505,13 +506,13 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">קופת המשפחה</h3>
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">מאוזן</span>
+                <h3 className="text-xl font-bold">{t('familyFund.title')}</h3>
+                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">{t('familyFund.status')}</span>
               </div>
               
               <div className="mb-6">
                 <div className="flex justify-between items-end mb-1">
-                  <span className="text-sm text-gray-500">יתרה נוכחית</span>
+                  <span className="text-sm text-gray-500">{t('familyFund.currentBalance')}</span>
                   <span className="text-2xl font-bold">{fund ? formatCurrency(fund.balance) : "₪0"}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -522,7 +523,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                 </div>
                 <div className="flex justify-between items-center mt-1">
                   <span className="text-xs text-gray-500">₪0</span>
-                  <span className="text-xs font-medium text-green-600">יתרה מספקת לגזטה הבאה</span>
+                  <span className="text-xs font-medium text-green-600">{t('familyFund.sufficientBalance')}</span>
                   <span className="text-xs text-gray-500">₪70</span>
                 </div>
               </div>
@@ -534,7 +535,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   onClick={() => setIsAddFundsModalOpen(true)}
                 >
                   <PlusCircle className="w-5 h-5" />
-                  הוסף כסף
+                  {t('familyFund.addFunds')}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -544,20 +545,20 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
-                  היסטוריית תשלומים
+                  {t('familyFund.viewAll')}
                 </Button>
               </div>
               
               <div className="border-t border-neutral-200 pt-4">
                 <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-medium">תורמים אחרונים</h4>
+                  <h4 className="font-medium">{t('familyFund.recentTransactions')}</h4>
                   <Button 
                     variant="link" 
                     size="sm" 
                     className="p-0"
                     onClick={() => navigate(`/families/${familyId}/fund/contributors`)}
                   >
-                    הצג הכל
+                    {t('familyFund.viewAll')}
                   </Button>
                 </div>
                 <div className="space-y-3">
@@ -569,16 +570,16 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                             {members?.find(m => m.userId === transaction.userId)?.user?.profileImage ? (
                               <img 
                                 src={members?.find(m => m.userId === transaction.userId)?.user?.profileImage || ""} 
-                                alt={members?.find(m => m.userId === transaction.userId)?.user?.username || "משתמש"} 
+                                alt={members?.find(m => m.userId === transaction.userId)?.user?.username || "User"} 
                                 className="h-full w-full object-cover"
                               />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                                {members?.find(m => m.userId === transaction.userId)?.user?.username?.charAt(0).toUpperCase() || "מ"}
+                                {members?.find(m => m.userId === transaction.userId)?.user?.username?.charAt(0).toUpperCase() || "U"}
                               </div>
                             )}
                           </div>
-                          <span>{members?.find(m => m.userId === transaction.userId)?.user?.username || "משתמש"}</span>
+                          <span>{members?.find(m => m.userId === transaction.userId)?.user?.username || "User"}</span>
                         </div>
                         <span className="font-medium text-green-600">
                           {formatCurrency(transaction.amount)}+
@@ -587,7 +588,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     ))
                   ) : (
                     <div className="text-center py-2">
-                      <p className="text-gray-500">אין תורמים להצגה</p>
+                      <p className="text-gray-500">{t('familyFund.noTransactions')}</p>
                     </div>
                   )}
                 </div>
@@ -599,7 +600,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">חברי המשפחה</h3>
+                <h3 className="text-xl font-bold">{t('members.title')}</h3>
                 <Button 
                   size="sm" 
                   variant="outline" 
@@ -607,7 +608,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   onClick={() => setIsInviteModalOpen(true)}
                 >
                   <UserPlus className="w-4 h-4" />
-                  הזמן
+                  {t('members.inviteMembers')}
                 </Button>
               </div>
               
@@ -619,38 +620,38 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                         {member.user?.profileImage ? (
                           <img 
                             src={member.user.profileImage} 
-                            alt={member.user.username || "משתמש"} 
+                            alt={member.user.username || "User"} 
                             className="h-full w-full object-cover"
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                            {member.user?.username ? member.user.username.charAt(0).toUpperCase() : "מ"}
+                            {member.user?.username ? member.user.username.charAt(0).toUpperCase() : "U"}
                           </div>
                         )}
                       </div>
                       <div className="flex-grow">
-                        <p className="font-medium">{member.user?.fullName || member.user?.username || "משתמש"}</p>
-                        <p className="text-sm text-gray-500">{member.role === "admin" ? "מנהל" : "חבר"}</p>
+                        <p className="font-medium">{member.user?.fullName || member.user?.username || "User"}</p>
+                        <p className="text-sm text-gray-500">{member.role === "admin" ? "Admin" : "Member"}</p>
                       </div>
                       <div className="flex items-center">
                         <span className={`w-3 h-3 ${index === 0 ? 'bg-green-500' : 'bg-gray-300'} rounded-full mr-1`}></span>
-                        <span className="text-xs text-gray-500">{index === 0 ? 'מקוון' : 'לא מקוון'}</span>
+                        <span className="text-xs text-gray-500">{index === 0 ? 'Online' : 'Offline'}</span>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-gray-500">אין חברים להצגה</p>
+                    <p className="text-gray-500">{t('members.noMembers')}</p>
                     <Button size="sm" className="mt-2">
-                      הזמן חברי משפחה
+                      {t('members.inviteMembers')}
                     </Button>
                   </div>
                 )}
                 
                 <div className="mt-4 border-t border-neutral-200 pt-4">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium">מקבלי הגזטה</h4>
-                    <Button variant="link" size="sm" className="p-0">נהל</Button>
+                    <h4 className="font-medium">{t('familyFund.manageRecipients')}</h4>
+                    <Button variant="link" size="sm" className="p-0">{t('familyFund.viewAll')}</Button>
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {recipients && recipients.length > 0 ? (
@@ -674,7 +675,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                       <Button variant="outline" size="icon" className="h-12 w-12 rounded-full">
                         <PlusCircle className="h-6 w-6" />
                       </Button>
-                      <p className="text-xs mt-1 text-center text-gray-500">הוסף</p>
+                      <p className="text-xs mt-1 text-center text-gray-500">Add</p>
                     </div>
                   </div>
                 </div>
@@ -687,12 +688,12 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-bold">גזטות זמינות</h3>
+                  <h3 className="text-xl font-bold">{t('gazette.title', { month: '' })}</h3>
                   <Button 
                     variant="ghost" 
                     size="icon"
                     className="h-8 w-8"
-                    title="הגדרות הגזטה"
+                    title={t('gazette.title')}
                     onClick={() => navigate(`/families/${familyId}/gazette-settings`)}
                   >
                     <Settings className="h-4 w-4" />
@@ -703,7 +704,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   className="gap-1 p-0"
                   onClick={() => navigate(`/families/${familyId}/gazettes`)}
                 >
-                  הצג הכל
+                  {t('photos.viewAll')}
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
                   </svg>
@@ -719,8 +720,8 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                           <FileDown className="h-5 w-5" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-medium">גזטה {gazette.monthYear}</span>
-                          <span className="text-xs text-gray-500">{photos?.length || 0} תמונות</span>
+                          <span className="font-medium">{t('gazette.title', { month: gazette.monthYear })}</span>
+                          <span className="text-xs text-gray-500">{photos?.length || 0} {t('photos.recentPhotos')}</span>
                         </div>
                       </div>
                       <Button 
@@ -730,13 +731,13 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                         onClick={() => window.open(`/api/families/${familyId}/gazettes/${gazette.id}/download`)}
                       >
                         <Download className="h-4 w-4" />
-                        הורד
+                        {t('gazette.uploadPhotos')}
                       </Button>
                     </div>
                   ))
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-gray-500">אין גזטות זמינות</p>
+                    <p className="text-gray-500">{t('gazette.noGazettes')}</p>
                     <Button 
                       variant="outline" 
                       size="sm" 
@@ -745,8 +746,8 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                       disabled={isGeneratingGazette}
                     >
                       {isGeneratingGazette ? 
-                        <><RefreshCw className="h-4 w-4 animate-spin mr-2" /> מייצר גזטה...</> : 
-                        <><Newspaper className="h-4 w-4 mr-2" /> יצירת גזטה</>
+                        <><RefreshCw className="h-4 w-4 animate-spin mr-2" /> {t('gazette.generating')}</> : 
+                        <><Newspaper className="h-4 w-4 mr-2" /> {t('gazette.generateGazette', { month: getCurrentMonth() })}</>
                       }
                     </Button>
                   </div>
@@ -759,7 +760,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">אירועים קרובים</h3>
+                <h3 className="text-xl font-bold">{t('events.title')}</h3>
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
@@ -768,14 +769,14 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     onClick={() => setIsAddEventModalOpen(true)}
                   >
                     <Plus className="h-4 w-4" />
-                    הוסף אירוע
+                    {t('events.addEvent')}
                   </Button>
                   <Button 
                     variant="link" 
                     className="gap-1 p-0"
                     onClick={() => setIsEventsViewerOpen(true)}
                   >
-                    כל האירועים
+                    {t('events.viewAll')}
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
                     </svg>
@@ -805,14 +806,14 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   })
                 ) : (
                   <div className="text-center py-4">
-                    <p className="text-gray-500">אין אירועים קרובים</p>
+                    <p className="text-gray-500">{t('events.noEvents')}</p>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       className="mt-2"
                       onClick={() => setIsAddEventModalOpen(true)}
                     >
-                      הוסף אירוע
+                      {t('events.addEvent')}
                     </Button>
                   </div>
                 )}

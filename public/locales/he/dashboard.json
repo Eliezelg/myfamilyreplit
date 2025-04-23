@@ -12,7 +12,8 @@
     "uploadPhotos": "העלה תמונות",
     "generateGazette": "הפק גזטה לחודש {{month}}",
     "generating": "מייצר גזטה...",
-    "selectMonth": "בחר חודש"
+    "selectMonth": "בחר חודש",
+    "noGazettes": "אין גזטות זמינות"
   },
   "photos": {
     "recentPhotos": "תמונות אחרונות",

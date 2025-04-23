@@ -12,7 +12,8 @@
     "uploadPhotos": "Télécharger des photos",
     "generateGazette": "Générer la gazette pour {{month}}",
     "generating": "Génération en cours...",
-    "selectMonth": "Choisir un mois"
+    "selectMonth": "Choisir un mois",
+    "noGazettes": "Aucune gazette disponible"
   },
   "photos": {
     "recentPhotos": "Photos récentes",
