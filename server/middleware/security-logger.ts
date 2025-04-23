@@ -17,7 +17,8 @@ export function securityLogger(req: Request, res: Response, next: NextFunction) 
     req.path.includes('/api/login') || 
     req.path.includes('/api/register') || 
     req.path.includes('/api/admin') ||
-    req.path.includes('/api/payment')
+    req.path.includes('/api/payment') ||
+    req.path.includes('/api/user')
   );
 
   if (isSensitiveRoute) {
@@ -34,6 +35,17 @@ export function securityLogger(req: Request, res: Response, next: NextFunction) 
     // Intercepter la fin de la requête pour enregistrer le statut
     res.on('finish', () => {
       logEntry.status = res.statusCode.toString();
+      
+      // Ajouter des informations supplémentaires sur les tentatives suspectes
+      if (res.statusCode >= 400) {
+        logEntry['alert'] = res.statusCode >= 500 ? 'ERROR' : 'WARNING';
+        
+        // Pour les routes d'authentification, noter si c'est un échec d'authentification
+        if ((req.path.includes('/api/login') || req.path.includes('/api/register')) && res.statusCode === 401) {
+          logEntry['event'] = 'FAILED_AUTH';
+        }
+      }
+      
       fs.appendFileSync(
         securityLogFile, 
         JSON.stringify(logEntry) + '\n'

@@ -24,6 +24,10 @@ app.use(bruteForceProtection);
 // Configurer l'authentification
 setupAuth(app);
 
+// Appliquer la protection des sessions
+import { sessionProtection } from "./middleware/session-protection";
+app.use(sessionProtection);
+
 // Appliquer le sanitizer pour toutes les routes d'API
 import { sanitizeInputs } from "./middleware/sanitizer";
 app.use('/api', sanitizeInputs);

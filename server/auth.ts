@@ -83,8 +83,10 @@ export function setupAuth(app: Express) {
       secure: process.env.NODE_ENV === "production", // Secure en production uniquement
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      path: '/',
     },
     name: "myfamily_sid", // Nom de cookie personnalisé
+    rolling: true, // Réinitialise le délai d'expiration à chaque requête
   };
 
   app.set("trust proxy", 1);
@@ -144,9 +146,33 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      // Vérifier que tous les champs requis sont présents
+      if (!req.body.username || !req.body.email || !req.body.password) {
+        return res.status(400).send("Tous les champs sont obligatoires");
+      }
+      
       // Normaliser le nom d'utilisateur et l'email pour la cohérence
       const normalizedUsername = req.body.username.trim();
       const normalizedEmail = req.body.email.trim().toLowerCase();
+      
+      // Validation du format de l'email
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(normalizedEmail)) {
+        return res.status(400).send("Format d'email invalide");
+      }
+      
+      // Validation de la complexité du mot de passe
+      const password = req.body.password;
+      if (password.length < 8) {
+        return res.status(400).send("Le mot de passe doit contenir au moins 8 caractères");
+      }
+      
+      // Vérifier au moins une lettre et un chiffre
+      const hasLetter = /[a-zA-Z]/.test(password);
+      const hasNumber = /\d/.test(password);
+      if (!hasLetter || !hasNumber) {
+        return res.status(400).send("Le mot de passe doit contenir au moins une lettre et un chiffre");
+      }
       
       // Vérifier si le nom d'utilisateur existe déjà
       const existingUser = await storage.getUserByUsername(normalizedUsername);
