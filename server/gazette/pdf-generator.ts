@@ -7,7 +7,7 @@ import { storage } from "../storage";
 import { Family, Photo, User, Child } from "@shared/schema";
 
 // Structure pour les événements d'anniversaire
-interface BirthdayEvent {
+export interface BirthdayEvent {
   name: string;
   date: Date;
   profileImage?: string | null;

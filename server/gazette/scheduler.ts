@@ -1,8 +1,9 @@
 import cron from "node-cron";
 import { format } from "date-fns";
 import { storage } from "../storage";
-import { generateGazettePDF, getUpcomingBirthdays } from "./pdf-generator";
+import { getUpcomingBirthdays } from "./pdf-generator";
 import { Family, Gazette } from "@shared/schema";
+import { r2GazetteStorage } from "./r2-gazette-storage";
 
 /**
  * Planifie la génération automatique des gazettes
