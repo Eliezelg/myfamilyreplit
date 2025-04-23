@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import i18next from 'i18next';
 
 type LocaleContextType = {
   locale: string;
@@ -7,9 +9,9 @@ type LocaleContextType = {
 };
 
 const LocaleContext = createContext<LocaleContextType>({
-  locale: 'he',
+  locale: 'fr',
   setLocale: () => {},
-  dir: 'rtl',
+  dir: 'ltr',
 });
 
 export const useLocale = () => useContext(LocaleContext);
@@ -21,15 +23,28 @@ type LocaleProviderProps = {
 
 export const LocaleProvider: React.FC<LocaleProviderProps> = ({
   children,
-  initialLocale = 'he',
+  initialLocale = 'fr',
 }) => {
-  const [locale, setLocale] = useState(initialLocale);
+  const { i18n } = useTranslation();
+  const [locale, setLocaleState] = useState(i18n.language || initialLocale);
 
   // Determine text direction based on locale
   const dir = locale === 'he' || locale === 'ar' ? 'rtl' : 'ltr';
 
-  // Update document direction when locale changes
-  React.useEffect(() => {
+  const setLocale = (newLocale: string) => {
+    setLocaleState(newLocale);
+    i18n.changeLanguage(newLocale);
+  };
+
+  // Initialize i18n with the current locale
+  useEffect(() => {
+    if (i18n.language !== locale) {
+      i18n.changeLanguage(locale);
+    }
+  }, [locale, i18n]);
+
+  // Update document direction and language attribute when locale changes
+  useEffect(() => {
     document.documentElement.dir = dir;
     document.documentElement.lang = locale;
   }, [locale, dir]);

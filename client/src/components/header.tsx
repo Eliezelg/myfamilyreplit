@@ -1,7 +1,11 @@
-import { useState } from "react";
-import { Link } from "wouter";
-import { User } from "@shared/schema";
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { Link, useLocation } from 'wouter';
+import { useTranslation } from 'react-i18next';
+import { useLocale } from './ui/locale-provider';
+import { useAuth } from '@/hooks/use-auth';
+import { Button } from '@/components/ui/button';
+import LocaleSwitcher from './locale-switcher';
+import { HomeIcon, User, LogOut, Menu } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,88 +13,160 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/hooks/use-auth";
-import { ChevronDown } from "lucide-react";
+} from '@/components/ui/dropdown-menu';
 
-interface HeaderProps {
-  onMobileMenuClick: () => void;
-  user: User | null;
-}
+export const Header = () => {
+  const { t } = useTranslation('common');
+  const { dir } = useLocale();
+  const [location] = useLocation();
+  const { isAuthenticated, user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
-export default function Header({ onMobileMenuClick, user }: HeaderProps) {
-  const { logoutMutation } = useAuth();
-  
+  const isActive = (path: string) => {
+    return location === path;
+  };
+
   return (
-    <header className="bg-white shadow-sm">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl">
-            מ
-          </div>
-          <h1 className="text-2xl font-bold text-primary">MyFamily</h1>
+    <header className="w-full bg-background border-b">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="flex items-center">
+          <Link href="/">
+            <a className="flex items-center space-x-2">
+              <HomeIcon className="h-6 w-6" />
+              <span className="text-xl font-bold">{t('app.name')}</span>
+            </a>
+          </Link>
         </div>
-        
-        <div className="hidden md:flex items-center gap-6">
-          <nav>
-            <ul className="flex gap-6 font-medium">
-              <li><Link href="/" className="text-primary hover:text-primary-dark transition">בית</Link></li>
-              <li><Link href="#" className="hover:text-primary transition">הגזטה שלי</Link></li>
-              <li><Link href="#" className="hover:text-primary transition">התמונות שלי</Link></li>
-              <li><Link href="#" className="hover:text-primary transition">הגדרות</Link></li>
-            </ul>
-          </nav>
-          
-          {/* User Menu */}
-          {user && (
+
+        {/* Desktop navigation */}
+        <nav className="hidden md:flex items-center space-x-6">
+          <Link href="/">
+            <a className={`text-sm ${isActive('/') ? 'font-bold' : ''}`}>
+              {t('navigation.home')}
+            </a>
+          </Link>
+          <Link href="/features">
+            <a className={`text-sm ${isActive('/features') ? 'font-bold' : ''}`}>
+              {t('navigation.features')}
+            </a>
+          </Link>
+          <Link href="/about">
+            <a className={`text-sm ${isActive('/about') ? 'font-bold' : ''}`}>
+              {t('navigation.about')}
+            </a>
+          </Link>
+          <Link href="/contact">
+            <a className={`text-sm ${isActive('/contact') ? 'font-bold' : ''}`}>
+              {t('navigation.contact')}
+            </a>
+          </Link>
+
+          {isAuthenticated && (
+            <Link href="/dashboard">
+              <a className={`text-sm ${isActive('/dashboard') ? 'font-bold' : ''}`}>
+                {t('navigation.dashboard')}
+              </a>
+            </Link>
+          )}
+
+          {user?.role === 'admin' && (
+            <Link href="/admin">
+              <a className={`text-sm ${isActive('/admin') ? 'font-bold' : ''}`}>
+                {t('navigation.admin')}
+              </a>
+            </Link>
+          )}
+        </nav>
+
+        <div className="flex items-center space-x-4">
+          <LocaleSwitcher />
+
+          {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
-                  <span>שלום, {user.fullName.split(' ')[0]}</span>
-                  <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden">
-                    {user.profileImage ? (
-                      <img 
-                        src={user.profileImage} 
-                        alt="תמונת פרופיל" 
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                        {user.fullName.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  <ChevronDown className="h-4 w-4" />
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>החשבון שלי</DropdownMenuLabel>
+              <DropdownMenuContent align={dir === 'rtl' ? 'start' : 'end'}>
+                <DropdownMenuLabel>{user?.username}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">פרופיל</Link>
+                  <Link href="/profile">
+                    <a className="w-full cursor-pointer">
+                      {t('navigation.profile')}
+                    </a>
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>הגדרות</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
-                  התנתק
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {t('navigation.logout')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          ) : (
+            <Link href="/auth">
+              <Button>{t('auth.login')}</Button>
+            </Link>
           )}
+
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
         </div>
-        
-        {/* Mobile Menu Button */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="md:hidden" 
-          onClick={onMobileMenuClick}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
-        </Button>
       </div>
+
+      {/* Mobile navigation menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden px-4 py-2 bg-background border-t">
+          <div className="flex flex-col space-y-3 py-3">
+            <Link href="/">
+              <a className={`text-sm ${isActive('/') ? 'font-bold' : ''}`}>
+                {t('navigation.home')}
+              </a>
+            </Link>
+            <Link href="/features">
+              <a className={`text-sm ${isActive('/features') ? 'font-bold' : ''}`}>
+                {t('navigation.features')}
+              </a>
+            </Link>
+            <Link href="/about">
+              <a className={`text-sm ${isActive('/about') ? 'font-bold' : ''}`}>
+                {t('navigation.about')}
+              </a>
+            </Link>
+            <Link href="/contact">
+              <a className={`text-sm ${isActive('/contact') ? 'font-bold' : ''}`}>
+                {t('navigation.contact')}
+              </a>
+            </Link>
+
+            {isAuthenticated && (
+              <Link href="/dashboard">
+                <a className={`text-sm ${isActive('/dashboard') ? 'font-bold' : ''}`}>
+                  {t('navigation.dashboard')}
+                </a>
+              </Link>
+            )}
+
+            {user?.role === 'admin' && (
+              <Link href="/admin">
+                <a className={`text-sm ${isActive('/admin') ? 'font-bold' : ''}`}>
+                  {t('navigation.admin')}
+                </a>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
-}
+};
+
+export default Header;
