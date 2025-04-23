@@ -1,218 +1,250 @@
 import { db } from "../db";
+import { eq, and, desc, sql, count } from "drizzle-orm";
 import { 
   users, 
   families, 
-  familyMembers, 
   children, 
-  fundTransactions, 
-  photos,
-  gazettes,
-  events,
-  invitations, 
-  adminLogs, 
-  recipients
+  photos, 
+  familyFunds,
+  fundTransactions,
+  adminLogs,
+  InsertAdminLog
 } from "@shared/schema";
-import { eq, desc, sql, and, gte, lte } from "drizzle-orm";
-import { AdminLog, User } from "@shared/schema";
+import { storage } from "../storage";
 
 /**
- * Service pour les fonctionnalités d'administration
+ * Service pour les fonctionnalités administrateur
  */
-class AdminService {
+export class AdminService {
   /**
-   * Récupère des statistiques générales de la plateforme
-   */
-  async getStats() {
-    const [userCount] = await db.select({ count: sql<number>`count(*)` }).from(users);
-    const [familyCount] = await db.select({ count: sql<number>`count(*)` }).from(families);
-    const [childCount] = await db.select({ count: sql<number>`count(*)` }).from(children);
-    const [photoCount] = await db.select({ count: sql<number>`count(*)` }).from(photos);
-    const [transactionCount] = await db.select({ count: sql<number>`count(*)` }).from(fundTransactions);
-    
-    // Total des fonds (somme de toutes les transactions)
-    const [totalFunds] = await db.select({
-      sum: sql<number>`sum(amount)`
-    }).from(fundTransactions);
-
-    // Nouveaux utilisateurs cette semaine
-    const lastWeek = new Date();
-    lastWeek.setDate(lastWeek.getDate() - 7);
-    
-    const [newUsers] = await db.select({
-      count: sql<number>`count(*)`
-    })
-    .from(users)
-    .where(gte(users.createdAt, lastWeek));
-
-    return {
-      userCount: userCount.count,
-      familyCount: familyCount.count,
-      childCount: childCount.count,
-      photoCount: photoCount.count,
-      transactionCount: transactionCount.count,
-      totalFunds: totalFunds.sum || 0,
-      newUsersLastWeek: newUsers.count
-    };
-  }
-
-  /**
-   * Récupère tous les utilisateurs de la plateforme
+   * Récupère tous les utilisateurs
    */
   async getAllUsers() {
-    return await db.select().from(users).orderBy(desc(users.createdAt));
-  }
-
-  /**
-   * Met à jour le rôle d'un utilisateur
-   */
-  async updateUserRole(id: number, role: string): Promise<User> {
-    const [updatedUser] = await db
-      .update(users)
-      .set({ role })
-      .where(eq(users.id, id))
-      .returning();
-    
-    return updatedUser;
-  }
-
-  /**
-   * Supprime un utilisateur (attention: opération destructive!)
-   */
-  async deleteUser(id: number): Promise<void> {
-    // Supprimer les enfants de l'utilisateur
-    await db.delete(children).where(eq(children.userId, id));
-    
-    // Supprimer l'appartenance à des familles
-    await db.delete(familyMembers).where(eq(familyMembers.userId, id));
-    
-    // Puis supprimer l'utilisateur
-    await db.delete(users).where(eq(users.id, id));
+    return await db.select().from(users).orderBy(desc(users.id));
   }
 
   /**
    * Récupère toutes les familles
    */
   async getAllFamilies() {
-    return await db.select().from(families).orderBy(desc(families.createdAt));
+    return await db.select().from(families).orderBy(desc(families.id));
   }
 
   /**
-   * Récupère les détails d'une famille avec ses membres
+   * Récupère une famille avec ses statistiques
    */
-  async getFamilyDetails(id: number) {
-    const family = await db.select().from(families).where(eq(families.id, id)).then(rows => rows[0]);
+  async getFamilyDetails(familyId: number) {
+    // Récupérer la famille
+    const [familyData] = await db.select().from(families).where(eq(families.id, familyId));
     
-    if (!family) {
+    if (!familyData) {
       return null;
     }
-    
+
     // Récupérer les membres
-    const members = await db
-      .select({
-        member: familyMembers,
-        user: users
-      })
-      .from(familyMembers)
-      .leftJoin(users, eq(familyMembers.userId, users.id))
-      .where(eq(familyMembers.familyId, id));
-
-    // Récupérer les statistiques
+    const members = await storage.getFamilyMembers(familyId);
+    
+    // Compter les photos
     const [photoCount] = await db
-      .select({ count: sql<number>`count(*)` })
+      .select({ count: count() })
       .from(photos)
-      .where(eq(photos.familyId, id));
-
+      .where(eq(photos.familyId, familyId));
+    
+    // Compter les événements
     const [eventCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(events)
-      .where(eq(events.familyId, id));
-
+      .select({ count: count(sql`1`) })
+      .from(sql`events`)
+      .where(sql`family_id = ${familyId}`);
+    
+    // Compter les gazettes
     const [gazetteCount] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(gazettes)
-      .where(eq(gazettes.familyId, id));
-
+      .select({ count: count(sql`1`) })
+      .from(sql`gazettes`)
+      .where(sql`family_id = ${familyId}`);
+    
+    // Récupérer le fonds
+    const familyFund = await storage.getFamilyFund(familyId);
+    
     return {
-      ...family,
-      members: members.map(m => ({
-        ...m.member,
-        user: m.user
-      })),
+      ...familyData,
+      members,
       stats: {
-        photoCount: photoCount.count,
-        eventCount: eventCount.count,
-        gazetteCount: gazetteCount.count
-      }
+        photoCount: photoCount?.count || 0,
+        eventCount: eventCount?.count || 0,
+        gazetteCount: gazetteCount?.count || 0
+      },
+      fund: familyFund
     };
   }
 
   /**
-   * Récupère les logs d'administration
+   * Récupère les statistiques globales
    */
-  async getAdminLogs(limit = 100): Promise<AdminLog[]> {
-    return await db
-      .select()
-      .from(adminLogs)
-      .orderBy(desc(adminLogs.createdAt))
-      .limit(limit);
-  }
-  
-  /**
-   * Récupère les transactions financières
-   */
-  async getAllTransactions(limit = 100) {
-    return await db
-      .select({
-        transaction: fundTransactions,
-        user: users
+  async getDashboardStats() {
+    // Compter les utilisateurs
+    const [userCount] = await db
+      .select({ count: count() })
+      .from(users);
+    
+    // Compter les familles
+    const [familyCount] = await db
+      .select({ count: count() })
+      .from(families);
+    
+    // Compter les enfants
+    const [childCount] = await db
+      .select({ count: count() })
+      .from(children);
+    
+    // Compter les photos
+    const [photoCount] = await db
+      .select({ count: count() })
+      .from(photos);
+    
+    // Compter les transactions
+    const [transactionCount] = await db
+      .select({ count: count() })
+      .from(fundTransactions);
+    
+    // Calculer le solde total
+    const [totalFunds] = await db
+      .select({ 
+        total: sql<number>`sum(balance)` 
       })
-      .from(fundTransactions)
-      .leftJoin(users, eq(fundTransactions.userId, users.id))
-      .orderBy(desc(fundTransactions.createdAt))
-      .limit(limit);
+      .from(familyFunds);
+    
+    // Compter les nouveaux utilisateurs de la semaine dernière
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    const [newUsersLastWeek] = await db
+      .select({ count: count() })
+      .from(users)
+      .where(sql`created_at >= ${oneWeekAgo.toISOString()}`);
+    
+    return {
+      userCount: userCount?.count || 0,
+      familyCount: familyCount?.count || 0,
+      childCount: childCount?.count || 0,
+      photoCount: photoCount?.count || 0,
+      transactionCount: transactionCount?.count || 0,
+      totalFunds: totalFunds?.total || 0,
+      newUsersLastWeek: newUsersLastWeek?.count || 0
+    };
   }
 
   /**
    * Récupère les statistiques financières
    */
   async getFinancialStats() {
-    // Total des dépôts
-    const [deposits] = await db
-      .select({
-        sum: sql<number>`sum(amount)`
+    // Calculer les dépôts totaux
+    const [totalDeposits] = await db
+      .select({ 
+        total: sql<number>`sum(amount)` 
       })
       .from(fundTransactions)
       .where(eq(fundTransactions.type, "deposit"));
-
-    // Total des paiements
-    const [payments] = await db
-      .select({
-        sum: sql<number>`sum(amount)`
+    
+    // Calculer les paiements totaux
+    const [totalPayments] = await db
+      .select({ 
+        total: sql<number>`sum(amount)` 
       })
       .from(fundTransactions)
       .where(eq(fundTransactions.type, "payment"));
-
-    // Transactions par mois (derniers 6 mois)
+    
+    // Calculer les transactions par mois (6 derniers mois)
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-    const transactionsByMonth = await db
-      .select({
-        month: sql<string>`to_char(created_at, 'YYYY-MM')`,
-        total: sql<number>`sum(amount)`
-      })
-      .from(fundTransactions)
-      .where(gte(fundTransactions.createdAt, sixMonthsAgo))
-      .groupBy(sql`to_char(created_at, 'YYYY-MM')`)
-      .orderBy(sql`to_char(created_at, 'YYYY-MM')`);
-
+    
+    const transactionsByMonth = await db.execute<{ month: string, total: number }>(sql`
+      SELECT 
+        to_char(created_at, 'YYYY-MM') as month,
+        sum(amount) as total
+      FROM fund_transactions
+      WHERE created_at >= ${sixMonthsAgo.toISOString()}
+      GROUP BY month
+      ORDER BY month ASC
+    `);
+    
     return {
-      totalDeposits: deposits.sum || 0,
-      totalPayments: payments.sum || 0,
-      netBalance: (deposits.sum || 0) - (payments.sum || 0),
-      transactionsByMonth
+      totalDeposits: totalDeposits?.total || 0,
+      totalPayments: totalPayments?.total || 0,
+      netBalance: (totalDeposits?.total || 0) - (totalPayments?.total || 0),
+      transactionsByMonth: transactionsByMonth
     };
+  }
+
+  /**
+   * Récupère toutes les transactions avec les infos utilisateur
+   */
+  async getAllTransactions() {
+    return await db.execute(sql`
+      SELECT 
+        t.*,
+        json_build_object(
+          'id', u.id,
+          'fullName', u.full_name,
+          'username', u.username,
+          'email', u.email,
+          'profileImage', u.profile_image
+        ) as user
+      FROM fund_transactions t
+      JOIN users u ON t.user_id = u.id
+      ORDER BY t.created_at DESC
+    `);
+  }
+
+  /**
+   * Récupère tous les logs admin
+   */
+  async getAdminLogs() {
+    return await db.select().from(adminLogs).orderBy(desc(adminLogs.createdAt));
+  }
+
+  /**
+   * Met à jour le rôle d'un utilisateur
+   */
+  async updateUserRole(userId: number, role: string) {
+    if (role !== "user" && role !== "admin" && role !== "superadmin") {
+      throw new Error("Rôle invalide");
+    }
+    
+    const [updatedUser] = await db
+      .update(users)
+      .set({ role })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
+
+  /**
+   * Supprime un utilisateur
+   */
+  async deleteUser(userId: number) {
+    // Cette opération devrait être entourée d'une transaction
+    // et gérer les suppressions en cascade ou relations
+    const [deletedUser] = await db
+      .delete(users)
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return deletedUser;
+  }
+
+  /**
+   * Crée un log d'action admin
+   */
+  async createAdminLog(log: InsertAdminLog) {
+    const [createdLog] = await db
+      .insert(adminLogs)
+      .values(log)
+      .returning();
+    
+    return createdLog;
   }
 }
 
+// Singleton
 export const adminService = new AdminService();
