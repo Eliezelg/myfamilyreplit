@@ -16,6 +16,7 @@ import { registerChildRoutes } from "./routes/child-routes";
 import { registerFamilyRoutes } from "./routes/family-routes"; // Import des routes famille
 import { registerInvitationRoutes } from "./routes/invitation-routes"; // Import des routes d'invitation
 import { registerPhotoRoutes } from "./routes/photo-routes"; // Import des routes photo
+import { registerRecipientRoutes } from "./routes/recipient-routes"; // Import des routes destinataire
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
