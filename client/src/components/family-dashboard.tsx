@@ -773,7 +773,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     variant="outline" 
                     size="sm"
                     className="gap-1"
-                    onClick={() => setIsAddEventModalOpen(true)}
+                    onClick={() => startTransition(() => setIsAddEventModalOpen(true))}
                   >
                     <Plus className="h-4 w-4" />
                     {t('events.addEvent')}
@@ -781,7 +781,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   <Button 
                     variant="link" 
                     className="gap-1 p-0"
-                    onClick={() => setIsEventsViewerOpen(true)}
+                    onClick={() => startTransition(() => setIsEventsViewerOpen(true))}
                   >
                     {t('events.viewAll')}
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
@@ -818,7 +818,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                       variant="outline" 
                       size="sm" 
                       className="mt-2"
-                      onClick={() => setIsAddEventModalOpen(true)}
+                      onClick={() => startTransition(() => setIsAddEventModalOpen(true))}
                     >
                       {t('events.addEvent')}
                     </Button>
