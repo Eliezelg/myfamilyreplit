@@ -20,7 +20,7 @@ class R2StorageService {
     this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || "";
     this.r2Endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
 
-    // Configuration plus simple pour contourner les problèmes SSL
+    // Configuration avec options SSL étendues pour résoudre les problèmes de handshake
     this.s3Client = new S3Client({
       region: "auto", // La région est 'auto' pour Cloudflare R2
       endpoint: this.r2Endpoint,
@@ -28,8 +28,22 @@ class R2StorageService {
         accessKeyId: process.env.CLOUDFLARE_ACCESS_KEY_ID || "",
         secretAccessKey: process.env.CLOUDFLARE_SECRET_ACCESS_KEY || "",
       },
-      forcePathStyle: true
+      forcePathStyle: true,
+      tls: true,
+      requestHandler: {
+        httpOptions: {
+          timeout: 30000, // Prolonger le délai d'attente pour les requêtes
+        }
+      },
+      retryStrategy: {
+        maxAttempts: 3 // Tentatives de connexion supplémentaires
+      }
     });
+
+    // Vérification des credentials
+    if (!process.env.CLOUDFLARE_ACCESS_KEY_ID || !process.env.CLOUDFLARE_SECRET_ACCESS_KEY) {
+      console.warn("⚠️ Attention: Clés d'accès Cloudflare R2 manquantes dans les variables d'environnement");
+    }
 
     console.log(`R2StorageService initialisé avec le bucket: ${this.bucketName}`);
   }
