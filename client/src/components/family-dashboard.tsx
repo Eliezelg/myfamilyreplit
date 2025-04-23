@@ -8,6 +8,7 @@ import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipi
 import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus, Download, RefreshCw, FileDown, Newspaper, Settings } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import InviteFamilyModal from "./invite-family-modal";
+import { FamilyFundManager } from "./family-fund-manager";
 import { format, parse } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +26,7 @@ interface FamilyDashboardProps {
 
 export default function FamilyDashboard({ familyId, familyName, onUploadClick }: FamilyDashboardProps) {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isAddFundsModalOpen, setIsAddFundsModalOpen] = useState(false);
   const [currentMonthYear, setCurrentMonthYear] = useState<string>(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -144,6 +146,29 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
         familyId={familyId}
         familyName={familyName}
       />
+      
+      {/* Add Funds Modal */}
+      {isAddFundsModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">הוספת כסף לקופה המשפחתית</h2>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setIsAddFundsModalOpen(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </Button>
+              </div>
+              <FamilyFundManager familyId={familyId} />
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Family Selector */}
       <div className="mb-6">
@@ -373,7 +398,11 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
               </div>
               
               <div className="flex flex-wrap gap-3 mb-4">
-                <Button className="gap-2" variant="secondary">
+                <Button 
+                  className="gap-2" 
+                  variant="secondary"
+                  onClick={() => setIsAddFundsModalOpen(true)}
+                >
                   <PlusCircle className="w-5 h-5" />
                   הוסף כסף
                 </Button>
