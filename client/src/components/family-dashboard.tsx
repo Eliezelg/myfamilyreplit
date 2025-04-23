@@ -10,6 +10,9 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import InviteFamilyModal from "./invite-family-modal";
 import { FamilyFundManager } from "./family-fund-manager";
 import AddEventForm from "./add-event-form";
+import PhotoViewerModal from "./photo-viewer-modal";
+import PhotosViewerModal from "./photos-viewer-modal";
+import EventsViewerModal from "./events-viewer-modal";
 import { format, parse } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +32,10 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isAddFundsModalOpen, setIsAddFundsModalOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+  const [isEventsViewerOpen, setIsEventsViewerOpen] = useState(false);
+  const [isPhotosViewerOpen, setIsPhotosViewerOpen] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [currentMonthYear, setCurrentMonthYear] = useState<string>(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -170,6 +177,42 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
         onClose={() => setIsInviteModalOpen(false)}
         familyId={familyId}
         familyName={familyName}
+      />
+      
+      {/* Photo Viewer Modal */}
+      {selectedPhoto && (
+        <PhotoViewerModal
+          photo={selectedPhoto}
+          user={members?.find(m => m.userId === selectedPhoto.userId)?.user}
+          isOpen={isPhotoModalOpen}
+          onClose={() => {
+            setIsPhotoModalOpen(false);
+            setTimeout(() => setSelectedPhoto(null), 300);
+          }}
+        />
+      )}
+      
+      {/* Photos Gallery Modal */}
+      <PhotosViewerModal
+        photos={photos || []}
+        members={members}
+        familyId={familyId}
+        isOpen={isPhotosViewerOpen}
+        onClose={() => setIsPhotosViewerOpen(false)}
+        onUploadClick={onUploadClick}
+      />
+      
+      {/* Events Viewer Modal */}
+      <EventsViewerModal
+        events={events || []}
+        members={members}
+        familyId={familyId}
+        isOpen={isEventsViewerOpen}
+        onClose={() => setIsEventsViewerOpen(false)}
+        onAddEvent={() => {
+          setIsEventsViewerOpen(false);
+          setTimeout(() => setIsAddEventModalOpen(true), 300);
+        }}
       />
       
       {/* Add Funds Modal */}
@@ -344,7 +387,11 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">תמונות אחרונות</h3>
-                <Button variant="link" className="gap-1 p-0">
+                <Button 
+                  variant="link" 
+                  className="gap-1 p-0"
+                  onClick={() => setIsPhotosViewerOpen(true)}
+                >
                   הצג הכל
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -355,14 +402,30 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {photos && photos.length > 0 ? (
                   photos.slice(0, 4).map((photo) => (
-                    <div key={photo.id} className="relative group aspect-square rounded-lg overflow-hidden bg-neutral-200">
+                    <div 
+                      key={photo.id} 
+                      className="relative group aspect-square rounded-lg overflow-hidden bg-neutral-200 cursor-pointer"
+                      onClick={() => {
+                        setSelectedPhoto(photo);
+                        setIsPhotoModalOpen(true);
+                      }}
+                    >
                       <img 
                         src={photo.imageUrl} 
                         alt="תמונת משפחה" 
                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <Button size="icon" variant="ghost" className="bg-white hover:bg-white/90 text-black rounded-full transform transition-transform hover:scale-110">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="bg-white hover:bg-white/90 text-black rounded-full transform transition-transform hover:scale-110"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPhoto(photo);
+                            setIsPhotoModalOpen(true);
+                          }}
+                        >
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                           </svg>
@@ -387,7 +450,11 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-xl font-bold">פעילות משפחתית</h3>
-                <Button variant="link" className="gap-1 p-0">
+                <Button 
+                  variant="link" 
+                  className="gap-1 p-0"
+                  onClick={() => setIsPhotosViewerOpen(true)}
+                >
                   הצג הכל
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -400,10 +467,17 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   photos.slice(0, 3).map((photo) => (
                     <div key={photo.id} className="flex gap-3 border-b border-neutral-200 pb-4 last:border-b-0 last:pb-0">
                       <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden">
-                        {/* Member image would be fetched from members data */}
-                        <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                          ל
-                        </div>
+                        {members?.find(m => m.userId === photo.userId)?.user?.profileImage ? (
+                          <img 
+                            src={members?.find(m => m.userId === photo.userId)?.user?.profileImage || ""} 
+                            alt={members?.find(m => m.userId === photo.userId)?.user?.username || "משתמש"} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
+                            {members?.find(m => m.userId === photo.userId)?.user?.username?.charAt(0).toUpperCase() || "מ"}
+                          </div>
+                        )}
                       </div>
                       <div>
                         <p className="font-medium">
@@ -461,7 +535,11 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   <PlusCircle className="w-5 h-5" />
                   הוסף כסף
                 </Button>
-                <Button variant="outline" className="gap-2">
+                <Button 
+                  variant="outline" 
+                  className="gap-2"
+                  onClick={() => navigate(`/families/${familyId}/fund/transactions`)}
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                   </svg>
@@ -470,17 +548,34 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
               </div>
               
               <div className="border-t border-neutral-200 pt-4">
-                <h4 className="font-medium mb-3">תורמים אחרונים</h4>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-medium">תורמים אחרונים</h4>
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="p-0"
+                    onClick={() => navigate(`/families/${familyId}/fund/contributors`)}
+                  >
+                    הצג הכל
+                  </Button>
+                </div>
                 <div className="space-y-3">
                   {transactions && transactions.length > 0 ? (
                     transactions.slice(0, 2).map((transaction) => (
                       <div key={transaction.id} className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <div className="h-8 w-8 rounded-full bg-gray-200 overflow-hidden">
-                            {/* Member image would be fetched from members data */}
-                            <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                              ל
-                            </div>
+                            {members?.find(m => m.userId === transaction.userId)?.user?.profileImage ? (
+                              <img 
+                                src={members?.find(m => m.userId === transaction.userId)?.user?.profileImage || ""} 
+                                alt={members?.find(m => m.userId === transaction.userId)?.user?.username || "משתמש"} 
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
+                                {members?.find(m => m.userId === transaction.userId)?.user?.username?.charAt(0).toUpperCase() || "מ"}
+                              </div>
+                            )}
                           </div>
                           <span>{members?.find(m => m.userId === transaction.userId)?.user?.username || "משתמש"}</span>
                         </div>
@@ -520,10 +615,17 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                   members.slice(0, 4).map((member, index) => (
                     <div key={member.id} className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden">
-                        {/* Member image would be fetched from users data */}
-                        <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                          ל
-                        </div>
+                        {member.user?.profileImage ? (
+                          <img 
+                            src={member.user.profileImage} 
+                            alt={member.user.username || "משתמש"} 
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
+                            {member.user?.username ? member.user.username.charAt(0).toUpperCase() : "מ"}
+                          </div>
+                        )}
                       </div>
                       <div className="flex-grow">
                         <p className="font-medium">{member.user?.fullName || member.user?.username || "משתמש"}</p>
@@ -595,7 +697,11 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     <Settings className="h-4 w-4" />
                   </Button>
                 </div>
-                <Button variant="link" className="gap-1 p-0">
+                <Button 
+                  variant="link" 
+                  className="gap-1 p-0"
+                  onClick={() => navigate(`/families/${familyId}/gazettes`)}
+                >
                   הצג הכל
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -663,7 +769,11 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                     <Plus className="h-4 w-4" />
                     הוסף אירוע
                   </Button>
-                  <Button variant="link" className="gap-1 p-0">
+                  <Button 
+                    variant="link" 
+                    className="gap-1 p-0"
+                    onClick={() => setIsEventsViewerOpen(true)}
+                  >
                     כל האירועים
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-4 h-4">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 19.5L8.25 12l7.5-7.5" />

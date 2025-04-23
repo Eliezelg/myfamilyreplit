@@ -58,6 +58,15 @@ class InvitationController {
         return res.status(403).json({ message: "Vous n'êtes pas membre de cette famille" });
       }
       
+      // Vérifier si une invitation existe déjà
+      const existingInvitation = await invitationService.getFamilyInvitation(familyId);
+      
+      if (existingInvitation) {
+        return res.status(400).json({ 
+          message: "Un code d'invitation existe déjà pour cette famille. Il n'est pas possible de le modifier." 
+        });
+      }
+      
       const invitation = await invitationService.createInvitation(familyId, userId);
       
       return res.json(invitation);

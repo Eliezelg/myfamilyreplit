@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Copy, Check, Link, Mail, RefreshCw } from "lucide-react";
+import { Copy, Check, Link, Mail, RefreshCw, Send } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 
 interface InviteFamilyModalProps {
   isOpen: boolean;
@@ -158,15 +159,6 @@ export default function InviteFamilyModal({ isOpen, onClose, familyId, familyNam
                 >
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={generateNewCode}
-                  disabled={createInvitationMutation.isPending}
-                >
-                  <RefreshCw className={`h-4 w-4 ${createInvitationMutation.isPending ? 'animate-spin' : ''}`} />
-                </Button>
               </div>
             </div>
             
@@ -202,8 +194,43 @@ export default function InviteFamilyModal({ isOpen, onClose, familyId, familyNam
               </div>
             </div>
             
-            <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm">
-              <p>שלח את הקוד או את הקישור לבני המשפחה שלך כדי שיוכלו להצטרף למשפחה שלך.</p>
+            <div className="space-y-4">
+              <Label>שלח הזמנה בוואטסאפ</Label>
+              <div className="flex">
+                <Input
+                  type="tel"
+                  placeholder="הזן מספר טלפון"
+                  className="flex-1 text-left ltr"
+                  dir="ltr"
+                  id="whatsapp-number"
+                />
+                <Button
+                  type="button"
+                  variant="default"
+                  className="mx-2 bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    const phoneNumber = (document.getElementById('whatsapp-number') as HTMLInputElement).value;
+                    if (phoneNumber) {
+                      const message = `הוזמנת להצטרף למשפחת "${familyName}" באפליקציית המשפחה. קוד ההזמנה שלך הוא: ${invitation?.token}. קישור להצטרפות: ${getInvitationUrl()}`;
+                      const encodedMessage = encodeURIComponent(message);
+                      window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+                    } else {
+                      toast({
+                        title: "שגיאה",
+                        description: "יש להזין מספר טלפון",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  disabled={!invitation?.token || isLoadingInvitation}
+                >
+                  <SiWhatsapp className="h-4 w-4 mr-2" />
+                  שלח בוואטסאפ
+                </Button>
+              </div>
+              <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm">
+                <p>שלח את הקוד או את הקישור לבני המשפחה שלך כדי שיוכלו להצטרף למשפחה שלך.</p>
+              </div>
             </div>
           </TabsContent>
           
