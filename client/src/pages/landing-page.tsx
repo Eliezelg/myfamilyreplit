@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
+  const { t } = useTranslation('landing');
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -129,33 +131,33 @@ export default function LandingPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
             <div className="flex flex-col justify-center space-y-4">
               <div className="inline-block rounded-lg bg-[#4A90E2]/10 px-3 py-1 text-sm text-[#1F3A93]">
-                Nouvelle plateforme familiale
+                {t('hero.badge')}
               </div>
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-[#333333]">
-                Connectez votre famille à travers les générations
+                {t('hero.title')}
               </h1>
               <p className="max-w-[600px] text-[#333333] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                MyFamily est la plateforme qui rapproche les familles, facilite le partage de souvenirs et renforce les liens entre toutes les générations.
+                {t('hero.description')}
               </p>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <Link href="/auth?tab=register">
                   <button className="btn-primary inline-flex items-center gap-1 px-6 py-3 text-lg">
-                    Démarrer gratuitement
+                    {t('hero.startFree')}
                     <ChevronRight className="h-4 w-4" />
                   </button>
                 </Link>
                 <Link href="/features">
                   <button className="btn-secondary inline-flex items-center gap-1 px-6 py-3 text-lg">
-                    Découvrir les fonctionnalités
+                    {t('hero.discoverFeatures')}
                   </button>
                 </Link>
               </div>
               <div className="flex items-center gap-2 text-sm text-[#333333]">
                 <CheckCircle className="h-4 w-4 text-[#1F3A93]" />
-                <span>Pas besoin de carte bancaire</span>
+                <span>{t('hero.noCreditCard')}</span>
                 <span className="mx-2">•</span>
                 <Clock className="h-4 w-4 text-[#1F3A93]" />
-                <span>Configuration en 2 minutes</span>
+                <span>{t('hero.quickSetup')}</span>
               </div>
             </div>
             <div className="flex items-center justify-center">

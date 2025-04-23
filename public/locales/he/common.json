@@ -129,7 +129,14 @@
     "no": "לא",
     "back": "חזרה",
     "next": "הבא",
-    "welcome": "ברוך הבא"
+    "welcome": "ברוך הבא",
+    "quickLinks": "קישורים מהירים",
+    "legal": "משפטי",
+    "privacyPolicy": "מדיניות פרטיות",
+    "termsOfService": "תנאי שימוש",
+    "allRightsReserved": "כל הזכויות שמורות",
+    "designedWith": "עוצב עם",
+    "forAllFamilies": "עבור כל המשפחות"
   },
   "languages": {
     "en": "אנגלית",

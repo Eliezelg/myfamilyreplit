@@ -129,7 +129,14 @@
     "no": "Non",
     "back": "Retour",
     "next": "Suivant",
-    "welcome": "Bienvenue"
+    "welcome": "Bienvenue",
+    "quickLinks": "Liens rapides",
+    "legal": "Légal",
+    "privacyPolicy": "Politique de confidentialité",
+    "termsOfService": "Conditions d'utilisation",
+    "allRightsReserved": "Tous droits réservés",
+    "designedWith": "Conçu avec",
+    "forAllFamilies": "pour toutes les familles"
   },
   "languages": {
     "en": "Anglais",

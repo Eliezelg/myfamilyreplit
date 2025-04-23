@@ -129,7 +129,14 @@
     "no": "No",
     "back": "Back",
     "next": "Next",
-    "welcome": "Welcome"
+    "welcome": "Welcome",
+    "quickLinks": "Quick Links",
+    "legal": "Legal",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "allRightsReserved": "All rights reserved",
+    "designedWith": "Designed with",
+    "forAllFamilies": "for all families"
   },
   "languages": {
     "en": "English",

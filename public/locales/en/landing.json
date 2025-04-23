@@ -1,0 +1,118 @@
+{
+  "hero": {
+    "badge": "New family platform",
+    "title": "Connect your family across generations",
+    "description": "MyFamily is the platform that brings families closer, facilitates sharing memories and strengthens bonds between all generations.",
+    "startFree": "Start for free",
+    "discoverFeatures": "Discover features",
+    "noCreditCard": "No credit card needed",
+    "quickSetup": "2-minute setup"
+  },
+  "features": {
+    "title": "Features designed for modern families",
+    "subtitle": "Simple yet powerful tools to strengthen your family bonds",
+    "allFeatures": "All features",
+    "items": {
+      "connections": {
+        "title": "Family Connections",
+        "description": "Create and strengthen bonds between generations with our intuitive family platform."
+      },
+      "photos": {
+        "title": "Photo Sharing",
+        "description": "Share precious moments and create lasting memories for the whole family."
+      },
+      "events": {
+        "title": "Family Events",
+        "description": "Plan and organize gatherings, celebrations and important events for your family."
+      },
+      "gazette": {
+        "title": "Family Gazettes",
+        "description": "Create monthly newsletters to share news and stories with your loved ones."
+      },
+      "funds": {
+        "title": "Fund Management",
+        "description": "Easily manage shared family finances for common projects and events."
+      },
+      "invitations": {
+        "title": "Simple Invitations",
+        "description": "Easily invite new members to join your family circle in just a few clicks."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "What our users say",
+    "subtitle": "Discover how MyFamily transforms family life",
+    "moreTestimonials": "See more testimonials",
+    "items": [
+      {
+        "quote": "MyFamily has revolutionized the way our family stays connected despite the distance. It's amazing to be able to share our daily lives so easily.",
+        "author": "Marie L.",
+        "role": "Grandmother of 4 grandchildren"
+      },
+      {
+        "quote": "Family fund management has become much more transparent and simple with MyFamily. We can now organize our events without hassle.",
+        "author": "Thomas B.",
+        "role": "Family father"
+      },
+      {
+        "quote": "I love receiving the monthly gazettes. It's like having a personalized family newspaper that brings together all our stories!",
+        "author": "Sophie M.",
+        "role": "Distant aunt"
+      }
+    ]
+  },
+  "pricing": {
+    "title": "Simple and transparent plans",
+    "subtitle": "Choose the plan that suits your family",
+    "mostPopular": "Most popular",
+    "taxIncluded": "All prices include taxes. Cancel anytime.",
+    "needCustom": "Need a custom solution for your organization?",
+    "contactUs": "Contact us",
+    "plans": {
+      "essential": {
+        "name": "Essential",
+        "price": "Free",
+        "description": "For small families just getting started",
+        "features": [
+          "Up to 10 members",
+          "Basic photo sharing",
+          "Event calendar",
+          "1 family group"
+        ],
+        "cta": "Get started"
+      },
+      "family": {
+        "name": "Family",
+        "price": "$9.99 /month",
+        "description": "For families who want more features",
+        "features": [
+          "Up to 30 members",
+          "Unlimited family gazettes",
+          "Advanced photo editing",
+          "Family fund management",
+          "3 family groups"
+        ],
+        "cta": "Choose"
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "$19.99 /month",
+        "description": "For large families and important events",
+        "features": [
+          "Unlimited members",
+          "Unlimited photo storage",
+          "Advanced organization tools",
+          "Unlimited family groups",
+          "Priority support"
+        ],
+        "cta": "Choose"
+      }
+    }
+  },
+  "cta": {
+    "title": "Ready to bring your family together?",
+    "description": "Create your free family space today and start sharing precious moments with your loved ones.",
+    "startFree": "Start for free",
+    "contact": "Contact us"
+  }
+}

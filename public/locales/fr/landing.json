@@ -1,0 +1,118 @@
+{
+  "hero": {
+    "badge": "Nouvelle plateforme familiale",
+    "title": "Connectez votre famille à travers les générations",
+    "description": "MyFamily est la plateforme qui rapproche les familles, facilite le partage de souvenirs et renforce les liens entre toutes les générations.",
+    "startFree": "Démarrer gratuitement",
+    "discoverFeatures": "Découvrir les fonctionnalités",
+    "noCreditCard": "Pas besoin de carte bancaire",
+    "quickSetup": "Configuration en 2 minutes"
+  },
+  "features": {
+    "title": "Fonctionnalités conçues pour les familles modernes",
+    "subtitle": "Des outils simples mais puissants pour renforcer vos liens familiaux",
+    "allFeatures": "Toutes les fonctionnalités",
+    "items": {
+      "connections": {
+        "title": "Connexions Familiales",
+        "description": "Créez et renforcez les liens entre les générations grâce à notre plateforme familiale intuitive."
+      },
+      "photos": {
+        "title": "Partage de Photos",
+        "description": "Partagez des moments précieux et créez des souvenirs durables pour toute la famille."
+      },
+      "events": {
+        "title": "Événements Familiaux",
+        "description": "Planifiez et organisez des rencontres, célébrations et événements importants pour votre famille."
+      },
+      "gazette": {
+        "title": "Gazettes Familiales",
+        "description": "Créez des newsletters mensuelles pour partager des nouvelles et histoires avec vos proches."
+      },
+      "funds": {
+        "title": "Gestion de Fonds",
+        "description": "Gérez facilement les finances familiales partagées pour les projets et événements communs."
+      },
+      "invitations": {
+        "title": "Invitations Simplifiées",
+        "description": "Invitez facilement de nouveaux membres à rejoindre votre cercle familial en quelques clics."
+      }
+    }
+  },
+  "testimonials": {
+    "title": "Ce que nos utilisateurs disent",
+    "subtitle": "Découvrez comment MyFamily transforme la vie de famille",
+    "moreTestimonials": "Voir plus de témoignages",
+    "items": [
+      {
+        "quote": "MyFamily a révolutionné la façon dont notre famille reste connectée malgré la distance. C'est incroyable de pouvoir partager notre quotidien si facilement.",
+        "author": "Marie L.",
+        "role": "Grand-mère de 4 petits-enfants"
+      },
+      {
+        "quote": "La gestion des fonds familiaux est devenue beaucoup plus transparente et simple avec MyFamily. Nous pouvons maintenant organiser nos événements sans tracas.",
+        "author": "Thomas B.",
+        "role": "Père de famille"
+      },
+      {
+        "quote": "J'adore recevoir les gazettes mensuelles. C'est comme avoir un journal familial personnalisé qui rassemble toutes nos histoires!",
+        "author": "Sophie M.",
+        "role": "Tante éloignée"
+      }
+    ]
+  },
+  "pricing": {
+    "title": "Plans simples et transparents",
+    "subtitle": "Choisissez le plan qui convient à votre famille",
+    "mostPopular": "Le plus populaire",
+    "taxIncluded": "Tous les prix sont indiqués TTC. Annulez à tout moment.",
+    "needCustom": "Besoin d'une solution personnalisée pour votre organisation ?",
+    "contactUs": "Contactez-nous",
+    "plans": {
+      "essential": {
+        "name": "Essentiel",
+        "price": "Gratuit",
+        "description": "Pour les petites familles qui débutent",
+        "features": [
+          "Jusqu'à 10 membres",
+          "Partage de photos basique",
+          "Calendrier d'événements",
+          "1 groupe familial"
+        ],
+        "cta": "Commencer"
+      },
+      "family": {
+        "name": "Famille",
+        "price": "9,99€ /mois",
+        "description": "Pour les familles qui veulent plus de fonctionnalités",
+        "features": [
+          "Jusqu'à 30 membres",
+          "Gazettes familiales illimitées",
+          "Édition photo avancée",
+          "Gestion de fonds familiaux",
+          "3 groupes familiaux"
+        ],
+        "cta": "Choisir"
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "19,99€ /mois",
+        "description": "Pour les grandes familles et les événements importants",
+        "features": [
+          "Membres illimités",
+          "Stockage photos illimité",
+          "Outils avancés d'organisation",
+          "Groupes familiaux illimités",
+          "Support prioritaire"
+        ],
+        "cta": "Choisir"
+      }
+    }
+  },
+  "cta": {
+    "title": "Prêt à réunir votre famille ?",
+    "description": "Créez votre espace familial gratuit aujourd'hui et commencez à partager des moments précieux avec vos proches.",
+    "startFree": "Démarrer gratuitement",
+    "contact": "Nous contacter"
+  }
+}
