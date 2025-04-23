@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { emailController } from "./controllers/email-controller";
 
 declare global {
   namespace Express {
@@ -194,6 +195,15 @@ export function setupAuth(app: Express) {
       });
 
       console.log(`Nouvel utilisateur créé: ${user.username} (${user.email}) - ID: ${user.id}`);
+
+      // Envoyer un email de bienvenue
+      try {
+        await emailController.sendWelcomeEmail(user);
+        console.log(`Email de bienvenue envoyé à ${user.email}`);
+      } catch (emailError) {
+        console.error('Erreur lors de l\'envoi de l\'email de bienvenue:', emailError);
+        // Continuer le processus même si l'email échoue
+      }
 
       req.login(user, (err) => {
         if (err) return next(err);
