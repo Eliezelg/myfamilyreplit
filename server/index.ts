@@ -33,8 +33,9 @@ import { sanitizeInputs } from "./middleware/sanitizer";
 app.use('/api', sanitizeInputs);
 
 // Appliquer la protection CSRF après l'authentification
-app.use('/api', csrfProtection);
+// Assurez-vous que setupCSRF est exécuté avant csrfProtection
 app.use(setupCSRF);
+app.use('/api', csrfProtection);
 
 
 app.use((req, res, next) => {
