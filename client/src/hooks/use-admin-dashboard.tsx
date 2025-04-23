@@ -103,12 +103,40 @@ export function useAdminDashboard() {
   });
 
   // Détails d'une famille
-  const getFamilyDetails = (familyId: number) => {
-    return useQuery({
-      queryKey: ["/api/admin/families", familyId],
-      queryFn: getQueryFn({ on401: "throw" }),
-      enabled: familyId > 0,
-    });
+  const { 
+    data: familyDetailsCache,
+    isLoading: isLoadingFamilyDetails
+  } = useQuery<Record<number, any>>({
+    queryKey: ["/api/admin/families/details"],
+    queryFn: () => ({}),
+    initialData: {},
+  });
+
+  const getFamilyDetails = async (familyId: number): Promise<any> => {
+    if (familyId <= 0) return null;
+    
+    if (familyDetailsCache[familyId]) {
+      return familyDetailsCache[familyId];
+    }
+    
+    try {
+      const response = await fetch(`/api/admin/families/${familyId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch family details');
+      }
+      const data = await response.json();
+      
+      // Update cache
+      queryClient.setQueryData(["/api/admin/families/details"], {
+        ...familyDetailsCache,
+        [familyId]: data
+      });
+      
+      return data;
+    } catch (error) {
+      console.error('Error fetching family details:', error);
+      return null;
+    }
   };
 
   // Mise à jour du rôle d'un utilisateur

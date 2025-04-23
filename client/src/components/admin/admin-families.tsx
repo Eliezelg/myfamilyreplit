@@ -51,10 +51,23 @@ export default function AdminFamilies({
 }: AdminFamiliesProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFamilyId, setSelectedFamilyId] = useState<number | null>(null);
+  const [selectedFamily, setSelectedFamily] = useState<any>(null);
+  const [isLoadingFamily, setIsLoadingFamily] = useState<boolean>(false);
   const { getFamilyDetails } = useAdminDashboard();
   
-  const { data: selectedFamily, isLoading: isLoadingFamily } = 
-    getFamilyDetails(selectedFamilyId || 0);
+  const handleViewFamilyDetails = async (familyId: number) => {
+    setSelectedFamilyId(familyId);
+    setIsLoadingFamily(true);
+    
+    try {
+      const details = await getFamilyDetails(familyId);
+      setSelectedFamily(details);
+    } catch (error) {
+      console.error("Error fetching family details:", error);
+    } finally {
+      setIsLoadingFamily(false);
+    }
+  };
 
   const filteredFamilies = families.filter((family) =>
     family.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -143,7 +156,7 @@ export default function AdminFamilies({
                             <Button 
                               variant="ghost"
                               size="sm"
-                              onClick={() => setSelectedFamilyId(family.id)}
+                              onClick={() => handleViewFamilyDetails(family.id)}
                             >
                               Détails <ChevronRight className="ml-1 h-4 w-4" />
                             </Button>
@@ -213,7 +226,7 @@ export default function AdminFamilies({
                                                 </TableCell>
                                               </TableRow>
                                             ) : (
-                                              selectedFamily.members?.map((member) => (
+                                              selectedFamily.members?.map((member: any) => (
                                                 <TableRow key={member.id}>
                                                   <TableCell>
                                                     <div className="flex items-center gap-2">
