@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, primaryKey, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -197,6 +197,7 @@ export const familiesRelations = relations(families, ({ many, one }) => ({
   recipients: many(recipients),
   invitations: many(invitations),
   events: many(events),
+  subscription: one(subscriptions, { fields: [families.id], references: [subscriptions.familyId] }),
 }));
 
 export const familyMembersRelations = relations(familyMembers, ({ one }) => ({
@@ -240,6 +241,50 @@ export const childrenRelations = relations(children, ({ one }) => ({
   parent: one(users, { fields: [children.userId], references: [users.id] }),
 }));
 
+// Promo Codes model
+export const promoCodes = pgTable("promo_codes", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  discount: decimal("discount").notNull(),  // 50.00 shekels pour un abonnement à vie
+  type: text("type").notNull().default("lifetime"),  // types: 'lifetime', 'percentage', 'fixed'
+  description: text("description"),
+  maxUses: integer("max_uses"),
+  usesCount: integer("uses_count").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date"),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertPromoCodeSchema = createInsertSchema(promoCodes).omit({
+  id: true,
+  usesCount: true,
+  createdAt: true,
+});
+
+// Subscriptions model
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  familyId: integer("family_id").notNull().references(() => families.id).unique(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  status: text("status").notNull().default("active"),  // active, canceled, expired
+  type: text("type").notNull(),  // regular, lifetime 
+  promoCodeId: integer("promo_code_id").references(() => promoCodes.id),
+  originalPrice: decimal("original_price").notNull(),
+  finalPrice: decimal("final_price").notNull(),
+  startDate: timestamp("start_date").defaultNow().notNull(),
+  endDate: timestamp("end_date"),
+  renewalDate: timestamp("renewal_date"),
+  canceledAt: timestamp("canceled_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Admin logs model
 export const adminLogs = pgTable("admin_logs", {
   id: serial("id").primaryKey(),
@@ -254,6 +299,17 @@ export const adminLogs = pgTable("admin_logs", {
 
 export const adminLogsRelations = relations(adminLogs, ({ one }) => ({
   admin: one(users, { fields: [adminLogs.adminId], references: [users.id] }),
+}));
+
+export const promoCodesRelations = relations(promoCodes, ({ one, many }) => ({
+  creator: one(users, { fields: [promoCodes.createdBy], references: [users.id] }),
+  subscriptions: many(subscriptions)
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  family: one(families, { fields: [subscriptions.familyId], references: [families.id] }),
+  user: one(users, { fields: [subscriptions.userId], references: [users.id] }),
+  promoCode: one(promoCodes, { fields: [subscriptions.promoCodeId], references: [promoCodes.id] })
 }));
 
 // Export types
@@ -296,3 +352,9 @@ export const insertAdminLogSchema = createInsertSchema(adminLogs).omit({
   createdAt: true,
 });
 export type InsertAdminLog = z.infer<typeof insertAdminLogSchema>;
+
+export type PromoCode = typeof promoCodes.$inferSelect;
+export type InsertPromoCode = z.infer<typeof insertPromoCodeSchema>;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
