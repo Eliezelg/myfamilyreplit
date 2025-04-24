@@ -47,8 +47,21 @@ export class PromoCodeService {
    * Crée un nouveau code promotionnel
    */
   async createPromoCode(data: InsertPromoCode): Promise<PromoCode> {
+    console.log('Données reçues pour création de code promo:', JSON.stringify(data));
+
+    // Traiter les dates correctement
+    const processedData = {
+      ...data,
+      // S'assurer que startDate est une date valide
+      startDate: data.startDate ? new Date(data.startDate) : new Date(),
+      // Traiter endDate correctement (null, undefined ou date valide)
+      endDate: data.endDate && typeof data.endDate === 'string' && data.endDate !== 'null' ? new Date(data.endDate) : null
+    };
+    
+    console.log('Données traitées pour création de code promo:', JSON.stringify(processedData));
+    
     // Valider les données
-    const validatedData = insertPromoCodeSchema.parse(data);
+    const validatedData = insertPromoCodeSchema.parse(processedData);
     
     // Insérer dans la base de données
     const [insertedCode] = await db
@@ -68,11 +81,25 @@ export class PromoCodeService {
     if (!existingCode) {
       return undefined;
     }
+    
+    console.log('Données reçues pour mise à jour de code promo:', JSON.stringify(data));
+
+    // Traiter les dates correctement
+    const processedData = {
+      ...data,
+      // S'assurer que startDate est une date valide si elle est fournie
+      startDate: data.startDate ? new Date(data.startDate) : undefined,
+      // Traiter endDate correctement (null, undefined ou date valide)
+      endDate: data.endDate === undefined ? undefined : 
+              (data.endDate === null || (typeof data.endDate === 'string' && data.endDate === 'null') ? null : new Date(data.endDate))
+    };
+    
+    console.log('Données traitées pour mise à jour de code promo:', JSON.stringify(processedData));
 
     // Mettre à jour le code promo
     const [updatedCode] = await db
       .update(promoCodes)
-      .set(data)
+      .set(processedData)
       .where(eq(promoCodes.id, id))
       .returning();
       
