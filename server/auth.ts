@@ -194,6 +194,12 @@ export function setupAuth(app: Express) {
       const firstName = req.body.firstName || '';
       const lastName = req.body.lastName || '';
       
+      console.log("Données d'inscription après normalisation:");
+      console.log("- username:", normalizedUsername);
+      console.log("- email:", normalizedEmail);
+      console.log("- firstName:", firstName);
+      console.log("- lastName:", lastName);
+      
       // Générer le fullName à partir de firstName et lastName, ou utiliser celui fourni
       // Si ni firstName ni lastName ne sont fournis, utiliser le nom d'utilisateur
       let fullName = req.body.fullName;
@@ -203,6 +209,8 @@ export function setupAuth(app: Express) {
       if (!fullName) {
         fullName = normalizedUsername;
       }
+      
+      console.log("- fullName généré:", fullName);
 
       const user = await storage.createUser({
         ...req.body,
