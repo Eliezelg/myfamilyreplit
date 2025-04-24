@@ -69,15 +69,29 @@ export default function AuthPage() {
   const onRegisterSubmit = (data: RegisterFormValues) => {
     console.log("Formulaire standard soumis avec:", data);
     
-    // La validation est déjà gérée par le schéma Zod, pas besoin de validation manuelle
-    // Retirer confirmPassword et garder les autres données
-    const { confirmPassword, ...restData } = data;
-    
-    console.log("⚡ TENTATIVE D'INSCRIPTION VIA FORMULAIRE STANDARD ⚡");
-    console.log("Données du formulaire:", restData);
-    
-    // Utiliser la mutation de registerMutation
-    registerMutation.mutate(restData);
+    try {
+      // Retirer confirmPassword et garder les autres données
+      const { confirmPassword, ...restData } = data;
+      
+      console.log("⚡ TENTATIVE D'INSCRIPTION VIA FORMULAIRE STANDARD ⚡");
+      console.log("Données du formulaire:", restData);
+      
+      // Vérifier si tous les champs requis sont présents
+      const requiredFields = ["username", "password", "email", "firstName", "lastName"];
+      const missingFields = requiredFields.filter(field => !restData[field as keyof typeof restData]);
+      
+      if (missingFields.length > 0) {
+        console.error("Champs manquants:", missingFields);
+        alert(`Champs requis manquants: ${missingFields.join(", ")}`);
+        return;
+      }
+      
+      // Utiliser la mutation de registerMutation
+      registerMutation.mutate(restData);
+    } catch (error) {
+      console.error("Erreur lors de la soumission du formulaire:", error);
+      alert("Erreur lors de la soumission du formulaire");
+    }
   };
 
   return (

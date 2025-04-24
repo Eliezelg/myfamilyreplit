@@ -66,6 +66,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Tentative d'inscription via registerMutation avec:", credentials);
       
       try {
+        // Vérification de la structure des données avant envoi
+        if (!credentials.username || !credentials.password || !credentials.email || 
+            !credentials.firstName || !credentials.lastName) {
+          console.error("Données d'inscription incomplètes:", credentials);
+          throw new Error("Données d'inscription incomplètes");
+        }
+        
+        console.log("Envoi de la requête avec les données:", JSON.stringify(credentials));
+        
         // Utilisation directe de fetch pour mieux contrôler la requête
         const response = await fetch('/api/register', {
           method: 'POST',
@@ -74,17 +83,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           credentials: 'include'
         });
         
-        console.log("Réponse de l'API d'inscription:", response.status);
+        console.log("Statut de la réponse API:", response.status);
+        console.log("Headers de la réponse:", Object.fromEntries([...response.headers.entries()]));
         
-        // Traiter la réponse
+        // Obtenir le contenu de la réponse
+        const responseText = await response.text();
+        console.log("Contenu brut de la réponse:", responseText);
+        
+        // Vérifier si la réponse est OK
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error("Erreur d'inscription:", errorText);
-          throw new Error(errorText || `Erreur ${response.status}`);
+          console.error(`Erreur ${response.status} lors de l'inscription:`, responseText);
+          throw new Error(responseText || `Erreur ${response.status}`);
         }
         
-        const userData = await response.json();
-        console.log("Données utilisateur reçues:", userData);
+        // Tenter de parser la réponse JSON
+        let userData;
+        try {
+          userData = JSON.parse(responseText);
+          console.log("Données utilisateur parsées:", userData);
+        } catch (parseError) {
+          console.error("Erreur de parsing JSON:", parseError);
+          throw new Error("Réponse invalide du serveur");
+        }
+        
         return userData;
       } catch (error) {
         console.error("Exception pendant l'inscription:", error);
