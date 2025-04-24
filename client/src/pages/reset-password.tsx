@@ -58,11 +58,15 @@ export default function ResetPasswordPage() {
       }
 
       try {
-        const response = await apiRequest(`/api/password-reset/verify/${token}`, {
-          method: 'GET',
-        });
+        const response = await apiRequest(`/api/password-reset/verify/${token}`, 
+          undefined,
+          {
+            method: 'GET',
+          }
+        );
         
-        setIsTokenValid(response.valid === true);
+        const data = await response.json();
+        setIsTokenValid(data.valid === true);
       } catch (error) {
         console.error('Erreur lors de la vérification du token:', error);
         setIsTokenValid(false);
@@ -87,13 +91,15 @@ export default function ResetPasswordPage() {
     setIsSubmitting(true);
     
     try {
-      await apiRequest(`/api/password-reset/${token}`, {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await apiRequest(`/api/password-reset/${token}`, 
+        JSON.stringify(data),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       
       setIsSuccess(true);
       toast({

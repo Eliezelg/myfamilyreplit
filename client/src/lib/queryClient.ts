@@ -9,28 +9,34 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
-  method: string,
   url: string,
   data?: unknown | undefined,
+  options?: RequestInit,
 ): Promise<Response> {
   // Récupérer le token CSRF du cookie
   const csrfToken = getCookie('XSRF-TOKEN');
   
   // Préparer les headers avec CSRF token
-  const headers: Record<string, string> = {};
-  if (data) {
-    headers["Content-Type"] = "application/json";
-  }
+  const headers: Record<string, string> = {
+    ...(options?.headers as Record<string, string> || {})
+  };
+  
   if (csrfToken) {
     headers["X-CSRF-Token"] = csrfToken;
   }
   
-  const res = await fetch(url, {
+  const method = options?.method || 'GET';
+  
+  // Combine options while ensuring headers with CSRF token are always included
+  const fetchOptions = {
+    ...options,
     method,
     headers,
-    body: data ? JSON.stringify(data) : undefined,
+    body: data as BodyInit | null | undefined,
     credentials: "include",
-  });
+  };
+
+  const res = await fetch(url, fetchOptions);
 
   await throwIfResNotOk(res);
   return res;
