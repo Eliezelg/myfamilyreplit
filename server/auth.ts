@@ -19,7 +19,7 @@ const scryptAsync = promisify(scrypt);
 export async function hashPassword(password: string) {
   // Augmentation du coût de hachage pour une sécurité accrue
   const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64, { N: 16384, r: 8, p: 1 })) as Buffer;
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   const hashedPassword = `${buf.toString("hex")}.${salt}`;
   
   // Éviter de logger les mots de passe même partiellement
@@ -44,7 +44,7 @@ export async function comparePasswords(supplied: string, stored: string) {
   
   try {
     const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64, { N: 16384, r: 8, p: 1 })) as Buffer;
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     
     const result = timingSafeEqual(hashedBuf, suppliedBuf);
     

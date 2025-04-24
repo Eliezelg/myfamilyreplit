@@ -67,18 +67,44 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
+    console.log("Formulaire soumis avec:", data);
+    
+    // Valider les données du formulaire explicitement
+    if (!data.firstName || !data.lastName || !data.username || !data.email || !data.password) {
+      console.error("Données de formulaire incomplètes:", data);
+      return;
+    }
+
     // Retirer confirmPassword et garder les autres données
     const { confirmPassword, ...restData } = data;
     
-    // Ajoutons des logs pour le débogage
+    console.log("⚡ TENTATIVE D'INSCRIPTION ⚡");
     console.log("Données du formulaire d'inscription:", restData);
     
-    // Envoyer les données avec firstName, lastName et fullName
-    // Le serveur combinera firstName et lastName pour créer fullName si nécessaire
-    registerMutation.mutate(restData, {
-      onError: (error) => {
-        console.error("Erreur d'inscription détaillée:", error);
+    // Méthode alternative de soumission utilisant fetch directement
+    fetch('/api/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(restData),
+      credentials: 'include'
+    })
+    .then(res => {
+      console.log("Réponse status:", res.status);
+      if (!res.ok) {
+        console.error("Erreur d'inscription:", res.statusText);
+        throw new Error(`Erreur ${res.status}: ${res.statusText}`);
       }
+      return res.json();
+    })
+    .then(user => {
+      console.log("Inscription réussie:", user);
+      // Rediriger vers la page d'accueil
+      window.location.href = "/";
+    })
+    .catch(err => {
+      console.error("Erreur lors de l'inscription:", err);
     });
   };
 
