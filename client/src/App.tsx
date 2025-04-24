@@ -15,6 +15,8 @@ import LandingPage from "@/pages/landing-page";
 import FeaturesPage from "@/pages/features-page";
 import AboutPage from "@/pages/about-page";
 import ContactPage from "@/pages/contact-page";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import ResetPasswordPage from "@/pages/reset-password";
 import { ProtectedRoute } from "./lib/protected-route";
 import { AdminRoute } from "./lib/admin-route";
 import { LocaleProvider } from "./components/ui/locale-provider";
@@ -37,6 +39,8 @@ function Router() {
 
       {/* Authentication routes */}
       <Route path="/auth" component={AuthPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/reset-password" component={ResetPasswordPage} />
       <Route path="/join-family" component={JoinFamilyPage} />
       <Route path="/test-upload" component={TestUploadPage} />
 

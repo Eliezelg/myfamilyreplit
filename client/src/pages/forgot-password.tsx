@@ -34,13 +34,15 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
     
     try {
-      const response = await apiRequest('/api/password-reset/request', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('/api/password-reset/request', 
+        JSON.stringify(data),
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       
       setIsSuccess(true);
       toast({

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -136,6 +136,11 @@ export default function AuthPage() {
                           <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                         ) : "התחבר"}
                       </Button>
+                      <div className="text-right mt-2">
+                        <Link href="/forgot-password" className="text-sm text-gray-500 hover:text-gray-700">
+                          שכחת סיסמה?
+                        </Link>
+                      </div>
                     </form>
                   </Form>
                 </CardContent>
