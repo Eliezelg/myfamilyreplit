@@ -233,17 +233,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     setStep('payment');
   };
 
-  // Gérer la soumission du formulaire d'informations du destinataire
-  const onRecipientSubmit = (data: CreateRecipientFormValues) => {
-    setRecipientData(data);
-    setStep('payment');
-  };
-
-  // Gérer le choix d'ajouter le destinataire plus tard
-  const handleSkipRecipient = () => {
-    setAddRecipientLater(true);
-    setStep('payment');
-  };
+  // Ces fonctions ont été supprimées car nous avons retiré l'étape "recipient"
 
   // Gérer l'enregistrement de la carte
   const handleCardSaved = (cardData: { 
@@ -424,140 +414,7 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     );
   }
 
-  // Afficher le formulaire des informations du destinataire
-  if (step === 'recipient') {
-    return (
-      <Card className="w-full max-w-lg mx-auto">
-        <CardHeader>
-          <CardTitle className="text-center">פרטי משלוח הגזטה</CardTitle>
-          <CardDescription className="text-center">
-            הזן את פרטי המקבל עבור משלוח הגזטה המודפסת
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...recipientForm}>
-            <form onSubmit={recipientForm.handleSubmit(onRecipientSubmit)} className="space-y-4">
-              <FormField
-                control={recipientForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>שם המקבל</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="שם מלא של מקבל הגזטה" 
-                        value={field.value || ""} 
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={recipientForm.control}
-                name="streetAddress"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>כתובת</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="רחוב ומספר בית" 
-                        value={field.value || ""} 
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={recipientForm.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>עיר</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="עיר" 
-                          value={field.value || ""} 
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={recipientForm.control}
-                  name="postalCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>מיקוד</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="מיקוד" 
-                          value={field.value || ""} 
-                          onChange={field.onChange}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={recipientForm.control}
-                name="country"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>מדינה</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="מדינה" 
-                        value={field.value || ""} 
-                        onChange={field.onChange}
-                        onBlur={field.onBlur}
-                        name={field.name}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex flex-col space-y-2 mt-4">
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                >
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                  המשך לתשלום
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleSkipRecipient}
-                >
-                  אוסיף את הפרטים מאוחר יותר
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    );
-  }
+  // L'étape du destinataire a été supprimée - les utilisateurs pourront ajouter ces informations plus tard
 
   // Afficher le formulaire de paiement
   if (step === 'payment') {
@@ -609,30 +466,19 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
 
           <CreditCardForm 
             onCardSaved={handleCardSaved}
-            buttonText="שמור כרטיס"
+            buttonText={
+              createFamilyWithPaymentMutation.isPending ? 
+              "מעבד..." : 
+              promoValidation?.isValid && promoValidation?.isLifetime ? 
+              "צור משפחה ושלם 50 ש\"ח" : 
+              "צור משפחה ושלם 70 ש\"ח"
+            }
+            buttonDisabled={createFamilyWithPaymentMutation.isPending}
             title="פרטי תשלום"
+            onButtonClick={handleCreateWithPayment}
+            buttonIcon={<CreditCard className="ml-2 h-4 w-4" />}
+            showSpinner={createFamilyWithPaymentMutation.isPending}
           />
-
-          <div className="pt-4">
-            <Button 
-              onClick={handleCreateWithPayment}
-              className="w-full"
-              disabled={!cardToken || createFamilyWithPaymentMutation.isPending}
-            >
-              {createFamilyWithPaymentMutation.isPending ? (
-                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <CreditCard className="ml-2 h-4 w-4" />
-                  {promoValidation?.isValid && promoValidation?.isLifetime ? (
-                    <>צור משפחה ושלם 50 ש"ח</>
-                  ) : (
-                    <>צור משפחה ושלם 70 ש"ח</>
-                  )}
-                </>
-              )}
-            </Button>
-          </div>
         </CardContent>
       </Card>
     );

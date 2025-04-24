@@ -58,6 +58,10 @@ interface CreditCardFormProps {
   title?: string;
   loading?: boolean;
   disabled?: boolean;
+  buttonDisabled?: boolean;
+  onButtonClick?: () => void;
+  buttonIcon?: React.ReactNode;
+  showSpinner?: boolean;
 }
 
 export function CreditCardForm({ 
@@ -65,7 +69,11 @@ export function CreditCardForm({
   buttonText = "Sauvegarder la carte", 
   title = "Informations de paiement",
   loading = false,
-  disabled = false
+  disabled = false,
+  buttonDisabled,
+  onButtonClick,
+  buttonIcon,
+  showSpinner = false
 }: CreditCardFormProps) {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(true);
