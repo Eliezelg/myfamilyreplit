@@ -56,9 +56,22 @@ export class EmailController {
       console.log(`Début de la procédure d'envoi d'email de récupération pour ${user.email}`);
       console.log(`Longueur du token de récupération: ${resetToken.length} caractères`);
       
+      // Test direct avec SendGrid pour comparer
+      console.log('Tentative d\'envoi d\'email via SendGrid directement...');
+      
+      // Utilisation du service standard
       const result = await emailService.sendPasswordResetEmail(user.email, resetToken);
       
       console.log(`Résultat de l'envoi d'email de récupération à ${user.email}: ${result ? 'Succès' : 'Échec'}`);
+      
+      // Si l'email n'a pas été envoyé, essayons de diagnostiquer pourquoi
+      if (!result) {
+        console.log('Échec de l\'envoi d\'email. Problèmes possibles:');
+        console.log('- Domaine d\'expéditeur non vérifié sur SendGrid');
+        console.log('- Erreur de configuration dans le template d\'email');
+        console.log('- Problème de connexion réseau avec l\'API SendGrid');
+      }
+      
       return result;
     } catch (error) {
       console.error('Erreur non gérée lors de l\'envoi de l\'email de récupération de mot de passe:');

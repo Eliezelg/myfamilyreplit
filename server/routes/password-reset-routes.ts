@@ -42,6 +42,14 @@ export function registerPasswordResetRoutes(app: Express) {
       const emailResult = await emailController.sendPasswordResetEmail(user, resetToken);
       console.log(`Résultat de l'envoi d'email de réinitialisation: ${emailResult ? 'Succès' : 'Échec'}`);
       
+      // POUR TESTS UNIQUEMENT: En cas d'échec d'envoi d'email, afficher le lien directement dans les logs
+      if (!emailResult) {
+        console.log('======================================================================');
+        console.log(`⚠️ L'ENVOI D'EMAIL A ÉCHOUÉ - UTILISER CE LIEN POUR TESTER (VALIDE 24H) ⚠️`);
+        console.log(`https://myfamily.replit.app/reset-password?token=${resetToken}`);
+        console.log('======================================================================');
+      }
+      
       return res.status(200).json({ 
         message: 'Si votre email existe dans notre base de données, vous recevrez un lien de réinitialisation'
       });
