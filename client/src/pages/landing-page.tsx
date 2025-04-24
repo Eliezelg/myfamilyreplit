@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
+  const [isPending, startTransition] = useTransition();
   const { t } = useTranslation('landing');
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -29,9 +30,11 @@ export default function LandingPage() {
   // Redirect to dashboard if already logged in
   useEffect(() => {
     if (user) {
-      setLocation("/");
+      startTransition(() => {
+        setLocation("/");
+      });
     }
-  }, [user, setLocation]);
+  }, [user, setLocation, startTransition]);
 
   const features = [
     {
