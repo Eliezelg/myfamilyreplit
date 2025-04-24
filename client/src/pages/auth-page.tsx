@@ -17,9 +17,12 @@ const loginSchema = z.object({
   password: z.string().min(6, "סיסמה חייבת להכיל לפחות 6 תווים"),
 });
 
+// Ajouter firstName et lastName au schéma
 const registerSchema = insertUserSchema.extend({
   password: z.string().min(6, "סיסמה חייבת להכיל לפחות 6 תווים"),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  firstName: z.string().min(1, "שם פרטי נדרש"),
+  lastName: z.string().min(1, "שם משפחה נדרש"),
 }).refine(data => data.password === data.confirmPassword, {
   message: "הסיסמאות אינן תואמות",
   path: ["confirmPassword"],
@@ -48,6 +51,8 @@ export default function AuthPage() {
       password: "",
       confirmPassword: "",
       fullName: "",
+      firstName: "",
+      lastName: "",
       email: "",
     },
   });

@@ -187,10 +187,14 @@ export function setupAuth(app: Express) {
         return res.status(400).send("כתובת הדוא״ל כבר בשימוש");
       }
 
+      // Utilisez le nom d'utilisateur comme fullName si non fourni
+      const fullName = req.body.fullName || normalizedUsername;
+
       const user = await storage.createUser({
         ...req.body,
         username: normalizedUsername,
         email: normalizedEmail,
+        fullName: fullName,
         password: await hashPassword(req.body.password),
       });
 
