@@ -8,8 +8,6 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  // fullName n'est plus utilisé, mais gardé dans le schéma pour compatibilité avec les données existantes
-  fullName: text("full_name"),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   displayName: text("display_name"),
@@ -32,7 +30,6 @@ export const insertUserSchema = createInsertSchema(users)
   .omit({
     id: true,
     createdAt: true,
-    fullName: true, // Omettre fullName car il sera généré à partir de firstName et lastName
   });
 
 // Family model
