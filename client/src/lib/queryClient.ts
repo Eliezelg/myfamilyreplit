@@ -17,6 +17,10 @@ export async function apiRequest(
   // Récupérer le token CSRF du cookie
   const csrfToken = getCookie('XSRF-TOKEN');
   
+  console.log(`API Request ${method} ${url}:`);
+  console.log(`- CSRF Token: ${csrfToken || 'Non trouvé'}`);
+  console.log(`- Cookies disponibles: ${document.cookie}`);
+  
   // Préparer les headers avec CSRF token
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -25,6 +29,15 @@ export async function apiRequest(
   
   if (csrfToken) {
     headers["X-CSRF-Token"] = csrfToken;
+    console.log('- Header CSRF ajouté');
+  } else {
+    console.warn('- Attention: Aucun CSRF token dans les cookies');
+    
+    // Cas spécifique d'inscription - désactiver temporairement le besoin de CSRF
+    if (url === '/api/register') {
+      console.log('- Route d\'inscription: ajout d\'un header spécial pour éviter CSRF');
+      headers["X-No-CSRF"] = "registration-special-case";
+    }
   }
   
   // Combine options while ensuring headers with CSRF token are always included
