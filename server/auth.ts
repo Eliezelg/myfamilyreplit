@@ -147,8 +147,11 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
+      console.log("Réception d'une demande d'inscription:", JSON.stringify(req.body, null, 2));
+      
       // Vérifier que tous les champs requis sont présents
       if (!req.body.username || !req.body.email || !req.body.password) {
+        console.log("Erreur: Champs manquants dans la demande d'inscription");
         return res.status(400).send("Tous les champs sont obligatoires");
       }
       

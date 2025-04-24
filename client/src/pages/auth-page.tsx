@@ -70,9 +70,16 @@ export default function AuthPage() {
     // Retirer confirmPassword et garder les autres données
     const { confirmPassword, ...restData } = data;
     
+    // Ajoutons des logs pour le débogage
+    console.log("Données du formulaire d'inscription:", restData);
+    
     // Envoyer les données avec firstName, lastName et fullName
     // Le serveur combinera firstName et lastName pour créer fullName si nécessaire
-    registerMutation.mutate(restData);
+    registerMutation.mutate(restData, {
+      onError: (error) => {
+        console.error("Erreur d'inscription détaillée:", error);
+      }
+    });
   };
 
   return (
