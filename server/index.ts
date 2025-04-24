@@ -42,14 +42,10 @@ app.use('/api', sanitizeInputs);
 import cookieParser from 'cookie-parser';
 app.use(cookieParser());
 
-// Appliquer la protection CSRF après l'authentification, mais exclure les routes d'inscription et de réinitialisation
-app.use('/api', (req, res, next) => {
-  // Exclure les routes publiques de la protection CSRF
-  if (req.path === '/register' || req.path.startsWith('/reset-password')) {
-    return next();
-  }
-  return csrfProtection(req, res, next);
-});
+// Appliquer la protection CSRF après l'authentification
+// Utiliser notre middleware conditionnel qui exclut déjà les routes d'inscription et de réinitialisation
+import { conditionalCsrfProtection } from "./middleware/csrf-protection";
+app.use('/api', conditionalCsrfProtection);
 app.use(setupCSRF);
 
 
