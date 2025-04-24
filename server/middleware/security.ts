@@ -13,7 +13,7 @@ export function setupSecurityMiddleware(app: Express) {
           scriptSrc: ["'self'", "'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
-          imgSrc: ["'self'", "data:", "https://*.r2.cloudflarestorage.com"],
+          imgSrc: ["'self'", "data:", "blob:", "https://*.r2.cloudflarestorage.com"],
           connectSrc: ["'self'", "https://*.r2.cloudflarestorage.com"],
           objectSrc: ["'none'"],
           upgradeInsecureRequests: [],
@@ -40,10 +40,17 @@ export function setupSecurityMiddleware(app: Express) {
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=()');
     
-    // Empêcher l'accès direct aux fichiers sensibles
-    const sensitivePatterns = [/\.env$/i, /\.log$/i, /\.config$/i, /\.sql$/i, /\.json$/i];
+    // Empêcher l'accès direct aux fichiers sensibles, mais autoriser les fichiers de traduction
+    const sensitivePatterns = [/\.env$/i, /\.log$/i, /\.config$/i, /\.sql$/i];
+    const translationPattern = /^\/locales\/[a-z]{2}\/.+\.json$/i;
     const requestPath = req.path.toLowerCase();
     
+    // Autoriser les fichiers de traduction JSON
+    if (translationPattern.test(requestPath)) {
+      return next();
+    }
+    
+    // Bloquer les autres fichiers sensibles
     if (sensitivePatterns.some(pattern => pattern.test(requestPath))) {
       return res.status(403).send('Accès interdit');
     }

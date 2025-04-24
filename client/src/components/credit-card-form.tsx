@@ -230,8 +230,12 @@ export function CreditCardForm({
                 type={onButtonClick ? "button" : "submit"}
                 className="w-full" 
                 disabled={buttonDisabled !== undefined ? buttonDisabled : disabled || storeCardMutation.isPending || loading}
-                onClick={onButtonClick && storedCardInfo ? (e) => {
+                onClick={onButtonClick ? (e) => {
                   e.preventDefault();
+                  // Si on n'a pas encore de carte stockée, soumettre d'abord le formulaire
+                  if (!storedCardInfo) {
+                    onSubmit(form.getValues());
+                  }
                   onButtonClick();
                 } : undefined}
               >

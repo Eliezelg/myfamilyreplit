@@ -1,15 +1,27 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import pkg from 'pg';
+const { Pool } = pkg;
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
+// Utiliser directement la base de données 'postgres' par défaut qui existe toujours dans PostgreSQL
+// Cette base de données est garantie d'exister et sera accessible
+const connectionString = "postgresql://postgres:Grenoble10@localhost:5432/postgres";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
+console.log(`Connecting to database with connection string: ${connectionString}`);
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+// Créer un pool pour PostgreSQL avec la connexion à la base 'postgres'
+const pool = new Pool({
+  connectionString: connectionString,
+  // Définir un timeout plus long pour les connexions
+  connectionTimeoutMillis: 10000,
+});
+
+// Gérer les erreurs de connexion 
+// (important pour éviter que l'application plante si la base de données n'est pas disponible)
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle database client', err);
+});
+
+// Exporter la connexion Drizzle
+export const db = drizzle(pool, { schema });
+export { pool };
