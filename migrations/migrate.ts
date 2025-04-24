@@ -34,7 +34,28 @@ async function migrate() {
     `);
     console.log("✓ Added lastLoginAt column to users table (if it didn't exist)");
 
-    // 3. Create admin_logs table if it doesn't exist
+    // 3. Add resetPasswordToken and resetPasswordExpires columns to users table if they don't exist
+    await db.execute(sql`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'reset_password_token'
+        ) THEN 
+          ALTER TABLE users ADD COLUMN reset_password_token text;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'reset_password_expires'
+        ) THEN 
+          ALTER TABLE users ADD COLUMN reset_password_expires timestamp;
+        END IF;
+      END $$;
+    `);
+    console.log("✓ Added password reset columns to users table (if they didn't exist)");
+
+    // 4. Create admin_logs table if it doesn't exist
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS admin_logs (
         id SERIAL PRIMARY KEY,
