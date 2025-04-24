@@ -57,7 +57,7 @@ interface PromoValidationResult {
 
 export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
   const { toast } = useToast();
-  const [step, setStep] = useState<'info' | 'recipient' | 'payment' | 'processing' | 'success'>('info');
+  const [step, setStep] = useState<'info' | 'payment' | 'processing' | 'success'>('info');
   const [cardToken, setCardToken] = useState<string | null>(null);
   const [familyData, setFamilyData] = useState<CreateFamilyFormValues | null>(null);
   const [recipientData, setRecipientData] = useState<CreateRecipientFormValues | null>(null);
@@ -227,7 +227,10 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
     }
     
     setFamilyData(data);
-    setStep('recipient');
+    // Définir automatiquement l'option d'ajouter les destinataires plus tard 
+    setAddRecipientLater(true);
+    // Passer directement à l'étape de paiement
+    setStep('payment');
   };
 
   // Gérer la soumission du formulaire d'informations du destinataire
