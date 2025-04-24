@@ -28,13 +28,17 @@ export async function apiRequest(
   const method = options?.method || 'GET';
   
   // Combine options while ensuring headers with CSRF token are always included
-  const fetchOptions = {
+  const fetchOptions: RequestInit = {
     ...options,
     method,
     headers,
-    body: data as BodyInit | null | undefined,
     credentials: "include",
   };
+  
+  // N'ajoutez pas de body pour les requêtes GET ou HEAD
+  if (method !== 'GET' && method !== 'HEAD' && data !== undefined) {
+    fetchOptions.body = data as BodyInit;
+  }
 
   const res = await fetch(url, fetchOptions);
 
