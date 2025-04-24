@@ -50,7 +50,6 @@ export default function AuthPage() {
       username: "",
       password: "",
       confirmPassword: "",
-      fullName: "",
       firstName: "",
       lastName: "",
       email: "",

@@ -8,7 +8,10 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
+  // Garder fullName pour compatibilité tout en ajoutant firstName et lastName
   fullName: text("full_name").notNull(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
   displayName: text("display_name"),
   email: text("email").notNull(),
   profileImage: text("profile_image"),
@@ -20,10 +23,16 @@ export const users = pgTable("users", {
   resetPasswordExpires: timestamp("reset_password_expires"),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-});
+export const insertUserSchema = createInsertSchema(users)
+  .extend({
+    // Ajouter une validation pour firstName et lastName
+    firstName: z.string().min(1, "Le prénom est requis"),
+    lastName: z.string().min(1, "Le nom de famille est requis")
+  })
+  .omit({
+    id: true,
+    createdAt: true,
+  });
 
 // Family model
 export const families = pgTable("families", {
