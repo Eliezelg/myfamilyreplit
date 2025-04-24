@@ -187,14 +187,27 @@ export function setupAuth(app: Express) {
         return res.status(400).send("כתובת הדוא״ל כבר בשימוש");
       }
 
-      // Utilisez le nom d'utilisateur comme fullName si non fourni
-      const fullName = req.body.fullName || normalizedUsername;
+      // Traiter les nouveaux champs firstName et lastName
+      const firstName = req.body.firstName || '';
+      const lastName = req.body.lastName || '';
+      
+      // Générer le fullName à partir de firstName et lastName, ou utiliser celui fourni
+      // Si ni firstName ni lastName ne sont fournis, utiliser le nom d'utilisateur
+      let fullName = req.body.fullName;
+      if (!fullName && (firstName || lastName)) {
+        fullName = `${firstName} ${lastName}`.trim();
+      }
+      if (!fullName) {
+        fullName = normalizedUsername;
+      }
 
       const user = await storage.createUser({
         ...req.body,
         username: normalizedUsername,
         email: normalizedEmail,
         fullName: fullName,
+        firstName: firstName,
+        lastName: lastName,
         password: await hashPassword(req.body.password),
       });
 

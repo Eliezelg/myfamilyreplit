@@ -67,17 +67,12 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
-    // Retirer confirmPassword et combiner firstName et lastName pour fullName
-    const { confirmPassword, firstName, lastName, ...restData } = data;
+    // Retirer confirmPassword et garder les autres données
+    const { confirmPassword, ...restData } = data;
     
-    // Créer le nom complet à partir du prénom et du nom
-    const fullName = `${firstName} ${lastName}`.trim();
-    
-    // Envoyer les données avec le nom complet
-    registerMutation.mutate({
-      ...restData,
-      fullName: fullName,
-    });
+    // Envoyer les données avec firstName, lastName et fullName
+    // Le serveur combinera firstName et lastName pour créer fullName si nécessaire
+    registerMutation.mutate(restData);
   };
 
   return (
