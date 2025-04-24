@@ -79,11 +79,14 @@ export class EmailService {
    * Envoie un email de test
    */
   async sendTestEmail(to: string): Promise<boolean> {
+    const textContent = 'Ceci est un email de test depuis la plateforme MyFamily.';
+    const htmlContent = '<h1>Test d\'email MyFamily</h1><p>Ceci est un email de test depuis la plateforme MyFamily.</p>';
+    
     return this.sendEmail({
       to,
       subject: 'Test d\'email MyFamily',
-      text: 'Ceci est un email de test depuis la plateforme MyFamily.',
-      html: '<h1>Test d\'email MyFamily</h1><p>Ceci est un email de test depuis la plateforme MyFamily.</p>',
+      text: textContent,
+      html: htmlContent
     });
   }
   
@@ -91,27 +94,46 @@ export class EmailService {
    * Envoie un email de bienvenue après l'inscription
    */
   async sendWelcomeEmail(to: string, name: string): Promise<boolean> {
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #4a5568; text-align: center;">Bienvenue sur MyFamily, ${name}!</h1>
+        <p>Nous sommes ravis de vous accueillir sur notre plateforme dédiée aux familles.</p>
+        <p>Avec MyFamily, vous pouvez:</p>
+        <ul>
+          <li>Créer ou rejoindre des cercles familiaux</li>
+          <li>Partager des photos et créer des gazettes</li>
+          <li>Organiser des événements familiaux</li>
+          <li>Gérer un fond familial commun</li>
+        </ul>
+        <p>Pour commencer, connectez-vous à votre compte et créez votre première famille ou rejoignez-en une existante.</p>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="https://myfamily.replit.app" style="background-color: #4a5568; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Accéder à MyFamily</a>
+        </div>
+        <p style="margin-top: 30px; font-size: 0.8em; color: #718096; text-align: center;">Si vous avez des questions, n'hésitez pas à nous contacter à info@atrehitim.co.il</p>
+      </div>
+    `;
+    
+    const textContent = `
+      Bienvenue sur MyFamily, ${name}!
+      
+      Nous sommes ravis de vous accueillir sur notre plateforme dédiée aux familles.
+      
+      Avec MyFamily, vous pouvez:
+      - Créer ou rejoindre des cercles familiaux
+      - Partager des photos et créer des gazettes
+      - Organiser des événements familiaux
+      - Gérer un fond familial commun
+      
+      Pour commencer, connectez-vous à votre compte et créez votre première famille ou rejoignez-en une existante.
+      
+      Accéder à MyFamily: https://myfamily.replit.app
+    `;
+    
     return this.sendEmail({
       to,
       subject: 'Bienvenue sur MyFamily!',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #4a5568; text-align: center;">Bienvenue sur MyFamily, ${name}!</h1>
-          <p>Nous sommes ravis de vous accueillir sur notre plateforme dédiée aux familles.</p>
-          <p>Avec MyFamily, vous pouvez:</p>
-          <ul>
-            <li>Créer ou rejoindre des cercles familiaux</li>
-            <li>Partager des photos et créer des gazettes</li>
-            <li>Organiser des événements familiaux</li>
-            <li>Gérer un fond familial commun</li>
-          </ul>
-          <p>Pour commencer, connectez-vous à votre compte et créez votre première famille ou rejoignez-en une existante.</p>
-          <div style="text-align: center; margin-top: 30px;">
-            <a href="https://myfamily.replit.app" style="background-color: #4a5568; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Accéder à MyFamily</a>
-          </div>
-          <p style="margin-top: 30px; font-size: 0.8em; color: #718096; text-align: center;">Si vous avez des questions, n'hésitez pas à nous contacter à info@atrehitim.co.il</p>
-        </div>
-      `
+      text: textContent,
+      html: htmlContent
     });
   }
   
@@ -121,22 +143,37 @@ export class EmailService {
   async sendPasswordResetEmail(to: string, resetToken: string): Promise<boolean> {
     const resetLink = `https://myfamily.replit.app/reset-password?token=${resetToken}`;
     
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #4a5568; text-align: center;">Réinitialisation de mot de passe</h1>
+        <p>Vous avez demandé à réinitialiser votre mot de passe sur MyFamily.</p>
+        <p>Cliquez sur le lien ci-dessous pour créer un nouveau mot de passe:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetLink}" style="background-color: #4a5568; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a>
+        </div>
+        <p>Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email.</p>
+        <p>Ce lien expirera dans 24 heures.</p>
+        <p style="margin-top: 30px; font-size: 0.8em; color: #718096; text-align: center;">Si vous avez des questions, n'hésitez pas à nous contacter à info@atrehitim.co.il</p>
+      </div>
+    `;
+    
+    const textContent = `
+      Réinitialisation de mot de passe MyFamily
+      
+      Vous avez demandé à réinitialiser votre mot de passe sur MyFamily.
+      
+      Pour créer un nouveau mot de passe, visitez le lien suivant:
+      ${resetLink}
+      
+      Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email.
+      Ce lien expirera dans 24 heures.
+    `;
+    
     return this.sendEmail({
       to,
       subject: 'Réinitialisation de votre mot de passe MyFamily',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #4a5568; text-align: center;">Réinitialisation de mot de passe</h1>
-          <p>Vous avez demandé à réinitialiser votre mot de passe sur MyFamily.</p>
-          <p>Cliquez sur le lien ci-dessous pour créer un nouveau mot de passe:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetLink}" style="background-color: #4a5568; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Réinitialiser mon mot de passe</a>
-          </div>
-          <p>Si vous n'avez pas demandé cette réinitialisation, veuillez ignorer cet email.</p>
-          <p>Ce lien expirera dans 24 heures.</p>
-          <p style="margin-top: 30px; font-size: 0.8em; color: #718096; text-align: center;">Si vous avez des questions, n'hésitez pas à nous contacter à info@atrehitim.co.il</p>
-        </div>
-      `
+      text: textContent,
+      html: htmlContent
     });
   }
   
