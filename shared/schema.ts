@@ -266,11 +266,30 @@ export const promoCodes = pgTable("promo_codes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const insertPromoCodeSchema = createInsertSchema(promoCodes).omit({
-  id: true,
-  usesCount: true,
-  createdAt: true,
-});
+export const insertPromoCodeSchema = createInsertSchema(promoCodes)
+  .omit({
+    id: true,
+    usesCount: true,
+    createdAt: true,
+  })
+  .extend({
+    // Permettre les dates au format string ou Date
+    startDate: z.union([z.string(), z.date()]).transform(val => {
+      if (typeof val === 'string') {
+        return new Date(val);
+      }
+      return val;
+    }),
+    endDate: z.union([z.string(), z.date(), z.null()]).optional().transform(val => {
+      if (val === null || val === undefined || val === 'null') {
+        return null;
+      }
+      if (typeof val === 'string') {
+        return new Date(val);
+      }
+      return val;
+    }),
+  });
 
 // Subscriptions model
 export const subscriptions = pgTable("subscriptions", {

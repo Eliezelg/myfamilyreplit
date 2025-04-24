@@ -80,9 +80,27 @@ export class PromoCodeController {
         return res.status(404).json({ message: 'Code promo non trouvé' });
       }
 
-      // Mise à jour du code
-      const updatedCode = await promoCodeService.updatePromoCode(id, req.body);
-      return res.status(200).json(updatedCode);
+      // Traitement des données avec le schéma partiel pour validation
+      console.log('Données reçues pour mise à jour:', JSON.stringify(req.body));
+      
+      // Créer un schéma partiel pour la mise à jour (tous les champs sont optionnels)
+      const updatePromoCodeSchema = insertPromoCodeSchema.partial();
+      
+      try {
+        // Valider les données
+        const validatedData = updatePromoCodeSchema.parse(req.body);
+        console.log('Données validées pour mise à jour:', JSON.stringify(validatedData));
+        
+        // Mise à jour du code
+        const updatedCode = await promoCodeService.updatePromoCode(id, validatedData);
+        return res.status(200).json(updatedCode);
+      } catch (validationError) {
+        console.error('Erreur de validation lors de la mise à jour du code promo:', validationError);
+        if (validationError instanceof z.ZodError) {
+          return res.status(400).json({ message: 'Données de code promo invalides', errors: validationError.errors });
+        }
+        throw validationError; // Si ce n'est pas une erreur Zod, la propager
+      }
     } catch (error) {
       console.error('Erreur lors de la mise à jour du code promo:', error);
       return res.status(500).json({ message: 'Erreur lors de la mise à jour du code promo' });

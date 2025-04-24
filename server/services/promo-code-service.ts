@@ -48,20 +48,12 @@ export class PromoCodeService {
    */
   async createPromoCode(data: InsertPromoCode): Promise<PromoCode> {
     console.log('Données reçues pour création de code promo:', JSON.stringify(data));
-
-    // Traiter les dates correctement
-    const processedData = {
-      ...data,
-      // S'assurer que startDate est une date valide
-      startDate: data.startDate ? new Date(data.startDate) : new Date(),
-      // Traiter endDate correctement (null, undefined ou date valide)
-      endDate: data.endDate && typeof data.endDate === 'string' && data.endDate !== 'null' ? new Date(data.endDate) : null
-    };
     
-    console.log('Données traitées pour création de code promo:', JSON.stringify(processedData));
+    // Valider les données avec le schéma Zod mis à jour
+    // Zod s'occupera de la conversion des dates
+    const validatedData = insertPromoCodeSchema.parse(data);
     
-    // Valider les données
-    const validatedData = insertPromoCodeSchema.parse(processedData);
+    console.log('Données validées pour création de code promo:', JSON.stringify(validatedData));
     
     // Insérer dans la base de données
     const [insertedCode] = await db
@@ -84,15 +76,20 @@ export class PromoCodeService {
     
     console.log('Données reçues pour mise à jour de code promo:', JSON.stringify(data));
 
-    // Traiter les dates correctement
-    const processedData = {
-      ...data,
-      // S'assurer que startDate est une date valide si elle est fournie
-      startDate: data.startDate ? new Date(data.startDate) : undefined,
-      // Traiter endDate correctement (null, undefined ou date valide)
-      endDate: data.endDate === undefined ? undefined : 
-              (data.endDate === null || (typeof data.endDate === 'string' && data.endDate === 'null') ? null : new Date(data.endDate))
-    };
+    // Traiter les dates en utilisant le même principe que dans insertPromoCodeSchema
+    const processedData = { ...data };
+    
+    if (data.startDate) {
+      processedData.startDate = new Date(data.startDate);
+    }
+    
+    if (data.endDate !== undefined) {
+      if (data.endDate === null || (typeof data.endDate === 'string' && data.endDate === 'null')) {
+        processedData.endDate = null;
+      } else if (data.endDate) {
+        processedData.endDate = new Date(data.endDate);
+      }
+    }
     
     console.log('Données traitées pour mise à jour de code promo:', JSON.stringify(processedData));
 
