@@ -264,7 +264,7 @@ export default function AdminFinances({
                                 <UserIcon className="h-3 w-3" />
                               </div>
                             )}
-                            <span className="text-sm">{tx.user.fullName}</span>
+                            <span className="text-sm">{tx.user.firstName} {tx.user.lastName}</span>
                           </div>
                         </TableCell>
                         <TableCell className={

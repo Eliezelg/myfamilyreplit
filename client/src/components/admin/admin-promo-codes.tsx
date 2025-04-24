@@ -53,7 +53,8 @@ interface PromoCodeWithRelations extends PromoCode {
   creator?: {
     id: number;
     username: string;
-    fullName: string;
+    firstName?: string;
+    lastName?: string;
   };
   subscriptions?: any[];
 }
