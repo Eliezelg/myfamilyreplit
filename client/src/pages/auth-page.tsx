@@ -293,54 +293,7 @@ export default function AuthPage() {
                     </form>
                   </Form>
                   
-                  <div className="mt-4 p-3 border border-red-300 rounded bg-red-50">
-                    <h3 className="text-sm font-medium text-red-800 mb-2">Test de création d'un utilisateur</h3>
-                    <Button 
-                      onClick={() => {
-                        console.log("🔍 Test de création d'un utilisateur");
-                        const testUser = {
-                          username: "test_"+Date.now(),
-                          email: `test${Date.now()}@example.com`,
-                          password: "Test12345",
-                          firstName: "Prénom",
-                          lastName: "Nom"
-                        };
-                        console.log("Données de test:", testUser);
-                        
-                        fetch('/api/register', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(testUser),
-                          credentials: 'include'
-                        })
-                        .then(res => {
-                          console.log("Statut de la réponse:", res.status);
-                          return res.text().then(text => {
-                            try {
-                              const json = JSON.parse(text);
-                              console.log("Réponse JSON:", json);
-                              return json;
-                            } catch (e) {
-                              console.log("Réponse texte:", text);
-                              throw new Error(text);
-                            }
-                          });
-                        })
-                        .then(data => {
-                          console.log("Utilisateur créé avec succès:", data);
-                          alert("Utilisateur créé avec succès!");
-                          window.location.href = "/";
-                        })
-                        .catch(err => {
-                          console.error("Erreur:", err);
-                          alert("Erreur: " + err.message);
-                        });
-                      }}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      Créer un utilisateur de test
-                    </Button>
-                  </div>
+
                 </CardContent>
                 <CardFooter className="px-0 justify-center">
                   <p className="text-sm text-gray-500">
@@ -393,63 +346,4 @@ export default function AuthPage() {
 }
 
 
-                  <div className="mt-4 p-3 border border-orange-300 rounded bg-orange-50">
-                    <h3 className="text-sm font-medium text-orange-800 mb-2">Utiliser l'inscription directe</h3>
-                    <p className="text-xs text-orange-700 mb-2">Si le bouton d'inscription standard ne fonctionne pas, essayez cette méthode alternative.</p>
-                    <Button 
-                      onClick={() => {
-                        const formData = registerForm.getValues();
-                        console.log("Tentative d'inscription directe avec:", formData);
-                        
-                        if (!formData.username || !formData.password || !formData.email || 
-                            !formData.firstName || !formData.lastName || !formData.confirmPassword) {
-                          alert("Veuillez remplir tous les champs du formulaire");
-                          return;
-                        }
-                        
-                        if (formData.password !== formData.confirmPassword) {
-                          alert("Les mots de passe ne correspondent pas");
-                          return;
-                        }
-                        
-                        // Exclure confirmPassword avant d'envoyer
-                        const { confirmPassword, ...userData } = formData;
-                        
-                        // Appel direct à l'API sans passer par la mutation
-                        fetch('/api/register', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(userData),
-                          credentials: 'include'
-                        })
-                        .then(res => {
-                          console.log("Statut de la réponse:", res.status);
-                          return res.text().then(text => {
-                            try {
-                              const json = JSON.parse(text);
-                              console.log("Réponse JSON:", json);
-                              return json;
-                            } catch (e) {
-                              console.log("Réponse texte:", text);
-                              throw new Error(text);
-                            }
-                          });
-                        })
-                        .then(data => {
-                          console.log("Inscription réussie:", data);
-                          alert("Inscription réussie! Vous allez être redirigé.");
-                          // Mise à jour du contexte d'authentification
-                          queryClient.setQueryData(["/api/user"], data);
-                          // Redirection vers la page d'accueil
-                          window.location.href = "/";
-                        })
-                        .catch(err => {
-                          console.error("Erreur d'inscription:", err);
-                          alert("Erreur lors de l'inscription: " + err.message);
-                        });
-                      }}
-                      className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-                    >
-                      Inscription alternative
-                    </Button>
-                  </div>
+

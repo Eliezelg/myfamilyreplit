@@ -51,6 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "התחברת בהצלחה",
         description: `ברוך הבא, ${user.firstName} ${user.lastName}`,
       });
+      
+      // Redirection automatique vers le tableau de bord
+      window.location.href = "/";
     },
     onError: (error: Error) => {
       toast({
@@ -134,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "נרשמת בהצלחה",
         description: `ברוך הבא, ${user.firstName} ${user.lastName}`,
       });
+      
+      // Redirection automatique vers le tableau de bord
+      window.location.href = "/";
     },
     onError: (error: Error) => {
       console.error("Erreur d'inscription (mutation):", error);
