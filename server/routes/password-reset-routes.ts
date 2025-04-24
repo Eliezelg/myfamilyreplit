@@ -38,7 +38,9 @@ export function registerPasswordResetRoutes(app: Express) {
       });
       
       // Envoyer l'email de réinitialisation
-      await emailController.sendPasswordResetEmail(user, resetToken);
+      console.log(`Tentative d'envoi d'email de réinitialisation pour ${user.email} avec token: ${resetToken.substring(0, 10)}...`);
+      const emailResult = await emailController.sendPasswordResetEmail(user, resetToken);
+      console.log(`Résultat de l'envoi d'email de réinitialisation: ${emailResult ? 'Succès' : 'Échec'}`);
       
       return res.status(200).json({ 
         message: 'Si votre email existe dans notre base de données, vous recevrez un lien de réinitialisation'

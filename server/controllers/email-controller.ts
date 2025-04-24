@@ -53,11 +53,16 @@ export class EmailController {
    */
   async sendPasswordResetEmail(user: User, resetToken: string) {
     try {
-      await emailService.sendPasswordResetEmail(user.email, resetToken);
-      console.log(`Email de récupération de mot de passe envoyé à ${user.email}`);
-      return true;
+      console.log(`Début de la procédure d'envoi d'email de récupération pour ${user.email}`);
+      console.log(`Longueur du token de récupération: ${resetToken.length} caractères`);
+      
+      const result = await emailService.sendPasswordResetEmail(user.email, resetToken);
+      
+      console.log(`Résultat de l'envoi d'email de récupération à ${user.email}: ${result ? 'Succès' : 'Échec'}`);
+      return result;
     } catch (error) {
-      console.error('Erreur lors de l\'envoi de l\'email de récupération de mot de passe:', error);
+      console.error('Erreur non gérée lors de l\'envoi de l\'email de récupération de mot de passe:');
+      console.error(error);
       return false;
     }
   }

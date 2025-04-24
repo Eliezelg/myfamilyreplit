@@ -19,14 +19,20 @@ export class EmailService {
     // Vérifier que la clé API est définie
     if (!process.env.SENDGRID_API_KEY) {
       console.error('SENDGRID_API_KEY non définie. L\'envoi d\'emails ne fonctionnera pas.');
+    } else {
+      console.log('SENDGRID_API_KEY est définie. Longueur de la clé:', process.env.SENDGRID_API_KEY.length);
     }
     
     this.mailService = new MailService();
     
     // Initialiser SendGrid avec la clé API
     if (process.env.SENDGRID_API_KEY) {
-      this.mailService.setApiKey(process.env.SENDGRID_API_KEY);
-      console.log('Service d\'email initialisé avec succès.');
+      try {
+        this.mailService.setApiKey(process.env.SENDGRID_API_KEY);
+        console.log('Service d\'email initialisé avec succès.');
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation du service d\'email:', error);
+      }
     }
   }
   
@@ -39,19 +45,29 @@ export class EmailService {
       return false;
     }
     
+    console.log(`Préparation de l'envoi d'email à ${params.to} avec sujet: "${params.subject}"`);
+    
     try {
-      await this.mailService.send({
+      const emailData = {
         to: params.to,
         from: this.fromEmail,
         subject: params.subject,
         text: params.text || '',
         html: params.html || '',
-      });
+      };
+      
+      console.log(`Email préparé pour ${params.to}, envoi en cours...`);
+      console.log(`Adresse d'expédition: ${this.fromEmail}`);
+      
+      await this.mailService.send(emailData);
       
       console.log(`Email envoyé avec succès à ${params.to}`);
       return true;
     } catch (error: any) {
       console.error('Erreur lors de l\'envoi de l\'email:', error.message);
+      console.error('Type d\'erreur:', typeof error);
+      console.error('Stack trace:', error.stack);
+      
       if (error.response) {
         console.error('Détails de l\'erreur SendGrid:', error.response.body);
       }
