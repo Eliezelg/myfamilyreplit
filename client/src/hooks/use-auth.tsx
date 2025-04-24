@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], user);
       toast({
         title: "נרשמת בהצלחה",
-        description: `ברוך הבא, ${user.fullName}`,
+        description: `ברוך הבא, ${user.firstName} ${user.lastName}`,
       });
     },
     onError: (error: Error) => {
