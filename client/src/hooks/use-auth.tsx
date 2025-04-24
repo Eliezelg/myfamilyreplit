@@ -65,24 +65,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async (credentials: InsertUser) => {
       console.log("Tentative d'inscription via registerMutation avec:", credentials);
       
-      // Utilisation directe de fetch pour mieux contrôler la requête
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-        credentials: 'include'
-      });
-      
-      console.log("Réponse de l'API d'inscription:", response.status);
-      
-      // Traiter la réponse
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Erreur d'inscription:", errorText);
-        throw new Error(errorText || `Erreur ${response.status}`);
+      try {
+        // Utilisation directe de fetch pour mieux contrôler la requête
+        const response = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(credentials),
+          credentials: 'include'
+        });
+        
+        console.log("Réponse de l'API d'inscription:", response.status);
+        
+        // Traiter la réponse
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Erreur d'inscription:", errorText);
+          throw new Error(errorText || `Erreur ${response.status}`);
+        }
+        
+        const userData = await response.json();
+        console.log("Données utilisateur reçues:", userData);
+        return userData;
+      } catch (error) {
+        console.error("Exception pendant l'inscription:", error);
+        throw error;
       }
-      
-      return await response.json();
     },
     onSuccess: (user: SelectUser) => {
       console.log("Inscription réussie:", user);

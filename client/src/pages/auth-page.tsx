@@ -69,19 +69,14 @@ export default function AuthPage() {
   const onRegisterSubmit = (data: RegisterFormValues) => {
     console.log("Formulaire standard soumis avec:", data);
     
-    // Valider les données du formulaire explicitement
-    if (!data.firstName || !data.lastName || !data.username || !data.email || !data.password) {
-      console.error("Données de formulaire incomplètes:", data);
-      return;
-    }
-
+    // La validation est déjà gérée par le schéma Zod, pas besoin de validation manuelle
     // Retirer confirmPassword et garder les autres données
     const { confirmPassword, ...restData } = data;
     
     console.log("⚡ TENTATIVE D'INSCRIPTION VIA FORMULAIRE STANDARD ⚡");
     console.log("Données du formulaire:", restData);
     
-    // Utiliser la mutation de registerMutation qui a été corrigée
+    // Utiliser la mutation de registerMutation
     registerMutation.mutate(restData);
   };
 
