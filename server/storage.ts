@@ -184,6 +184,11 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     return userService.getUserByEmail(email);
   }
+  
+  // Fonction pour récupérer un utilisateur par son token de réinitialisation
+  async getUserByResetToken(token: string): Promise<User | undefined> {
+    return userService.getUserByResetToken(token);
+  }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     return userService.createUser(insertUser);
@@ -195,6 +200,11 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserPassword(id: number, newPassword: string): Promise<User> {
     return userService.updateUserPassword(id, newPassword);
+  }
+  
+  // Méthode générique pour mettre à jour les données d'un utilisateur
+  async updateUser(id: number, userData: Partial<User>): Promise<User> {
+    return userService.updateUser(id, userData);
   }
 
   // Children operations - Délégués au service
