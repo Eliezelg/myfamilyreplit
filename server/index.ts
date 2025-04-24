@@ -42,8 +42,14 @@ app.use('/api', sanitizeInputs);
 import cookieParser from 'cookie-parser';
 app.use(cookieParser());
 
-// Appliquer la protection CSRF après l'authentification
-app.use('/api', csrfProtection);
+// Appliquer la protection CSRF après l'authentification, mais exclure les routes d'inscription et de réinitialisation
+app.use('/api', (req, res, next) => {
+  // Exclure les routes publiques de la protection CSRF
+  if (req.path === '/register' || req.path.startsWith('/reset-password')) {
+    return next();
+  }
+  return csrfProtection(req, res, next);
+});
 app.use(setupCSRF);
 
 
