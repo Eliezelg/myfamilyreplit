@@ -199,10 +199,11 @@ export default function ProfilePage() {
   // Mutation pour changer le mot de passe
   const changePasswordMutation = useMutation({
     mutationFn: async (data: PasswordFormValues) => {
-      const response = await apiRequest("POST", "/api/profile/password", {
+      const passwordData = {
         currentPassword: data.currentPassword,
         newPassword: data.newPassword,
-      });
+      };
+      const response = await apiRequest("POST", "/api/profile/password", passwordData);
       return response.json();
     },
     onSuccess: () => {

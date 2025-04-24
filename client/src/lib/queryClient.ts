@@ -9,6 +9,7 @@ async function throwIfResNotOk(res: Response) {
 }
 
 export async function apiRequest(
+  method: string,
   url: string,
   data?: unknown | undefined,
   options?: RequestInit,
@@ -18,14 +19,13 @@ export async function apiRequest(
   
   // Préparer les headers avec CSRF token
   const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
     ...(options?.headers as Record<string, string> || {})
   };
   
   if (csrfToken) {
     headers["X-CSRF-Token"] = csrfToken;
   }
-  
-  const method = options?.method || 'GET';
   
   // Combine options while ensuring headers with CSRF token are always included
   const fetchOptions: RequestInit = {
@@ -37,7 +37,7 @@ export async function apiRequest(
   
   // N'ajoutez pas de body pour les requêtes GET ou HEAD
   if (method !== 'GET' && method !== 'HEAD' && data !== undefined) {
-    fetchOptions.body = data as BodyInit;
+    fetchOptions.body = JSON.stringify(data);
   }
 
   const res = await fetch(url, fetchOptions);
