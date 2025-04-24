@@ -23,6 +23,7 @@ import { promoCodeRouter } from "./routes/promo-code-routes"; // Import des rout
 import { subscriptionRouter } from "./routes/subscription-routes"; // Import des routes d'abonnement
 import { emailController } from "./controllers/email-controller"; // Import du contrôleur d'email
 import { registerEmailRoutes } from "./routes/email-routes"; // Import des routes d'email
+import { registerPasswordResetRoutes } from "./routes/password-reset-routes"; // Import des routes de réinitialisation de mot de passe
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -96,6 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerEventRoutes(app); // Enregistrement des routes événement
   registerAdminRoutes(app); // Enregistrement des routes admin
   registerEmailRoutes(app); // Enregistrement des routes d'email
+  registerPasswordResetRoutes(app); // Enregistrement des routes de réinitialisation de mot de passe
   
   // Enregistrement des routes pour les codes promo et abonnements
   app.use('/api/promo-codes', promoCodeRouter);
