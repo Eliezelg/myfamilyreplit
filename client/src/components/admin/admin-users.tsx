@@ -66,7 +66,8 @@ export default function AdminUsers({
     const searchLower = searchTerm.toLowerCase();
     return (
       user.username.toLowerCase().includes(searchLower) ||
-      user.fullName.toLowerCase().includes(searchLower) ||
+      (user.firstName?.toLowerCase() || '').includes(searchLower) ||
+      (user.lastName?.toLowerCase() || '').includes(searchLower) ||
       user.email.toLowerCase().includes(searchLower)
     );
   });
@@ -141,7 +142,7 @@ export default function AdminUsers({
                           {user.profileImage ? (
                             <img
                               src={user.profileImage}
-                              alt={user.fullName}
+                              alt={`${user.firstName || ''} ${user.lastName || ''}`}
                               className="h-8 w-8 rounded-full object-cover"
                             />
                           ) : (
@@ -150,7 +151,7 @@ export default function AdminUsers({
                             </div>
                           )}
                           <div>
-                            <div className="font-medium">{user.fullName}</div>
+                            <div className="font-medium">{user.firstName} {user.lastName}</div>
                             <div className="text-xs text-muted-foreground">@{user.username}</div>
                           </div>
                         </div>

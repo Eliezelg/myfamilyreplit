@@ -685,7 +685,7 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
                         )}
                       </div>
                       <div className="flex-grow">
-                        <p className="font-medium">{member.user?.fullName || member.user?.username || "User"}</p>
+                        <p className="font-medium">{(member.user?.firstName && member.user?.lastName) ? `${member.user.firstName} ${member.user.lastName}` : member.user?.username || "User"}</p>
                         <p className="text-sm text-gray-500">{member.role === "admin" ? "Admin" : "Member"}</p>
                       </div>
                       <div className="flex items-center">

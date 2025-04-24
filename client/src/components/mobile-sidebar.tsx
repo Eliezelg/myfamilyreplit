@@ -55,12 +55,12 @@ export default function MobileSidebar({
                 />
               ) : (
                 <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                  {user.fullName.charAt(0)}
+                  {user.firstName?.charAt(0) || ''}{user.lastName?.charAt(0) || ''}
                 </div>
               )}
             </div>
             <div>
-              <p className="font-medium">{user.fullName}</p>
+              <p className="font-medium">{user.firstName} {user.lastName}</p>
               <p className="text-sm text-gray-500">{user.email}</p>
             </div>
           </div>
