@@ -39,7 +39,9 @@ import { useLocation } from "wouter";
 
 // Schéma de validation pour le formulaire du profil
 const profileSchema = z.object({
-  fullName: z.string().min(1, { message: "השם המלא הוא שדה חובה" }),
+  firstName: z.string().min(1, { message: "השם הפרטי הוא שדה חובה" }),
+  lastName: z.string().min(1, { message: "שם המשפחה הוא שדה חובה" }),
+  fullName: z.string().optional(), // Gardé pour compatibilité
   displayName: z.string().optional(),
   email: z.string().email({ message: "כתובת דוא״ל לא תקינה" }),
   birthDate: z.string().optional(),
@@ -106,6 +108,8 @@ export default function ProfilePage() {
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
       fullName: user?.fullName || "",
       displayName: user?.displayName || "",
       email: user?.email || "",
@@ -482,9 +486,9 @@ export default function ProfilePage() {
                         <Avatar className="h-24 w-24 border-2 border-primary">
                           <AvatarImage 
                             src={photoPreview || user.profileImage || ""} 
-                            alt={user.fullName}
+                            alt={`${user.firstName} ${user.lastName}`}
                           />
-                          <AvatarFallback>{user.fullName.substring(0, 2)}</AvatarFallback>
+                          <AvatarFallback>{user.firstName?.charAt(0) || ''}{user.lastName?.charAt(0) || ''}</AvatarFallback>
                         </Avatar>
                         <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-1">
                           <PenLine className="h-4 w-4" />
@@ -493,19 +497,35 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  <FormField
-                    control={profileForm.control}
-                    name="fullName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>שם מלא</FormLabel>
-                        <FormControl>
-                          <Input dir="rtl" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={profileForm.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>שם פרטי</FormLabel>
+                          <FormControl>
+                            <Input dir="rtl" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={profileForm.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>שם משפחה</FormLabel>
+                          <FormControl>
+                            <Input dir="rtl" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={profileForm.control}
