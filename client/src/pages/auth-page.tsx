@@ -299,6 +299,55 @@ export default function AuthPage() {
                       </Button>
                     </form>
                   </Form>
+                  
+                  <div className="mt-4 p-3 border border-red-300 rounded bg-red-50">
+                    <h3 className="text-sm font-medium text-red-800 mb-2">Test de création d'un utilisateur</h3>
+                    <Button 
+                      onClick={() => {
+                        console.log("🔍 Test de création d'un utilisateur");
+                        const testUser = {
+                          username: "test_"+Date.now(),
+                          email: `test${Date.now()}@example.com`,
+                          password: "Test12345",
+                          firstName: "Prénom",
+                          lastName: "Nom"
+                        };
+                        console.log("Données de test:", testUser);
+                        
+                        fetch('/api/register', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(testUser),
+                          credentials: 'include'
+                        })
+                        .then(res => {
+                          console.log("Statut de la réponse:", res.status);
+                          return res.text().then(text => {
+                            try {
+                              const json = JSON.parse(text);
+                              console.log("Réponse JSON:", json);
+                              return json;
+                            } catch (e) {
+                              console.log("Réponse texte:", text);
+                              throw new Error(text);
+                            }
+                          });
+                        })
+                        .then(data => {
+                          console.log("Utilisateur créé avec succès:", data);
+                          alert("Utilisateur créé avec succès!");
+                          window.location.href = "/";
+                        })
+                        .catch(err => {
+                          console.error("Erreur:", err);
+                          alert("Erreur: " + err.message);
+                        });
+                      }}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Créer un utilisateur de test
+                    </Button>
+                  </div>
                 </CardContent>
                 <CardFooter className="px-0 justify-center">
                   <p className="text-sm text-gray-500">
