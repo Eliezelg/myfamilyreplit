@@ -193,11 +193,15 @@ export default function AdminPromoCodes({
 
   // Gérer la création d'un code promo
   const handleCreatePromoCode = (data: PromoCodeFormValues) => {
-    // Simplification: envoyer les données telles quelles
-    // Notre schéma Zod s'occupera de la conversion des dates
-    console.log('Envoi de données pour création:', data);
+    // S'assurer que le type lifetime a toujours une réduction de 50
+    const formattedData = { ...data };
+    if (formattedData.type === "lifetime") {
+      formattedData.discount = "50";
+    }
     
-    createPromoCodeMutation.mutate(data, {
+    console.log('Envoi de données pour création:', formattedData);
+    
+    createPromoCodeMutation.mutate(formattedData, {
       onSuccess: () => {
         setIsCreateDialogOpen(false);
         toast({
@@ -220,12 +224,16 @@ export default function AdminPromoCodes({
   const handleUpdatePromoCode = (data: PromoCodeFormValues) => {
     if (!selectedPromoCode) return;
 
-    // Simplification: envoyer les données telles quelles
-    // Notre schéma Zod s'occupera de la conversion des dates côté serveur
-    console.log('Envoi de données pour mise à jour:', data);
+    // S'assurer que le type lifetime a toujours une réduction de 50
+    const formattedData = { ...data };
+    if (formattedData.type === "lifetime") {
+      formattedData.discount = "50";
+    }
+    
+    console.log('Envoi de données pour mise à jour:', formattedData);
 
     updatePromoCodeMutation.mutate(
-      { id: selectedPromoCode.id, data: data },
+      { id: selectedPromoCode.id, data: formattedData },
       {
         onSuccess: () => {
           setIsEditDialogOpen(false);
@@ -450,28 +458,36 @@ export default function AdminPromoCodes({
               <FormField
                 control={createForm.control}
                 name="discount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Montant de réduction</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        placeholder={
-                          createForm.watch("type") === "lifetime" ? "50" :
-                          createForm.watch("type") === "percentage" ? "10" : "5"
-                        }
-                        disabled={createForm.watch("type") === "lifetime"}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {createForm.watch("type") === "lifetime" && "Prix fixe de 50₪ pour l'abonnement à vie"}
-                      {createForm.watch("type") === "percentage" && "Pourcentage de réduction"}
-                      {createForm.watch("type") === "fixed" && "Montant en shekels (₪)"}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  // Forcer la valeur à 50 pour le type lifetime
+                  if (createForm.watch("type") === "lifetime" && field.value !== "50") {
+                    field.onChange("50");
+                  }
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Montant de réduction</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number" 
+                          placeholder={
+                            createForm.watch("type") === "lifetime" ? "50" :
+                            createForm.watch("type") === "percentage" ? "10" : "5"
+                          }
+                          disabled={createForm.watch("type") === "lifetime"}
+                          value={createForm.watch("type") === "lifetime" ? "50" : field.value}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {createForm.watch("type") === "lifetime" && "Prix fixe de 50₪ pour l'abonnement à vie"}
+                        {createForm.watch("type") === "percentage" && "Pourcentage de réduction"}
+                        {createForm.watch("type") === "fixed" && "Montant en shekels (₪)"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
@@ -648,28 +664,36 @@ export default function AdminPromoCodes({
               <FormField
                 control={editForm.control}
                 name="discount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Montant de réduction</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        type="number" 
-                        placeholder={
-                          editForm.watch("type") === "lifetime" ? "50" :
-                          editForm.watch("type") === "percentage" ? "10" : "5"
-                        }
-                        disabled={editForm.watch("type") === "lifetime"}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {editForm.watch("type") === "lifetime" && "Prix fixe de 50₪ pour l'abonnement à vie"}
-                      {editForm.watch("type") === "percentage" && "Pourcentage de réduction"}
-                      {editForm.watch("type") === "fixed" && "Montant en shekels (₪)"}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  // Forcer la valeur à 50 pour le type lifetime
+                  if (editForm.watch("type") === "lifetime" && field.value !== "50") {
+                    field.onChange("50");
+                  }
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Montant de réduction</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number" 
+                          placeholder={
+                            editForm.watch("type") === "lifetime" ? "50" :
+                            editForm.watch("type") === "percentage" ? "10" : "5"
+                          }
+                          disabled={editForm.watch("type") === "lifetime"}
+                          value={editForm.watch("type") === "lifetime" ? "50" : field.value}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {editForm.watch("type") === "lifetime" && "Prix fixe de 50₪ pour l'abonnement à vie"}
+                        {editForm.watch("type") === "percentage" && "Pourcentage de réduction"}
+                        {editForm.watch("type") === "fixed" && "Montant en shekels (₪)"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
