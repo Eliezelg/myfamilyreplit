@@ -120,8 +120,22 @@ export class UserService {
    * Crée un nouvel utilisateur
    */
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
+    console.log("[UserService] Création d'un nouvel utilisateur:", {
+      username: insertUser.username,
+      email: insertUser.email,
+      firstName: insertUser.firstName,
+      lastName: insertUser.lastName,
+      fullName: insertUser.fullName
+    });
+    
+    try {
+      const [user] = await db.insert(users).values(insertUser).returning();
+      console.log("[UserService] Utilisateur créé avec succès:", user.id);
+      return user;
+    } catch (error) {
+      console.error("[UserService] Erreur lors de la création de l'utilisateur:", error);
+      throw error;
+    }
   }
 
   /**
