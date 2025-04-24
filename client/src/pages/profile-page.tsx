@@ -123,8 +123,10 @@ export default function ProfilePage() {
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
       // Assurez-vous que birthDate est correctement formaté ou null
+      // Et synchronisez fullName avec firstName et lastName pour la compatibilité
       const formattedData = {
         ...data,
+        fullName: `${data.firstName} ${data.lastName}`.trim(), // Maintenir fullName à jour
         birthDate: data.birthDate && data.birthDate.trim() !== "" 
           ? new Date(data.birthDate).toISOString() 
           : null,
