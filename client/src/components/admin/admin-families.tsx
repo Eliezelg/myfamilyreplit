@@ -233,7 +233,7 @@ export default function AdminFamilies({
                                                       {member.user?.profileImage ? (
                                                         <img
                                                           src={member.user.profileImage}
-                                                          alt={member.user.fullName}
+                                                          alt={`${member.user.firstName || ''} ${member.user.lastName || ''}`}
                                                           className="h-8 w-8 rounded-full object-cover"
                                                         />
                                                       ) : (
@@ -242,7 +242,7 @@ export default function AdminFamilies({
                                                         </div>
                                                       )}
                                                       <div>
-                                                        <div className="font-medium">{member.user?.fullName}</div>
+                                                        <div className="font-medium">{member.user?.firstName} {member.user?.lastName}</div>
                                                         <div className="text-xs text-muted-foreground">
                                                           {member.user?.email}
                                                         </div>

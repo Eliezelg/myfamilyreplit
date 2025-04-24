@@ -229,7 +229,7 @@ export default function AdminUsers({
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmation de suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur <strong>{userToDelete?.fullName}</strong> ?
+              Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur <strong>{userToDelete?.firstName} {userToDelete?.lastName}</strong> ?
               <br /><br />
               Cette action est irréversible et supprimera également toutes les données associées à cet utilisateur :
               <ul className="list-disc list-inside mt-2">

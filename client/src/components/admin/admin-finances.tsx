@@ -60,7 +60,8 @@ export default function AdminFinances({
       const searchLower = searchTerm.toLowerCase();
       return (
         (tx.description && tx.description.toLowerCase().includes(searchLower)) ||
-        (tx.user && tx.user.fullName && tx.user.fullName.toLowerCase().includes(searchLower)) ||
+        (tx.user && ((tx.user.firstName && tx.user.firstName.toLowerCase().includes(searchLower)) || 
+        (tx.user.lastName && tx.user.lastName.toLowerCase().includes(searchLower)))) ||
         (tx.type && tx.type.toLowerCase().includes(searchLower))
       );
     })
@@ -255,7 +256,7 @@ export default function AdminFinances({
                             {tx.user.profileImage ? (
                               <img
                                 src={tx.user.profileImage}
-                                alt={tx.user.fullName}
+                                alt={`${tx.user.firstName || ''} ${tx.user.lastName || ''}`}
                                 className="h-6 w-6 rounded-full object-cover"
                               />
                             ) : (
