@@ -8,10 +8,10 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  // Garder fullName pour compatibilité tout en ajoutant firstName et lastName
-  fullName: text("full_name").notNull(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
+  // fullName n'est plus utilisé, mais gardé dans le schéma pour compatibilité avec les données existantes
+  fullName: text("full_name"),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
   displayName: text("display_name"),
   email: text("email").notNull(),
   profileImage: text("profile_image"),
@@ -25,13 +25,14 @@ export const users = pgTable("users", {
 
 export const insertUserSchema = createInsertSchema(users)
   .extend({
-    // Ajouter une validation pour firstName et lastName
+    // Validation pour firstName et lastName
     firstName: z.string().min(1, "Le prénom est requis"),
     lastName: z.string().min(1, "Le nom de famille est requis")
   })
   .omit({
     id: true,
     createdAt: true,
+    fullName: true, // Omettre fullName car il sera généré à partir de firstName et lastName
   });
 
 // Family model

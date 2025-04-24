@@ -124,8 +124,7 @@ export class UserService {
       username: insertUser.username,
       email: insertUser.email,
       firstName: insertUser.firstName,
-      lastName: insertUser.lastName,
-      fullName: insertUser.fullName
+      lastName: insertUser.lastName
     });
     
     try {

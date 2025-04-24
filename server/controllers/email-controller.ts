@@ -39,7 +39,11 @@ export class EmailController {
    */
   async sendWelcomeEmail(user: User) {
     try {
-      await emailService.sendWelcomeEmail(user.email, user.fullName || user.username);
+      const displayName = user.firstName && user.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user.username;
+      
+      await emailService.sendWelcomeEmail(user.email, displayName);
       console.log(`Email de bienvenue envoyé à ${user.email}`);
       return true;
     } catch (error) {
@@ -85,9 +89,13 @@ export class EmailController {
    */
   async sendFamilyCreationConfirmation(user: User, family: Family) {
     try {
+      const displayName = user.firstName && user.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user.username;
+      
       await emailService.sendFamilyCreationConfirmation(
         user.email, 
-        user.fullName || user.username, 
+        displayName, 
         family.name
       );
       console.log(`Email de confirmation de création de famille envoyé à ${user.email}`);
@@ -103,9 +111,13 @@ export class EmailController {
    */
   async sendFamilyJoinConfirmation(user: User, family: Family) {
     try {
+      const displayName = user.firstName && user.lastName 
+        ? `${user.firstName} ${user.lastName}` 
+        : user.username;
+      
       await emailService.sendFamilyJoinConfirmation(
         user.email, 
-        user.fullName || user.username, 
+        displayName, 
         family.name
       );
       console.log(`Email de confirmation de rejoindre une famille envoyé à ${user.email}`);

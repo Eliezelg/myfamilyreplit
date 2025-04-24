@@ -200,23 +200,19 @@ export function setupAuth(app: Express) {
       console.log("- firstName:", firstName);
       console.log("- lastName:", lastName);
       
-      // Générer le fullName à partir de firstName et lastName, ou utiliser celui fourni
-      // Si ni firstName ni lastName ne sont fournis, utiliser le nom d'utilisateur
-      let fullName = req.body.fullName;
-      if (!fullName && (firstName || lastName)) {
-        fullName = `${firstName} ${lastName}`.trim();
-      }
-      if (!fullName) {
-        fullName = normalizedUsername;
+      // Valider que firstName et lastName sont présents
+      if (!firstName || !lastName) {
+        console.log("Erreur: firstName ou lastName manquant");
+        return res.status(400).send("Les champs prénom et nom sont obligatoires");
       }
       
-      console.log("- fullName généré:", fullName);
+      console.log("- firstName:", firstName);
+      console.log("- lastName:", lastName);
 
       const user = await storage.createUser({
         ...req.body,
         username: normalizedUsername,
         email: normalizedEmail,
-        fullName: fullName,
         firstName: firstName,
         lastName: lastName,
         password: await hashPassword(req.body.password),
