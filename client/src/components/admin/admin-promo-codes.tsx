@@ -193,14 +193,11 @@ export default function AdminPromoCodes({
 
   // Gérer la création d'un code promo
   const handleCreatePromoCode = (data: PromoCodeFormValues) => {
-    // Assurons-nous que les dates sont bien formatées
-    const formattedData = {
-      ...data,
-      startDate: data.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
-      endDate: data.endDate ? new Date(data.endDate).toISOString() : null
-    };
-
-    createPromoCodeMutation.mutate(formattedData, {
+    // Simplification: envoyer les données telles quelles
+    // Notre schéma Zod s'occupera de la conversion des dates
+    console.log('Envoi de données pour création:', data);
+    
+    createPromoCodeMutation.mutate(data, {
       onSuccess: () => {
         setIsCreateDialogOpen(false);
         toast({
@@ -223,15 +220,12 @@ export default function AdminPromoCodes({
   const handleUpdatePromoCode = (data: PromoCodeFormValues) => {
     if (!selectedPromoCode) return;
 
-    // Assurons-nous que les dates sont bien formatées
-    const formattedData = {
-      ...data,
-      startDate: data.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
-      endDate: data.endDate ? new Date(data.endDate).toISOString() : null
-    };
+    // Simplification: envoyer les données telles quelles
+    // Notre schéma Zod s'occupera de la conversion des dates côté serveur
+    console.log('Envoi de données pour mise à jour:', data);
 
     updatePromoCodeMutation.mutate(
-      { id: selectedPromoCode.id, data: formattedData },
+      { id: selectedPromoCode.id, data: data },
       {
         onSuccess: () => {
           setIsEditDialogOpen(false);
