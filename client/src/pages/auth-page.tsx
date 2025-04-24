@@ -67,7 +67,7 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
-    console.log("Formulaire soumis avec:", data);
+    console.log("Formulaire standard soumis avec:", data);
     
     // Valider les données du formulaire explicitement
     if (!data.firstName || !data.lastName || !data.username || !data.email || !data.password) {
@@ -78,34 +78,11 @@ export default function AuthPage() {
     // Retirer confirmPassword et garder les autres données
     const { confirmPassword, ...restData } = data;
     
-    console.log("⚡ TENTATIVE D'INSCRIPTION ⚡");
-    console.log("Données du formulaire d'inscription:", restData);
+    console.log("⚡ TENTATIVE D'INSCRIPTION VIA FORMULAIRE STANDARD ⚡");
+    console.log("Données du formulaire:", restData);
     
-    // Méthode alternative de soumission utilisant fetch directement
-    fetch('/api/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(restData),
-      credentials: 'include'
-    })
-    .then(res => {
-      console.log("Réponse status:", res.status);
-      if (!res.ok) {
-        console.error("Erreur d'inscription:", res.statusText);
-        throw new Error(`Erreur ${res.status}: ${res.statusText}`);
-      }
-      return res.json();
-    })
-    .then(user => {
-      console.log("Inscription réussie:", user);
-      // Rediriger vers la page d'accueil
-      window.location.href = "/";
-    })
-    .catch(err => {
-      console.error("Erreur lors de l'inscription:", err);
-    });
+    // Utiliser la mutation de registerMutation qui a été corrigée
+    registerMutation.mutate(restData);
   };
 
   return (

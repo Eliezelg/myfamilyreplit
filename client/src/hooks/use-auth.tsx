@@ -63,10 +63,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      return await res.json();
+      console.log("Tentative d'inscription via registerMutation avec:", credentials);
+      
+      // Utilisation directe de fetch pour mieux contrôler la requête
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+        credentials: 'include'
+      });
+      
+      console.log("Réponse de l'API d'inscription:", response.status);
+      
+      // Traiter la réponse
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Erreur d'inscription:", errorText);
+        throw new Error(errorText || `Erreur ${response.status}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: (user: SelectUser) => {
+      console.log("Inscription réussie:", user);
+      
       // Vider tous les caches précédents pour assurer une isolation complète entre utilisateurs
       queryClient.removeQueries({ queryKey: ["/api/families"] });
       queryClient.removeQueries({ predicate: (query) => {
@@ -82,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("Erreur d'inscription (mutation):", error);
       toast({
         title: "הרשמה נכשלה",
         description: error.message,
