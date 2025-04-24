@@ -30,13 +30,12 @@ class R2StorageService {
       },
       forcePathStyle: true,
       tls: true,
+      retryMode: "standard", // Utilisation du mode de retry standard du SDK AWS v3
+      maxAttempts: 3, // Nombre de tentatives maximum
       requestHandler: {
         httpOptions: {
           timeout: 30000, // Prolonger le délai d'attente pour les requêtes
         }
-      },
-      retryStrategy: {
-        maxAttempts: 3 // Tentatives de connexion supplémentaires
       }
     });
 
