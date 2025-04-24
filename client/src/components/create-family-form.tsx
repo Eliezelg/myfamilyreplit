@@ -268,9 +268,9 @@ export default function CreateFamilyForm({ onSuccess }: CreateFamilyFormProps) {
       amount: promoValidation?.isValid && promoValidation?.isLifetime 
         ? LIFETIME_PRICE 
         : SUBSCRIPTION_PRICE,
-      subscriptionType: promoValidation?.isValid && promoValidation?.isLifetime 
+      subscriptionType: (promoValidation?.isValid && promoValidation?.isLifetime 
         ? 'lifetime' 
-        : 'regular',
+        : 'regular') as 'lifetime' | 'regular',
       promoCode: (familyData.promoCode && promoValidation?.isValid) 
         ? familyData.promoCode 
         : undefined,

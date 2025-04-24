@@ -227,13 +227,17 @@ export function CreditCardForm({
               />
 
               <Button 
-                type="submit" 
+                type={onButtonClick ? "button" : "submit"}
                 className="w-full" 
-                disabled={disabled || storeCardMutation.isPending || loading}
+                disabled={buttonDisabled !== undefined ? buttonDisabled : disabled || storeCardMutation.isPending || loading}
+                onClick={onButtonClick && storedCardInfo ? (e) => {
+                  e.preventDefault();
+                  onButtonClick();
+                } : undefined}
               >
-                {storeCardMutation.isPending ? (
+                {(storeCardMutation.isPending || showSpinner) ? (
                   <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
+                ) : buttonIcon || null}
                 {buttonText}
               </Button>
             </form>
@@ -249,6 +253,19 @@ export function CreditCardForm({
                 Expire {storedCardInfo.expiration.slice(0, 2)}/{storedCardInfo.expiration.slice(2, 4)}
               </p>
             </div>
+            
+            {onButtonClick && (
+              <Button 
+                onClick={onButtonClick}
+                className="w-full mt-4" 
+                disabled={buttonDisabled}
+              >
+                {showSpinner ? (
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                ) : buttonIcon || null}
+                {buttonText}
+              </Button>
+            )}
           </div>
         ) : null}
       </CardContent>
