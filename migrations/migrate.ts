@@ -54,6 +54,27 @@ async function migrate() {
       END $$;
     `);
     console.log("✓ Added password reset columns to users table (if they didn't exist)");
+    
+    // 4. Add firstName and lastName columns to users table if they don't exist
+    await db.execute(sql`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'first_name'
+        ) THEN 
+          ALTER TABLE users ADD COLUMN first_name text;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT FROM information_schema.columns 
+          WHERE table_name = 'users' AND column_name = 'last_name'
+        ) THEN 
+          ALTER TABLE users ADD COLUMN last_name text;
+        END IF;
+      END $$;
+    `);
+    console.log("✓ Added firstName and lastName columns to users table (if they didn't exist)");
 
     // 4. Create admin_logs table if it doesn't exist
     await db.execute(sql`
