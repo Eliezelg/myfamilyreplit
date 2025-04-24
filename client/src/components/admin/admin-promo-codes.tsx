@@ -75,7 +75,7 @@ const promoCodeSchema = z.object({
   ]),
   isActive: z.boolean().default(true),
   startDate: z.string(),
-  endDate: z.string().optional(),
+  endDate: z.string().optional().nullable(),
 });
 
 type PromoCodeFormValues = z.infer<typeof promoCodeSchema>;
@@ -193,12 +193,27 @@ export default function AdminPromoCodes({
 
   // Gérer la création d'un code promo
   const handleCreatePromoCode = (data: PromoCodeFormValues) => {
-    createPromoCodeMutation.mutate(data, {
+    // Assurons-nous que les dates sont bien formatées
+    const formattedData = {
+      ...data,
+      startDate: data.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
+      endDate: data.endDate ? new Date(data.endDate).toISOString() : null
+    };
+
+    createPromoCodeMutation.mutate(formattedData, {
       onSuccess: () => {
         setIsCreateDialogOpen(false);
         toast({
           title: "Code promo créé",
           description: "Le code promo a été créé avec succès",
+        });
+      },
+      onError: (error) => {
+        console.error("Erreur création code promo:", error);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors de la création du code promo",
+          variant: "destructive",
         });
       }
     });
@@ -208,14 +223,29 @@ export default function AdminPromoCodes({
   const handleUpdatePromoCode = (data: PromoCodeFormValues) => {
     if (!selectedPromoCode) return;
 
+    // Assurons-nous que les dates sont bien formatées
+    const formattedData = {
+      ...data,
+      startDate: data.startDate ? new Date(data.startDate).toISOString() : new Date().toISOString(),
+      endDate: data.endDate ? new Date(data.endDate).toISOString() : null
+    };
+
     updatePromoCodeMutation.mutate(
-      { id: selectedPromoCode.id, data },
+      { id: selectedPromoCode.id, data: formattedData },
       {
         onSuccess: () => {
           setIsEditDialogOpen(false);
           toast({
             title: "Code promo mis à jour",
             description: "Le code promo a été mis à jour avec succès",
+          });
+        },
+        onError: (error) => {
+          console.error("Erreur mise à jour code promo:", error);
+          toast({
+            title: "Erreur",
+            description: "Une erreur est survenue lors de la mise à jour du code promo",
+            variant: "destructive",
           });
         }
       }
