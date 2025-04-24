@@ -66,6 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("Tentative d'inscription via registerMutation avec:", credentials);
       
       try {
+        // Arrêt forcé des requêtes précédentes potentiellement en cours
+        if (window.abortController) {
+          window.abortController.abort();
+        }
+        window.abortController = new AbortController();
+        
         // Vérification de la structure des données avant envoi
         if (!credentials.username || !credentials.password || !credentials.email || 
             !credentials.firstName || !credentials.lastName) {
