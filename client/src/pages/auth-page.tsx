@@ -68,9 +68,17 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = (data: RegisterFormValues) => {
-    // Remove confirmPassword as it's not part of the user schema
-    const { confirmPassword, ...userData } = data;
-    registerMutation.mutate(userData);
+    // Retirer confirmPassword et combiner firstName et lastName pour fullName
+    const { confirmPassword, firstName, lastName, ...restData } = data;
+    
+    // Créer le nom complet à partir du prénom et du nom
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    // Envoyer les données avec le nom complet
+    registerMutation.mutate({
+      ...restData,
+      fullName: fullName,
+    });
   };
 
   return (
@@ -173,19 +181,34 @@ export default function AuthPage() {
                 <CardContent className="px-0">
                   <Form {...registerForm}>
                     <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                      <FormField
-                        control={registerForm.control}
-                        name="fullName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>שם מלא</FormLabel>
-                            <FormControl>
-                              <Input placeholder="הזן שם מלא" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={registerForm.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>שם פרטי</FormLabel>
+                              <FormControl>
+                                <Input placeholder="הזן שם פרטי" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={registerForm.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>שם משפחה</FormLabel>
+                              <FormControl>
+                                <Input placeholder="הזן שם משפחה" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       <FormField
                         control={registerForm.control}
                         name="email"
