@@ -38,11 +38,14 @@ export const families = pgTable("families", {
   name: text("name").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   imageUrl: text("image_url"),
+  emailAlias: text("email_alias").unique(),
 });
 
 export const insertFamilySchema = createInsertSchema(families).omit({
   id: true,
   createdAt: true,
+}).extend({
+  emailAlias: z.string().optional(),
 });
 
 // FamilyMembers model (joining users and families)

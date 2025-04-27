@@ -4,8 +4,26 @@ import { User, Family } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { X, Home, Newspaper, Image, Settings, Users, Bell, PlusCircle, UserPlus, User as UserIcon } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { 
+  X, 
+  Home, 
+  Newspaper, 
+  Image, 
+  Settings, 
+  Users, 
+  Bell, 
+  PlusCircle, 
+  UserPlus, 
+  User as UserIcon,
+  LogOut,
+  Calendar,
+  CreditCard,
+  Menu,
+  ChevronRight
+} from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -34,192 +52,160 @@ export default function MobileSidebar({
   if (!isOpen) return null;
   
   return (
-    <div className="md:hidden fixed inset-0 bg-black bg-opacity-30 z-40 flex">
-      <div className="absolute inset-y-0 right-0 w-72 bg-white shadow-lg py-4 px-3 overflow-y-auto">
-        <div className="flex justify-between items-center mb-6 px-3">
-          <h3 className="text-lg font-bold">תפריט</h3>
+    <div className="fixed inset-0 bg-black/50 z-50 flex">
+      <div className="absolute inset-y-0 right-0 w-72 bg-background shadow-xl flex flex-col">
+        <div className="flex justify-between items-center p-4 border-b">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">
+              M
+            </div>
+            <h1 className="text-xl font-bold">MyFamily</h1>
+          </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </Button>
         </div>
         
         {/* User Info */}
         {user && (
-          <div className="px-3 py-2 mb-6 flex items-center gap-3 border-b border-neutral-200 pb-4">
-            <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden">
-              {user.profileImage ? (
-                <img 
-                  src={user.profileImage} 
-                  alt="תמונת פרופיל" 
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full flex items-center justify-center bg-primary text-white font-bold">
-                  {user.firstName?.charAt(0) || ''}{user.lastName?.charAt(0) || ''}
-                </div>
-              )}
-            </div>
-            <div>
-              <p className="font-medium">{user.firstName} {user.lastName}</p>
-              <p className="text-sm text-gray-500">{user.email}</p>
+          <div className="p-4 border-b">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10 border">
+                <AvatarImage src={user.profileImage || ""} alt={user.username} />
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {user.firstName?.charAt(0) || user.username?.charAt(0) || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{user.firstName} {user.lastName}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
             </div>
           </div>
         )}
         
-        {/* Families Section */}
-        {families && families.length > 0 && (
-          <div className="mb-4">
-            <Accordion type="single" collapsible className="w-full" defaultValue="families">
-              <AccordionItem value="families" className="border-none">
-                <AccordionTrigger className="py-2 px-3 hover:bg-gray-50 rounded-md">
-                  <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5" />
-                    <span>המשפחות שלי</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="pr-5 pl-2 pb-2 space-y-1">
-                    {families.map((family) => (
-                      <Link 
-                        key={family.id} 
-                        href="/"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (onFamilySelect) {
-                            onFamilySelect(family.id);
-                          }
-                          onClose();
-                        }}
-                        className="block py-2 px-3 text-sm rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                      >
-                        {family.name}
-                      </Link>
-                    ))}
-                    
-                    <div className="mt-2 pt-2 border-t border-gray-100">
-                      <Link 
-                        href="/" 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (onAddFamilyClick) {
-                            onAddFamilyClick();
-                          }
-                          onClose();
-                        }}
-                        className="flex items-center gap-2 py-2 px-3 text-sm text-primary rounded-md hover:bg-primary/5 transition-colors"
-                      >
-                        <PlusCircle className="w-4 h-4" />
-                        <span>צור משפחה חדשה</span>
-                      </Link>
-                      
-                      <Link 
-                        href="/join-family" 
-                        onClick={(e) => {
-                          onClose();
-                        }}
-                        className="flex items-center gap-2 py-2 px-3 text-sm text-primary rounded-md hover:bg-primary/5 transition-colors"
-                      >
-                        <UserPlus className="w-4 h-4" />
-                        <span>הצטרף למשפחה</span>
-                      </Link>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+        <ScrollArea className="flex-1 p-4">
+          {/* Main Navigation */}
+          <div className="space-y-1 mb-6">
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/">
+                <Home className="mr-2 h-4 w-4" />
+                Dashboard
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/profile">
+                <UserIcon className="mr-2 h-4 w-4" />
+                Profile
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/photos">
+                <Image className="mr-2 h-4 w-4" />
+                Photos
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/events">
+                <Calendar className="mr-2 h-4 w-4" />
+                Events
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/gazettes">
+                <Newspaper className="mr-2 h-4 w-4" />
+                Gazettes
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/fund">
+                <CreditCard className="mr-2 h-4 w-4" />
+                Family Fund
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/members">
+                <Users className="mr-2 h-4 w-4" />
+                Members
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/notifications">
+                <Bell className="mr-2 h-4 w-4" />
+                Notifications
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Link>
+            </Button>
           </div>
-        )}
-        
-        {/* Mobile Nav */}
-        <nav>
-          <ul className="space-y-2">
-            <li>
-              <Link 
-                href="/" 
-                onClick={() => onClose()}
-                className="flex items-center gap-3 px-3 py-2 text-primary rounded-md bg-primary bg-opacity-10"
-              >
-                <Home className="w-5 h-5" />
-                בית
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/gazette" 
-                onClick={() => onClose()} 
-                className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md"
-              >
-                <Newspaper className="w-5 h-5" />
-                הגזטה שלי
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/photos" 
-                onClick={() => onClose()}
-                className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md"
-              >
-                <Image className="w-5 h-5" />
-                התמונות שלי
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/family-management" 
-                onClick={() => onClose()}
-                className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md"
-              >
-                <Users className="w-5 h-5" />
-                ניהול משפחה
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/notifications" 
-                onClick={() => onClose()}
-                className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md"
-              >
-                <Bell className="w-5 h-5" />
-                התראות
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/profile" 
-                onClick={() => onClose()}
-                className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md"
-              >
-                <UserIcon className="w-5 h-5" />
-                פרופיל
-              </Link>
-            </li>
-            <li>
-              <Link 
-                href="/settings" 
-                onClick={() => onClose()}
-                className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-md"
-              >
-                <Settings className="w-5 h-5" />
-                הגדרות
-              </Link>
-            </li>
-            <li>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start px-3 py-2 hover:bg-gray-100 rounded-md"
-                onClick={() => {
-                  logoutMutation.mutate();
-                  onClose();
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                התנתק
+          
+          <Separator className="my-4" />
+          
+          {/* Families Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">MY FAMILIES</h3>
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onAddFamilyClick}>
+                <PlusCircle className="h-4 w-4" />
               </Button>
-            </li>
-          </ul>
-        </nav>
+            </div>
+            
+            <div className="space-y-1">
+              {families?.map((family) => (
+                <Button
+                  key={family.id}
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    if (onFamilySelect) {
+                      onFamilySelect(family.id);
+                      onClose();
+                    }
+                  }}
+                >
+                  <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center mr-2">
+                    {family.imageUrl ? (
+                      <img src={family.imageUrl} alt={family.name} className="h-5 w-5 rounded-full" />
+                    ) : (
+                      <Home className="h-3 w-3 text-primary" />
+                    )}
+                  </div>
+                  <span className="truncate">{family.name}</span>
+                </Button>
+              ))}
+              
+              <Button variant="outline" size="sm" className="w-full mt-2" onClick={onAddFamilyClick}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create New Family
+              </Button>
+              
+              <Button variant="outline" size="sm" className="w-full mt-2" asChild>
+                <Link href="/join-family">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Join Family
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </ScrollArea>
+        
+        <div className="p-4 border-t">
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={() => {
+              logoutMutation.mutate();
+              onClose();
+            }}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -3,10 +3,32 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Family, Photo, FamilyMember, Event, FamilyFund, FundTransaction, Recipient, User, Gazette } from "@shared/schema";
-import { Calendar, Image, Users, CalendarIcon, PlusCircle, Eye, HelpCircle, Link, UserPlus, Download, RefreshCw, FileDown, Newspaper, Settings, Plus } from "lucide-react";
+import { 
+  Calendar, 
+  Image, 
+  Users, 
+  CalendarIcon, 
+  PlusCircle, 
+  Eye, 
+  Link, 
+  UserPlus, 
+  Download, 
+  RefreshCw, 
+  FileDown, 
+  Newspaper, 
+  Settings, 
+  Plus,
+  ArrowRight,
+  BarChart,
+  Wallet,
+  Clock,
+  ChevronRight,
+  MoreHorizontal,
+  Loader2
+} from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import InviteFamilyModal from "./invite-family-modal";
 import { FamilyFundManager } from "./family-fund-manager";
@@ -14,6 +36,7 @@ import AddEventForm from "./add-event-form";
 import PhotoViewerModal from "./photo-viewer-modal";
 import PhotosViewerModal from "./photos-viewer-modal";
 import EventsViewerModal from "./events-viewer-modal";
+import FamilyEmailSettings from "./family-email-settings";
 import { format, parse } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -205,6 +228,11 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
     return formatter.format(amount / 100); // Convert from cents to actual currency
   };
   
+  // Vérifier si l'utilisateur actuel est administrateur de la famille
+  // Note: nous utilisons le premier membre admin pour le moment comme exemple
+  // Dans une implémentation réelle, il faudrait obtenir l'ID de l'utilisateur connecté
+  const isAdmin = members?.some(member => member.role === "admin") || false;
+
   // Indicateur de chargement global
   const isAnyLoading = familyLoading || photosLoading || membersLoading || fundLoading || 
                         transactionsLoading || eventsLoading || recipientsLoading || gazettesLoading || isPending;
@@ -737,6 +765,9 @@ export default function FamilyDashboard({ familyId, familyName, onUploadClick }:
               </div>
             </CardContent>
           </Card>
+          
+          {/* Email Settings */}
+          <FamilyEmailSettings familyId={familyId} isAdmin={isAdmin} />
           
           {/* Available Gazettes */}
           <Card>

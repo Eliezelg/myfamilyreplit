@@ -1,6 +1,7 @@
 import { db } from "../server/db";
 import { adminLogs, users } from "../shared/schema";
 import { sql } from "drizzle-orm";
+import { addEmailAliasToFamilies } from "./add-email-alias-to-families";
 
 async function migrate() {
   console.log("Starting database migration...");
@@ -109,7 +110,12 @@ async function migrate() {
       console.log("✓ Admin user already exists");
     }
 
-    console.log("Migration completed successfully!");
+    // Ajouter le champ emailAlias à la table families
+    await addEmailAliasToFamilies();
+    console.log("✓ Added emailAlias column to families table (if it didn't exist)");
+
+    // Fin de la migration
+    console.log("Database migration completed successfully!");
   } catch (error) {
     console.error("Migration failed:", error);
   } finally {

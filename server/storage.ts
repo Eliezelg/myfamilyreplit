@@ -47,8 +47,11 @@ export interface IStorage {
 
   // Family operations
   getFamily(id: number): Promise<Family | undefined>;
+  getFamilyById(id: number): Promise<Family | undefined>;
+  getFamilyByEmailAlias(emailAlias: string): Promise<Family | undefined>;
   getFamiliesForUser(userId: number): Promise<Family[]>;
   createFamily(family: InsertFamily, userId: number): Promise<Family>;
+  updateFamilyEmailAlias(familyId: number, emailAlias: string): Promise<Family>;
 
   // Family member operations
   getFamilyMembers(familyId: number): Promise<(FamilyMember & { user?: User })[]>;
@@ -185,6 +188,10 @@ export class DatabaseStorage implements IStorage {
     return userService.getUserByEmail(email);
   }
   
+  async getUserById(id: number): Promise<User | undefined> {
+    return this.getUser(id);
+  }
+  
   // Fonction pour récupérer un utilisateur par son token de réinitialisation
   async getUserByResetToken(token: string): Promise<User | undefined> {
     return userService.getUserByResetToken(token);
@@ -233,6 +240,15 @@ export class DatabaseStorage implements IStorage {
     const [family] = await db.select().from(families).where(eq(families.id, id));
     return family || undefined;
   }
+  
+  async getFamilyById(id: number): Promise<Family | undefined> {
+    return this.getFamily(id);
+  }
+  
+  async getFamilyByEmailAlias(emailAlias: string): Promise<Family | undefined> {
+    const [family] = await db.select().from(families).where(eq(families.emailAlias, emailAlias));
+    return family || undefined;
+  }
 
   async getFamiliesForUser(userId: number): Promise<Family[]> {
     const result = await db
@@ -263,6 +279,15 @@ export class DatabaseStorage implements IStorage {
     });
 
     return newFamily;
+  }
+  
+  async updateFamilyEmailAlias(familyId: number, emailAlias: string): Promise<Family> {
+    const [updatedFamily] = await db.update(families)
+      .set({ emailAlias })
+      .where(eq(families.id, familyId))
+      .returning();
+    
+    return updatedFamily;
   }
 
   // Family member operations - Délégués au service

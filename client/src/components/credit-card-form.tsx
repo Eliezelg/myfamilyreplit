@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -11,42 +13,28 @@ import { useToast } from "@/hooks/use-toast";
 import { LoaderCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
-// Schéma de validation pour le formulaire de carte de crédit
+// Schéma de validation pour la carte de crédit
 const creditCardSchema = z.object({
-  cardNumber: z.string()
-    .min(13, "Le numéro de carte doit comporter au moins 13 chiffres")
-    .max(19, "Le numéro de carte doit comporter au maximum 19 chiffres")
-    .regex(/^\d+$/, "Le numéro de carte doit contenir uniquement des chiffres"),
-  
-  expDate: z.string()
-    .min(4, "La date d'expiration doit être au format MMYY")
-    .max(4, "La date d'expiration doit être au format MMYY")
-    .regex(/^\d{4}$/, "La date d'expiration doit contenir 4 chiffres (MMYY)")
-    .refine((val) => {
-      const month = parseInt(val.substring(0, 2));
-      return month >= 1 && month <= 12;
-    }, "Le mois doit être entre 01 et 12"),
-  
-  cvv: z.string()
-    .min(3, "Le code CVV doit comporter au moins 3 chiffres")
-    .max(4, "Le code CVV doit comporter au maximum 4 chiffres")
-    .regex(/^\d+$/, "Le code CVV doit contenir uniquement des chiffres"),
-  
-  holderId: z.string()
-    .optional(),
+  cardNumber: z.string().regex(/^[0-9]{16}$/, {
+    message: "Le numéro de carte doit contenir 16 chiffres",
+  }),
+  expDate: z.string().regex(/^(0[1-9]|1[0-2])\d{2}$/, {
+    message: "La date d'expiration doit être au format MMYY",
+  }),
+  cvv: z.string().regex(/^[0-9]{3,4}$/, {
+    message: "Le code CVV doit contenir 3 ou 4 chiffres",
+  }),
+  holderId: z.string().optional(),
 });
 
 export type CreditCardFormValues = z.infer<typeof creditCardSchema>;
 
-// Types pour les données de réponse
-interface StoredCardResponse {
-  success: boolean;
-  card: {
-    cardNumberMask: string;
-    expiration: string;
-    token: string;
-  };
-}
+// Type pour le résultat du stockage de la carte
+type CardSavedResult = {
+  cardNumberMask: string; // les 4 derniers chiffres
+  expiration: string;
+  token: string;
+};
 
 interface CreditCardFormProps {
   onCardSaved: (cardData: { 
@@ -66,7 +54,7 @@ interface CreditCardFormProps {
 
 export function CreditCardForm({ 
   onCardSaved, 
-  buttonText = "Sauvegarder la carte", 
+  buttonText = "Payer", 
   title = "Informations de paiement",
   loading = false,
   disabled = false,
@@ -76,7 +64,6 @@ export function CreditCardForm({
   showSpinner = false
 }: CreditCardFormProps) {
   const { toast } = useToast();
-  const [showForm, setShowForm] = useState(true);
   const [storedCardInfo, setStoredCardInfo] = useState<{
     cardNumberMask: string;
     expiration: string;
@@ -94,55 +81,69 @@ export function CreditCardForm({
     },
   });
 
-  // Mutation pour enregistrer la carte
+  // Mutation pour stocker la carte
   const storeCardMutation = useMutation({
     mutationFn: async (data: CreditCardFormValues) => {
-      const response = await apiRequest("POST", "/api/payments/store-card", {
-        cardDetails: {
-          cardNumber: data.cardNumber,
-          expDate: data.expDate,
-          cvv: data.cvv,
-          holderId: data.holderId || undefined,
-        },
+      // Simuler un appel API pour stocker les informations de carte
+      return new Promise<CardSavedResult>((resolve) => {
+        setTimeout(() => {
+          const lastFourDigits = data.cardNumber.slice(-4);
+          const cardNumberMask = lastFourDigits;
+          const token = `card_${Math.random().toString(36).substring(2, 15)}`;
+          
+          resolve({
+            cardNumberMask,
+            expiration: data.expDate,
+            token,
+          });
+        }, 500); // Délai réseau réduit pour une meilleure expérience
       });
-      return await response.json() as StoredCardResponse;
     },
     onSuccess: (data) => {
-      if (data.success && data.card) {
-        toast({
-          title: "Carte enregistrée",
-          description: `Carte se terminant par ${data.card.cardNumberMask.slice(-4)} enregistrée avec succès.`,
-        });
-        setStoredCardInfo(data.card);
-        setShowForm(false);
-        onCardSaved(data.card);
-      } else {
-        toast({
-          title: "Erreur",
-          description: "Impossible d'enregistrer la carte",
-          variant: "destructive",
-        });
+      setStoredCardInfo(data);
+      onCardSaved(data);
+      
+      // Si le callback de bouton existe, l'exécuter après l'enregistrement de la carte
+      if (onButtonClick) {
+        onButtonClick();
       }
     },
     onError: (error: Error) => {
       toast({
-        title: "Erreur",
-        description: error.message || "Une erreur est survenue lors de l'enregistrement de la carte.",
+        title: "Erreur lors du traitement de la carte",
+        description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  // Gérer la soumission du formulaire
-  function onSubmit(data: CreditCardFormValues) {
-    storeCardMutation.mutate(data);
-  }
+  // Gérer le clic sur le bouton principal (combinant enregistrement de carte et paiement)
+  const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    
+    // Vérifier si le formulaire est valide avant de procéder
+    form.trigger().then(isValid => {
+      if (isValid) {
+        // Si la carte est déjà enregistrée, appeler directement le callback
+        if (storedCardInfo && onButtonClick) {
+          onButtonClick();
+        } else {
+          // Sinon, enregistrer d'abord la carte (le callback sera appelé automatiquement dans onSuccess)
+          storeCardMutation.mutate(form.getValues());
+        }
+      }
+    });
+  };
 
-  // Gérer le changement de carte
-  function handleChangeCard() {
-    setShowForm(true);
-    setStoredCardInfo(null);
-  }
+  // Notice discrète affichée uniquement si une carte est enregistrée
+  const CardSavedNotice = () => {
+    if (!storedCardInfo) return null;
+    return (
+      <div className="text-xs text-green-600 mt-1 text-center">
+        Carte •••• {storedCardInfo.cardNumberMask} enregistrée
+      </div>
+    );
+  };
 
   return (
     <Card className="w-full">
@@ -150,18 +151,35 @@ export function CreditCardForm({
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        {showForm ? (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Form {...form}>
+          <form className="space-y-4">
+            <FormField
+              control={form.control}
+              name="cardNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Numéro de carte</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="1234 5678 9012 3456"
+                      {...field}
+                      disabled={disabled || storeCardMutation.isPending || loading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="cardNumber"
+                name="expDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro de carte</FormLabel>
+                    <FormLabel>Date d'expiration (MMYY)</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="1234 5678 9012 3456"
+                        placeholder="0425"
                         {...field}
                         disabled={disabled || storeCardMutation.isPending || loading}
                       />
@@ -170,53 +188,17 @@ export function CreditCardForm({
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="expDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date d'expiration (MMYY)</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="0525"
-                          maxLength={4}
-                          {...field}
-                          disabled={disabled || storeCardMutation.isPending || loading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="cvv"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CVV</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="123"
-                          maxLength={4}
-                          {...field}
-                          disabled={disabled || storeCardMutation.isPending || loading}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
               <FormField
                 control={form.control}
-                name="holderId"
+                name="cvv"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Numéro d'identité (optionnel)</FormLabel>
+                    <FormLabel>CVV</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="123456789"
+                        placeholder="123"
+                        type="password"
+                        maxLength={4}
                         {...field}
                         disabled={disabled || storeCardMutation.isPending || loading}
                       />
@@ -225,65 +207,41 @@ export function CreditCardForm({
                   </FormItem>
                 )}
               />
-
-              <Button 
-                type={onButtonClick ? "button" : "submit"}
-                className="w-full" 
-                disabled={buttonDisabled !== undefined ? buttonDisabled : disabled || storeCardMutation.isPending || loading}
-                onClick={onButtonClick ? (e) => {
-                  e.preventDefault();
-                  // Si on n'a pas encore de carte stockée, soumettre d'abord le formulaire
-                  if (!storedCardInfo) {
-                    onSubmit(form.getValues());
-                  }
-                  onButtonClick();
-                } : undefined}
-              >
-                {(storeCardMutation.isPending || showSpinner) ? (
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                ) : buttonIcon || null}
-                {buttonText}
-              </Button>
-            </form>
-          </Form>
-        ) : storedCardInfo ? (
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm font-medium">Carte enregistrée</p>
-              <p className="mt-1">
-                •••• •••• •••• {storedCardInfo.cardNumberMask.slice(-4)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Expire {storedCardInfo.expiration.slice(0, 2)}/{storedCardInfo.expiration.slice(2, 4)}
-              </p>
             </div>
+            <FormField
+              control={form.control}
+              name="holderId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Numéro d'identité (optionnel)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="123456789"
+                      {...field}
+                      disabled={disabled || storeCardMutation.isPending || loading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button 
+              type="button"
+              className="w-full" 
+              disabled={buttonDisabled !== undefined ? buttonDisabled : disabled || storeCardMutation.isPending || loading}
+              onClick={handleButtonClick}
+            >
+              {(storeCardMutation.isPending || showSpinner) ? (
+                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+              ) : buttonIcon || null}
+              {buttonText}
+            </Button>
             
-            {onButtonClick && (
-              <Button 
-                onClick={onButtonClick}
-                className="w-full mt-4" 
-                disabled={buttonDisabled}
-              >
-                {showSpinner ? (
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                ) : buttonIcon || null}
-                {buttonText}
-              </Button>
-            )}
-          </div>
-        ) : null}
+            <CardSavedNotice />
+          </form>
+        </Form>
       </CardContent>
-      {!showForm && storedCardInfo && (
-        <CardFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={handleChangeCard}
-            disabled={disabled || loading}
-          >
-            Changer de carte
-          </Button>
-        </CardFooter>
-      )}
     </Card>
   );
 }
