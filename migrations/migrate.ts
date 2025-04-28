@@ -2,6 +2,8 @@ import { db } from "../server/db";
 import { adminLogs, users } from "../shared/schema";
 import { sql } from "drizzle-orm";
 import { addEmailAliasToFamilies } from "./add-email-alias-to-families";
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function migrate() {
   console.log("Starting database migration...");
@@ -113,6 +115,16 @@ async function migrate() {
     // Ajouter le champ emailAlias à la table families
     await addEmailAliasToFamilies();
     console.log("✓ Added emailAlias column to families table (if it didn't exist)");
+
+    // Ajouter la table de préférences de notification
+    const notificationPreferencesMigrationPath = path.join(__dirname, 'add-notification-preferences.sql');
+    if (fs.existsSync(notificationPreferencesMigrationPath)) {
+      const notificationPreferencesMigration = fs.readFileSync(notificationPreferencesMigrationPath, 'utf8');
+      await db.execute(sql`${sql.raw(notificationPreferencesMigration)}`);
+      console.log("✓ Added notification_preferences table");
+    } else {
+      console.error("Migration file for notification preferences not found!");
+    }
 
     // Fin de la migration
     console.log("Database migration completed successfully!");

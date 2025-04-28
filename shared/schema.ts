@@ -193,8 +193,12 @@ export const insertChildSchema = createInsertSchema(children).omit({
 });
 
 // Define relationships between models
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   familyMembers: many(familyMembers),
+  notificationPreferences: one(notificationPreferences, {
+    fields: [users.id],
+    references: [notificationPreferences.userId],
+  }),
   photos: many(photos),
   fundTransactions: many(fundTransactions),
   invitations: many(invitations),
@@ -389,3 +393,31 @@ export type InsertPromoCode = z.infer<typeof insertPromoCodeSchema>;
 
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+
+// Notification Preferences model
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id).unique(),
+  newPhotoEmail: boolean("new_photo_email").notNull().default(true),
+  newPhotoPush: boolean("new_photo_push").notNull().default(true),
+  newCommentEmail: boolean("new_comment_email").notNull().default(true),
+  newCommentPush: boolean("new_comment_push").notNull().default(true),
+  newReactionEmail: boolean("new_reaction_email").notNull().default(false),
+  newReactionPush: boolean("new_reaction_push").notNull().default(true),
+  newGazetteEmail: boolean("new_gazette_email").notNull().default(true),
+  newGazettePush: boolean("new_gazette_push").notNull().default(true),
+  familyEventEmail: boolean("family_event_email").notNull().default(true),
+  familyEventPush: boolean("family_event_push").notNull().default(true),
+  weeklyDigestEmail: boolean("weekly_digest_email").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type NotificationPreferences = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreferences = z.infer<typeof insertNotificationPreferencesSchema>;

@@ -32,7 +32,8 @@ import {
   Landmark, 
   BookOpen, 
   User, 
-  LogOut 
+  LogOut,
+  Bell
 } from "lucide-react";
 
 export default function Navbar() {
@@ -96,6 +97,12 @@ export default function Navbar() {
                   <span>Mon profil</span>
                 </Button>
               </Link>
+              <Link href="/notification-preferences">
+                <Button variant="ghost" className="flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  <span>Notifications</span>
+                </Button>
+              </Link>
               <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
                 <LogOut className="h-4 w-4" />
                 <span>Déconnexion</span>
@@ -152,21 +159,29 @@ export default function Navbar() {
                 </div>
                 <div className="border-t pt-4">
                   {user ? (
-                    <div className="flex flex-col gap-2">
+                    <div className="space-y-3">
                       <SheetClose asChild>
                         <Link href="/profile">
-                          <Button variant="outline" className="w-full justify-start text-left">
-                            <User className="mr-2 h-4 w-4" />
-                            Mon profil
-                          </Button>
+                          <div className="flex items-center p-2 -mx-2 rounded-md hover:bg-muted cursor-pointer">
+                            <User className="h-5 w-5 mr-2" />
+                            <span>Mon profil</span>
+                          </div>
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link href="/notification-preferences">
+                          <div className="flex items-center p-2 -mx-2 rounded-md hover:bg-muted cursor-pointer">
+                            <Bell className="h-5 w-5 mr-2" />
+                            <span>Préférences de notification</span>
+                          </div>
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>
                         <Link href="/">
-                          <Button className="w-full justify-start text-left">
-                            <Home className="mr-2 h-4 w-4" />
-                            Dashboard
-                          </Button>
+                          <div className="flex items-center p-2 -mx-2 rounded-md hover:bg-muted cursor-pointer">
+                            <Home className="h-5 w-5 mr-2" />
+                            <span>Dashboard</span>
+                          </div>
                         </Link>
                       </SheetClose>
                       <Button 

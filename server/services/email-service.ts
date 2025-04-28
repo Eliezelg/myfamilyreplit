@@ -1,4 +1,5 @@
 import { MailService } from '@sendgrid/mail';
+import { notificationPreferencesService } from './notification-preferences-service';
 
 // Type pour les paramètres d'email
 interface EmailParams {
@@ -284,6 +285,170 @@ export class EmailService {
           <p style="margin-top: 30px; font-size: 0.8em; color: #718096; text-align: center;">Si vous avez des questions, n'hésitez pas à nous contacter à info@atrehitim.co.il</p>
         </div>
       `
+    });
+  }
+
+  /**
+   * Envoie une notification aux membres de la famille lorsqu'une nouvelle photo est ajoutée
+   */
+  async sendNewPhotoNotification(familyId: number, uploaderName: string, photoCaption: string, photoUrl: string): Promise<boolean[]> {
+    try {
+      // Importer le service de stockage ici pour éviter les dépendances circulaires
+      const { storage } = require('../storage');
+      
+      // Récupérer les informations de la famille
+      const family = await storage.getFamilyById(familyId);
+      if (!family) {
+        console.error(`Famille avec ID ${familyId} non trouvée`);
+        return [false];
+      }
+      
+      // Récupérer tous les membres de la famille
+      const familyMembers = await storage.getFamilyMembers(familyId);
+      
+      // Tableau pour stocker les résultats d'envoi
+      const results: boolean[] = [];
+      
+      // Pour chaque membre, envoyer un email de notification
+      for (const member of familyMembers) {
+        const user = await storage.getUserById(member.userId);
+        
+        if (user && user.email) {
+          const htmlContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h1 style="color: #4a5568; text-align: center;">Nouvelle photo dans l'album de ${family.name}</h1>
+              <p>Bonjour ${user.firstName},</p>
+              <p><strong>${uploaderName}</strong> a ajouté une nouvelle photo à votre album familial.</p>
+              
+              <div style="text-align: center; margin: 20px 0;">
+                <img src="${photoUrl}" alt="Nouvelle photo" style="max-width: 100%; max-height: 300px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <p style="font-style: italic; margin-top: 10px;">${photoCaption || 'Aucune légende'}</p>
+              </div>
+              
+              <p>Connectez-vous à votre compte MyFamily pour voir cette photo et bien plus encore!</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://atrehitim.co.il" style="background-color: #4a5568; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Voir la photo</a>
+              </div>
+              
+              <p style="margin-top: 30px; font-size: 0.8em; color: #718096; text-align: center;">
+                Vous recevez cet email car vous êtes membre de la famille "${family.name}" sur MyFamily.<br>
+                Pour ne plus recevoir ces notifications, modifiez vos préférences dans les paramètres de votre compte.
+              </p>
+            </div>
+          `;
+          
+          const textContent = `
+            Nouvelle photo dans l'album de ${family.name}
+            
+            Bonjour ${user.firstName},
+            
+            ${uploaderName} a ajouté une nouvelle photo à votre album familial.
+            
+            Légende: ${photoCaption || 'Aucune légende'}
+            
+            Connectez-vous à votre compte MyFamily pour voir cette photo et bien plus encore!
+            https://atrehitim.co.il
+            
+            Vous recevez cet email car vous êtes membre de la famille "${family.name}" sur MyFamily.
+            Pour ne plus recevoir ces notifications, modifiez vos préférences dans les paramètres de votre compte.
+          `;
+          
+          // Ne pas envoyer de notification à l'utilisateur qui a uploadé la photo
+          if (user.displayName !== uploaderName) {
+            // Vérifier les préférences de notification de l'utilisateur
+            const shouldSendEmail = await notificationPreferencesService.shouldNotifyUser(
+              user.id,
+              'newPhoto',
+              'email'
+            );
+            
+            if (shouldSendEmail) {
+              const result = await this.sendEmail({
+                to: user.email,
+                subject: `Nouvelle photo ajoutée par ${uploaderName}`,
+                text: textContent,
+                html: htmlContent
+              });
+              
+              results.push(result);
+            } else {
+              console.log(`L'utilisateur ${user.id} (${user.email}) a désactivé les notifications par email pour les nouvelles photos`);
+              results.push(true); // On considère que c'est un succès puisque c'est le comportement souhaité
+            }
+          }
+        }
+      }
+      
+      return results;
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi des notifications de nouvelle photo:', error);
+      return [false];
+    }
+  }
+
+  /**
+   * Envoie un email de confirmation de réception de photo
+   * @param to Adresse email du destinataire
+   * @param userName Nom de l'utilisateur
+   * @param familyName Nom de la famille
+   * @param photoCount Nombre de photos reçues
+   * @param userId ID de l'utilisateur (pour vérifier les préférences de notification)
+   */
+  async sendPhotoReceiptConfirmation(to: string, userName: string, familyName: string, photoCount: number, userId?: number): Promise<boolean> {
+    // Vérifier les préférences de notification si l'ID de l'utilisateur est fourni
+    if (userId) {
+      const shouldSendEmail = await notificationPreferencesService.shouldNotifyUser(
+        userId,
+        'newPhoto',
+        'email'
+      );
+      
+      if (!shouldSendEmail) {
+        console.log(`L'utilisateur ${userId} a désactivé les notifications par email pour les confirmations de photos`);
+        return true; // On considère que c'est un succès puisque c'est le comportement souhaité
+      }
+    }
+    
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #4a5568; text-align: center;">Photos reçues avec succès!</h1>
+        <p>Bonjour ${userName},</p>
+        <p>Nous avons bien reçu ${photoCount} photo${photoCount > 1 ? 's' : ''} pour votre album familial "${familyName}".</p>
+        <p>Vos photos ont été ajoutées à l'album et sont maintenant visibles par tous les membres de votre famille.</p>
+        <p>Merci d'utiliser MyFamily pour partager vos précieux souvenirs!</p>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="https://atrehitim.co.il" style="background-color: #4a5568; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Voir mes photos</a>
+        </div>
+        <p style="margin-top: 30px; font-size: 0.8em; color: #718096; text-align: center;">Si vous n'avez pas envoyé de photos, veuillez nous contacter à info@atrehitim.co.il</p>
+        <p style="font-size: 0.8em; color: #718096; text-align: center;">
+          Pour gérer vos préférences de notification, <a href="https://atrehitim.co.il/notification-preferences" style="color: #4a5568;">cliquez ici</a>.
+        </p>
+      </div>
+    `;
+    
+    const textContent = `
+      Photos reçues avec succès!
+      
+      Bonjour ${userName},
+      
+      Nous avons bien reçu ${photoCount} photo${photoCount > 1 ? 's' : ''} pour votre album familial "${familyName}".
+      
+      Vos photos ont été ajoutées à l'album et sont maintenant visibles par tous les membres de votre famille.
+      
+      Merci d'utiliser MyFamily pour partager vos précieux souvenirs!
+      
+      Voir mes photos: https://atrehitim.co.il
+      
+      Si vous n'avez pas envoyé de photos, veuillez nous contacter à info@atrehitim.co.il
+      
+      Pour gérer vos préférences de notification: https://atrehitim.co.il/notification-preferences
+    `;
+    
+    return this.sendEmail({
+      to,
+      subject: `${photoCount} photo${photoCount > 1 ? 's' : ''} reçue${photoCount > 1 ? 's' : ''} avec succès`,
+      text: textContent,
+      html: htmlContent
     });
   }
 }

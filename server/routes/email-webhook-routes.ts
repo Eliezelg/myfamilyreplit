@@ -21,9 +21,24 @@ const checkAuthWithoutCsrf = (req: Request, res: Response, next: NextFunction) =
   }
   
   if (!req.session.user) {
-    // Utilisateur par défaut pour les tests
-    req.session.user = { id: 1 };
-    req.user = { id: 1 };
+    // Utilisateur par défaut pour les tests avec les propriétés minimales requises
+    req.session.user = { 
+      id: 1,
+      createdAt: new Date(),
+      username: 'test_user',
+      password: 'hashed_password',
+      firstName: 'Test',
+      lastName: 'User',
+      displayName: 'Test User',
+      email: 'test@example.com',
+      profileImage: null,
+      birthDate: null,
+      role: 'user',
+      lastLoginAt: null,
+      resetPasswordToken: null,
+      resetPasswordExpires: null
+    };
+    req.user = req.session.user;
   } else if (!req.user) {
     req.user = req.session.user;
   }

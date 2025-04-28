@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { fallbackStorageService } from './fallback-storage';
+const Filter = require('bad-words');
 
 interface InboundEmail {
   from: string;
@@ -201,17 +202,57 @@ export class EmailInboundService {
       }
       
       // Extraire la légende (de l'objet ou du corps de l'email)
-      const caption = email.subject || email.text || '';
+      let caption = email.subject || email.text || '';
+      
+      // Filtrage du contenu inapproprié dans la légende
+      if (this.containsInappropriateContent(caption)) {
+        console.warn(`Contenu inapproprié détecté dans la légende, application du filtre`);
+        caption = this.filterInappropriateContent(caption);
+      }
+      
+      // Détecter si l'email est potentiellement un spam
+      if (this.isPotentialSpam(email)) {
+        console.warn(`Email potentiellement indésirable détecté de ${fromEmail}`);
+        // On continue le traitement mais on pourrait ajouter des mesures supplémentaires ici
+      }
       
       // Traiter les pièces jointes (photos)
       if (email.attachments && email.attachments.length > 0) {
+        // Compter les images valides
+        const validImageAttachments = email.attachments.filter(attachment => this.isImageAttachment(attachment));
+        let processedCount = 0;
+        
+        // Traiter chaque pièce jointe
         for (const attachment of email.attachments) {
           // Vérifier si la pièce jointe est une image
           if (this.isImageAttachment(attachment)) {
-            await this.processImageAttachment(attachment, family.id, user.id, caption);
+            const imageUrl = await this.processImageAttachment(attachment, family.id, user.id, caption);
+            processedCount++;
+            
+            // Envoyer une notification aux autres membres de la famille pour chaque nouvelle photo
+            if (imageUrl) {
+              await emailService.sendNewPhotoNotification(
+                family.id,
+                user.displayName || user.firstName,
+                caption,
+                imageUrl
+              );
+            }
           }
         }
-        return true;
+        
+        // Envoyer un email de confirmation à l'expéditeur
+        if (processedCount > 0) {
+          await emailService.sendPhotoReceiptConfirmation(
+            fromEmail,
+            user.firstName,
+            family.name,
+            processedCount,
+            user.id // Passer l'ID de l'utilisateur pour vérifier les préférences de notification
+          );
+        }
+        
+        return processedCount > 0;
       } else {
         console.log('Aucune pièce jointe trouvée dans l\'email');
         return false;
@@ -260,7 +301,7 @@ export class EmailInboundService {
     familyId: number,
     userId: number,
     caption: string
-  ): Promise<void> {
+  ): Promise<string | null> {
     try {
       // Créer un nom de fichier unique
       const fileExt = path.extname(attachment.filename) || '.jpg';
@@ -290,9 +331,85 @@ export class EmailInboundService {
       });
       
       console.log(`Photo ajoutée avec succès pour la famille ${familyId} par l'utilisateur ${userId}`);
+      return imageUrl;
     } catch (error) {
       console.error('Erreur lors du traitement de la pièce jointe image:', error);
+      return null;
     }
+  }
+  
+  /**
+   * Vérifie si le contenu contient des mots inappropriés
+   */
+  private containsInappropriateContent(content: string): boolean {
+    if (!content) return false;
+    
+    try {
+      const filter = new Filter();
+      return filter.isProfane(content);
+    } catch (error) {
+      console.error('Erreur lors de la vérification du contenu inapproprié:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Filtre le contenu inapproprié
+   */
+  private filterInappropriateContent(content: string): string {
+    if (!content) return content;
+    
+    try {
+      const filter = new Filter();
+      return filter.clean(content);
+    } catch (error) {
+      console.error('Erreur lors du filtrage du contenu inapproprié:', error);
+      return content;
+    }
+  }
+  
+  /**
+   * Détecte si un email est potentiellement un spam
+   */
+  private isPotentialSpam(email: InboundEmail): boolean {
+    // Indicateurs de spam potentiel
+    const spamIndicators = [
+      // Mots-clés courants dans les spams
+      'viagra', 'cialis', 'lottery', 'winner', 'casino', 'prize', 'free money',
+      'million dollars', 'nigerian prince', 'inheritance', 'bank transfer',
+      // Liens suspects
+      'bit.ly', 'tinyurl', 'goo.gl',
+      // Caractéristiques d'emails suspects
+      'urgent', 'confidential', 'secret deal', 'make money fast', 'work from home',
+      'weight loss', 'miracle cure', 'act now', 'limited time', 'risk free'
+    ];
+    
+    // Vérifier le sujet et le corps de l'email
+    const emailContent = `${email.subject || ''} ${email.text || ''}`;
+    const lowerContent = emailContent.toLowerCase();
+    
+    // Vérifier si l'un des indicateurs est présent
+    for (const indicator of spamIndicators) {
+      if (lowerContent.includes(indicator.toLowerCase())) {
+        return true;
+      }
+    }
+    
+    // Vérifier le nombre excessif de pièces jointes
+    if (email.attachments && email.attachments.length > 10) {
+      return true;
+    }
+    
+    // Vérifier la taille excessive des pièces jointes
+    if (email.attachments) {
+      const totalSize = email.attachments.reduce((sum, attachment) => sum + attachment.content.length, 0);
+      const maxSizeInBytes = 20 * 1024 * 1024; // 20 Mo
+      if (totalSize > maxSizeInBytes) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 }
 

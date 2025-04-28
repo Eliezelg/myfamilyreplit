@@ -25,6 +25,7 @@ import { emailController } from "./controllers/email-controller"; // Import du c
 import { registerEmailRoutes } from "./routes/email-routes"; // Import des routes d'email
 import { registerPasswordResetRoutes } from "./routes/password-reset-routes"; // Import des routes de réinitialisation de mot de passe
 import { emailWebhookRouter } from "./routes/email-webhook-routes"; // Import des routes de webhook email
+import notificationPreferencesRoutes from "./routes/notification-preferences-routes"; // Import des routes de préférences de notification
 
 // Interface étendue pour req.file avec multer
 interface MulterRequest extends Request {
@@ -104,8 +105,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/promo-codes', promoCodeRouter);
   app.use('/api/subscriptions', subscriptionRouter);
   
-  // Enregistrement des routes pour les webhooks email
+  // Enregistrer les routes de webhook email
   app.use('/api/email-webhook', emailWebhookRouter);
+  
+  // Enregistrer les routes de préférences de notification
+  app.use('/api/notification-preferences', notificationPreferencesRoutes);
   
   // Planifier la génération automatique des gazettes
   scheduleGazetteGeneration();
